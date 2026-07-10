@@ -26,7 +26,8 @@ public class AutoKillManager {
         
         lastLocations.put(uuid, player.getLocation().clone());
         KillTask task = new KillTask(player);
-        task.runTaskTimer(plugin, 0L, 40L);
+        int attackDelay = config.getAttackDelay();
+        task.runTaskTimer(plugin, 0L, attackDelay);
         tasks.put(uuid, task);
         
         player.sendMessage(config.getMessage("kill-enabled"));
@@ -56,12 +57,13 @@ public class AutoKillManager {
 
     private class KillTask extends BukkitRunnable {
         private final Player player;
-        private final int range = 2;
+        private final int range;
         private final UUID playerUUID;
 
         public KillTask(Player player) {
             this.player = player;
             this.playerUUID = player.getUniqueId();
+            this.range = config.getKillRange();
         }
 
         @Override
@@ -77,21 +79,15 @@ public class AutoKillManager {
                 boolean isSitting = false;
                 
                 try {
-                    if (player.hasMetadata("GSit")) {
-                        isSitting = true;
-                    }
+                    if (player.hasMetadata("GSit")) isSitting = true;
                 } catch (Exception ignored) {}
                 
                 try {
-                    if (player.hasMetadata("CMISit")) {
-                        isSitting = true;
-                    }
+                    if (player.hasMetadata("CMISit")) isSitting = true;
                 } catch (Exception ignored) {}
                 
                 try {
-                    if (player.hasMetadata("Sit")) {
-                        isSitting = true;
-                    }
+                    if (player.hasMetadata("Sit")) isSitting = true;
                 } catch (Exception ignored) {}
                 
                 if (!isSitting && lastLoc.distance(currentLoc) > 0.1) {
@@ -101,8 +97,14 @@ public class AutoKillManager {
                 }
             }
 
+            // Lọc mob theo config
             Entity target = player.getNearbyEntities(range, range, range).stream()
-                .filter(e -> e instanceof Monster || e instanceof Animals || e instanceof Mob)
+                .filter(e -> {
+                    if (e instanceof Monster) return config.isKillMonster();
+                    if (e instanceof Animals) return config.isKillAnimal();
+                    if (e instanceof Mob) return config.isKillMob();
+                    return false;
+                })
                 .filter(e -> e.isValid() && !e.isDead())
                 .min((e1, e2) -> Double.compare(
                     e1.getLocation().distanceSquared(player.getLocation()),
@@ -126,7 +128,8 @@ public class AutoKillManager {
                     target.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3);
                 
                 if (living.isDead() || living.getHealth() <= 0) {
-                    if (living instanceof Monster monster) {
+                    // Drop items
+                    if (config.isDropItems() && living instanceof Monster monster) {
                         ItemStack handItem = monster.getEquipment().getItemInMainHand();
                         if (handItem != null && !handItem.getType().isAir()) {
                             Item item = player.getWorld().dropItem(living.getLocation(), handItem);
@@ -147,17 +150,20 @@ public class AutoKillManager {
                         }
                     }
                     
-                    int xp = 0;
-                    if (living instanceof Monster) {
-                        xp = 5 + new Random().nextInt(3);
-                    } else if (living instanceof Animals) {
-                        xp = 1 + new Random().nextInt(3);
-                    } else if (living instanceof Mob) {
-                        xp = 3 + new Random().nextInt(5);
-                    }
-                    
-                    if (xp > 0) {
-                        player.giveExp(xp);
+                    // XP
+                    if (config.isDropXp()) {
+                        int xp = 0;
+                        if (living instanceof Monster) {
+                            xp = config.getXpMonster() + new Random().nextInt(3);
+                        } else if (living instanceof Animals) {
+                            xp = config.getXpAnimal() + new Random().nextInt(3);
+                        } else if (living instanceof Mob) {
+                            xp = config.getXpMob() + new Random().nextInt(5);
+                        }
+                        
+                        if (xp > 0) {
+                            player.giveExp(xp);
+                        }
                     }
                     
                     player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,
@@ -173,7 +179,7 @@ public class AutoKillManager {
         }
 
         private double calculateDamage(Player player, ItemStack weapon) {
-            double base = 1.0;
+            double base = config.getBaseDamage();
             
             if (weapon != null && !weapon.getType().isAir()) {
                 String name = weapon.getType().name();

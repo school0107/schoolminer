@@ -9,9 +9,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.Location;
-import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeModifier;
 import java.util.*;
 
 public class AutoMineManager {
@@ -43,7 +40,7 @@ public class AutoMineManager {
         if (task != null) {
             task.cancel();
             Block target = player.getTargetBlockExact(5);
-            if (target != null) {
+            if (target != null && target.getLocation() != null) {
                 player.sendBlockDamage(target.getLocation(), 0.0f);
             }
             player.sendMessage(config.getMessage("disabled"));
@@ -85,7 +82,6 @@ public class AutoMineManager {
                 return;
             }
 
-            // Kiểm tra di chuyển
             Location lastLoc = lastLocations.get(playerUUID);
             if (lastLoc != null) {
                 Location currentLoc = player.getLocation();
@@ -151,13 +147,10 @@ public class AutoMineManager {
             }
 
             if (breakTicks >= requiredTicks) {
-                // Lưu drops và break block
                 Collection<ItemStack> drops = target.getDrops(tool);
                 
-                // Xóa block
                 target.setType(Material.AIR);
                 
-                // Drop items
                 for (ItemStack drop : drops) {
                     int fortune = tool.getEnchantmentLevel(Enchantment.FORTUNE);
                     if (fortune > 0 && isFortuneable(target.getType())) {
@@ -261,7 +254,7 @@ public class AutoMineManager {
         }
 
         private void resetBreak() {
-            if (currentBlock != null) {
+            if (currentBlock != null && currentBlock.getLocation() != null) {
                 player.sendBlockDamage(currentBlock.getLocation(), 0.0f);
             }
             currentBlock = null;

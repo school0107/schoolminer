@@ -1,10 +1,17 @@
-settings:
-  mine-delay: 1  # 1 tick cho độ chính xác
-  attack-delay: 40  # 40 ticks = 2 giây
-  max-range: 5
-  min-break-time: 1
-  max-break-time: 1200
+# ============================================
+# SCHOOLMINER CONFIG
+# ============================================
 
+# ===== AUTO MINE =====
+automine:
+  # Thời gian đào 1 lần (ticks, 20 ticks = 1 giây)
+  # Mặc định: 20 ticks = 1 giây
+  delay: 20
+  
+  # Phạm vi đào tối đa
+  max-range: 5
+
+# Danh sách block được phép đào
 whitelist:
   - STONE
   - DEEPSLATE
@@ -30,20 +37,43 @@ whitelist:
   - ANDESITE
   - CALCITE
   - TUFF
-  - DRIPSTONE_BLOCK
-  - SANDSTONE
-  - RED_SANDSTONE
-  - NETHERRACK
-  - BASALT
-  - BLACKSTONE
   - OBSIDIAN
   - CRYING_OBSIDIAN
   - END_STONE
 
+# ===== AUTO KILL =====
+autokill:
+  # Thời gian hồi đòn (ticks, 20 ticks = 1 giây)
+  # Mặc định: 40 ticks = 2 giây
+  attack-delay: 40
+  
+  # Khoảng cách tấn công (block)
+  range: 3
+  
+  # Sát thương cơ bản
+  base-damage: 4.0
+  
+  # Loại mob được tấn công
+  kill-monster: true   # Zombie, Skeleton, Creeper, v.v...
+  kill-animal: false   # Bò, Heo, Gà, v.v...
+  kill-mob: true       # Các loại mob khác
+  
+  # Drop items khi kill
+  drop-items: true
+  
+  # Drop XP khi kill
+  drop-xp: true
+  
+  # XP nhận được khi kill
+  xp-monster: 5
+  xp-animal: 1
+  xp-mob: 3
+
+# ===== MESSAGES =====
 messages:
-  enabled: "&a✅ Đã bật Auto Mine! (Không di chuyển để đào)"
+  enabled: "&a✅ Đã bật Auto Mine! (Đào mỗi giây)"
   disabled: "&c⛔ Đã tắt Auto Mine!"
-  kill-enabled: "&a⚔️ Đã bật Auto Kill! (2 giây/lần)"
+  kill-enabled: "&a⚔️ Đã bật Auto Kill!"
   kill-disabled: "&c⛔ Đã tắt Auto Kill!"
   no-permission: "&c❌ Bạn không có quyền sử dụng lệnh này!"
   reloaded: "&a🔄 Đã reload config thành công!"

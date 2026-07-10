@@ -122,7 +122,7 @@ public class AutoKillManager {
             double damage = calculateDamage(player, weapon);
             
             if (target instanceof LivingEntity living) {
-                // Tạo sự kiện damage
+                // Tạo sự kiện damage để plugin khác nhận diện
                 EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(
                     player, 
                     living, 
@@ -133,9 +133,11 @@ public class AutoKillManager {
                 Bukkit.getPluginManager().callEvent(damageEvent);
                 
                 if (!damageEvent.isCancelled()) {
-                    living.damage(damageEvent.getFinalDamage(), player);
-                    player.attack(target);
+                    // CHỈ GỌI 1 LẦN DAMAGE DUY NHẤT
+                    // KHÔNG GỌI player.attack() để tránh double damage
+                    living.damage(damage, player);
                     
+                    // Hiệu ứng
                     player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, 
                         Material.REDSTONE_BLOCK);
                     player.getWorld().spawnParticle(Particle.CRIT, 
@@ -144,7 +146,6 @@ public class AutoKillManager {
                 
                 // Kiểm tra nếu mob chết
                 if (living.isDead() || living.getHealth() <= 0) {
-                    // Lấy drops từ mob
                     if (config.isDropItems() && living instanceof Monster monster) {
                         ItemStack handItem = monster.getEquipment().getItemInMainHand();
                         if (handItem != null && !handItem.getType().isAir()) {
@@ -158,7 +159,6 @@ public class AutoKillManager {
                         }
                     }
                     
-                    // XP
                     if (config.isDropXp()) {
                         int xp = 0;
                         if (living instanceof Monster) {
@@ -174,15 +174,9 @@ public class AutoKillManager {
                         }
                     }
                     
-                    // Gọi sự kiện death - CÁCH MỚI CHO PAPER 1.21
-                    // Không cần tạo EntityDeathEvent vì Paper 1.21 đã tự xử lý
-                    // Chỉ cần drop items và XP là đủ
-                    
-                    // Hiệu ứng
                     player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,
                         living.getLocation(), 30, 0.5, 0.5, 0.5);
                     
-                    // MythicMobs compatibility
                     try {
                         if (living.hasMetadata("MythicMobs")) {
                             // MythicMobs sẽ tự xử lý
@@ -232,12 +226,10 @@ public class AutoKillManager {
             for (ItemStack armor : player.getInventory().getArmorContents()) {
                 if (armor == null || armor.getType().isAir()) continue;
                 
-                // Kiểm tra tên item
                 if (armor.hasItemMeta() && armor.getItemMeta().hasDisplayName()) {
                     String displayName = armor.getItemMeta().getDisplayName();
                     String cleanName = ChatColor.stripColor(displayName);
                     
-                    // Tìm kiếm từ khóa
                     if (cleanName.toLowerCase().contains("lục bảo") ||
                         cleanName.toLowerCase().contains("bảo vệ") ||
                         cleanName.toLowerCase().contains("tấn công") ||
@@ -249,7 +241,6 @@ public class AutoKillManager {
                         armorAttack += 2.0;
                     }
                     
-                    // Tìm số trong tên
                     Pattern pattern = Pattern.compile("\\+([0-9.]+)");
                     java.util.regex.Matcher matcher = pattern.matcher(cleanName);
                     while (matcher.find()) {
@@ -265,7 +256,6 @@ public class AutoKillManager {
                     }
                 }
                 
-                // Kiểm tra lore
                 if (armor.hasItemMeta() && armor.getItemMeta().hasLore()) {
                     List<String> lore = armor.getItemMeta().getLore();
                     for (String line : lore) {
@@ -296,13 +286,11 @@ public class AutoKillManager {
             
             base += armorAttack;
             
-            // Strength potion
             if (player.hasPotionEffect(PotionEffectType.STRENGTH)) {
                 int level = player.getPotionEffect(PotionEffectType.STRENGTH).getAmplifier() + 1;
                 base *= (1 + (0.3 * level));
             }
             
-            // Critical hit
             if (Math.random() < 0.2) {
                 base *= 1.5;
             }

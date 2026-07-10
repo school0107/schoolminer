@@ -144,11 +144,10 @@ public class AutoMineManager {
             }
 
             if (breakTicks >= requiredTicks) {
-                // TẠO SỰ KIỆN BLOCK BREAK ĐỂ PLUGIN KHÁC NHẬN DIỆN
+                // Tạo sự kiện BlockBreakEvent để plugin khác nhận diện
                 BlockBreakEvent breakEvent = new BlockBreakEvent(target, player);
                 Bukkit.getPluginManager().callEvent(breakEvent);
                 
-                // Kiểm tra nếu sự kiện không bị cancel
                 if (!breakEvent.isCancelled()) {
                     // Lấy drops từ block
                     Collection<ItemStack> drops = target.getDrops(tool);
@@ -186,8 +185,8 @@ public class AutoMineManager {
                         }
                     }
                     
-                    // EXP từ block
-                    int exp = target.getExpDrop(tool);
+                    // EXP từ block - CÁCH MỚI CHO PAPER 1.21
+                    int exp = getBlockExp(target, tool);
                     if (exp > 0) {
                         player.giveExp(exp);
                     }
@@ -207,6 +206,49 @@ public class AutoMineManager {
                     player.sendBlockDamage(target.getLocation(), 1.0f);
                 } catch (Exception ignored) {}
             }
+        }
+
+        private int getBlockExp(Block block, ItemStack tool) {
+            Material type = block.getType();
+            String name = type.name();
+            
+            // Ore EXP
+            if (name.contains("COAL_ORE") || name.contains("DEEPSLATE_COAL_ORE")) {
+                return 0 + new Random().nextInt(2);
+            }
+            if (name.contains("IRON_ORE") || name.contains("DEEPSLATE_IRON_ORE")) {
+                return 1 + new Random().nextInt(2);
+            }
+            if (name.contains("GOLD_ORE") || name.contains("DEEPSLATE_GOLD_ORE") || name.contains("NETHER_GOLD_ORE")) {
+                return 2 + new Random().nextInt(3);
+            }
+            if (name.contains("DIAMOND_ORE") || name.contains("DEEPSLATE_DIAMOND_ORE")) {
+                return 3 + new Random().nextInt(4);
+            }
+            if (name.contains("EMERALD_ORE") || name.contains("DEEPSLATE_EMERALD_ORE")) {
+                return 3 + new Random().nextInt(4);
+            }
+            if (name.contains("LAPIS_ORE") || name.contains("DEEPSLATE_LAPIS_ORE")) {
+                return 2 + new Random().nextInt(3);
+            }
+            if (name.contains("REDSTONE_ORE") || name.contains("DEEPSLATE_REDSTONE_ORE")) {
+                return 1 + new Random().nextInt(3);
+            }
+            if (name.contains("NETHER_QUARTZ_ORE")) {
+                return 2 + new Random().nextInt(3);
+            }
+            if (name.contains("ANCIENT_DEBRIS")) {
+                return 4 + new Random().nextInt(5);
+            }
+            
+            // Đá thường
+            if (name.contains("STONE") || name.contains("DEEPSLATE") || 
+                name.contains("GRANITE") || name.contains("DIORITE") || 
+                name.contains("ANDESITE") || name.contains("TUFF")) {
+                return 0;
+            }
+            
+            return 0;
         }
 
         private boolean isFortuneable(Material material) {

@@ -70,6 +70,7 @@ public class AutoMineManager {
         private int requiredTicks = 0;
         private boolean isBreaking = false;
         private final UUID playerUUID;
+        private Random random = new Random();
 
         public MineTask(Player player) {
             this.player = player;
@@ -152,11 +153,15 @@ public class AutoMineManager {
                 } catch (Exception ignored) {}
             }
 
+            // Khi đào xong - KHÔNG XÓA BLOCK, chỉ drop items
             if (breakTicks >= requiredTicks) {
+                // Lấy drops từ block (KHÔNG XÓA BLOCK)
                 Collection<ItemStack> drops = target.getDrops(tool);
                 
-                target.setType(Material.AIR);
+                // KHÔNG XÓA BLOCK - Giữ nguyên block
+                // target.setType(Material.AIR); // <-- ĐÃ XÓA DÒNG NÀY
                 
+                // Drop items với Fortune
                 for (ItemStack drop : drops) {
                     int fortune = tool.getEnchantmentLevel(Enchantment.FORTUNE);
                     if (fortune > 0 && isFortuneable(target.getType())) {
@@ -164,20 +169,35 @@ public class AutoMineManager {
                         drop.setAmount(drop.getAmount() * (1 + bonus));
                     }
                     
+                    // Random số lượng để giống vanilla hơn
+                    if (drop.getAmount() > 1) {
+                        int randomAmount = 1 + random.nextInt(drop.getAmount());
+                        drop.setAmount(randomAmount);
+                    }
+                    
                     Location loc = target.getLocation().add(0.5, 0.5, 0.5);
                     Item item = player.getWorld().dropItem(loc, drop);
                     item.setPickupDelay(0);
+                    // Hút item về phía player
                     item.setVelocity(player.getLocation().toVector()
                         .subtract(item.getLocation().toVector())
-                        .normalize().multiply(0.5));
+                        .normalize().multiply(0.7));
                 }
                 
-                resetBreak();
+                // Reset tiến độ đào để đào tiếp
+                breakTicks = 0;
+                isBreaking = false;
                 
+                // Hiệu ứng khi đào xong 1 lần
                 player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
                 player.getWorld().spawnParticle(Particle.BLOCK,
-                    target.getLocation().add(0.5, 0.5, 0.5), 15,
+                    target.getLocation().add(0.5, 0.5, 0.5), 10,
                     target.getBlockData());
+                
+                // Gửi lại damage để tiếp tục đào
+                try {
+                    player.sendBlockDamage(target.getLocation(), 1.0f);
+                } catch (Exception ignored) {}
             }
         }
 
@@ -249,10 +269,9 @@ public class AutoMineManager {
         }
 
         private int getFortuneBonus(int fortuneLevel) {
-            Random rand = new Random();
             int bonus = 0;
             for (int i = 0; i < fortuneLevel; i++) {
-                if (rand.nextDouble() < 0.33) {
+                if (random.nextDouble() < 0.33) {
                     bonus++;
                 }
             }

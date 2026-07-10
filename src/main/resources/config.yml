@@ -10,8 +10,11 @@ automine:
   
   # Phạm vi đào tối đa
   max-range: 5
+  
+  # Tự động nhặt item vào túi (true/false)
+  auto-pickup: true
 
-# Danh sách block được phép đào
+# Danh sách block được phép đào (TẤT CẢ BLOCK)
 whitelist:
   - STONE
   - DEEPSLATE
@@ -40,11 +43,31 @@ whitelist:
   - OBSIDIAN
   - CRYING_OBSIDIAN
   - END_STONE
+  - NETHERRACK
+  - BASALT
+  - BLACKSTONE
+  - SANDSTONE
+  - RED_SANDSTONE
+  - DRIPSTONE_BLOCK
+  - SAND
+  - RED_SAND
+  - GRAVEL
+  - DIRT
+  - GRASS_BLOCK
+  - PODZOL
+  - MYCELIUM
+  - SNOW_BLOCK
+  - ICE
+  - PACKED_ICE
+  - BLUE_ICE
+  - CLAY
+  - FARMLAND
+  - SOUL_SAND
+  - SOUL_SOIL
 
 # ===== AUTO KILL =====
 autokill:
   # Thời gian hồi đòn (ticks, 20 ticks = 1 giây)
-  # Mặc định: 40 ticks = 2 giây
   attack-delay: 40
   
   # Khoảng cách tấn công (block)
@@ -54,9 +77,9 @@ autokill:
   base-damage: 4.0
   
   # Loại mob được tấn công
-  kill-monster: true   # Zombie, Skeleton, Creeper, v.v...
-  kill-animal: false   # Bò, Heo, Gà, v.v...
-  kill-mob: true       # Các loại mob khác
+  kill-monster: true
+  kill-animal: false
+  kill-mob: true
   
   # Drop items khi kill
   drop-items: true
@@ -64,14 +87,14 @@ autokill:
   # Drop XP khi kill
   drop-xp: true
   
-  # XP nhận được khi kill
+  # XP nhận được
   xp-monster: 5
   xp-animal: 1
   xp-mob: 3
 
 # ===== MESSAGES =====
 messages:
-  enabled: "&a✅ Đã bật Auto Mine! (Đào mỗi giây)"
+  enabled: "&a✅ Đã bật Auto Mine! (Đào mỗi giây, item vào thẳng túi)"
   disabled: "&c⛔ Đã tắt Auto Mine!"
   kill-enabled: "&a⚔️ Đã bật Auto Kill!"
   kill-disabled: "&c⛔ Đã tắt Auto Kill!"

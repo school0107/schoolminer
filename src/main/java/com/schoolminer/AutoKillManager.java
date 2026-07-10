@@ -7,8 +7,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.Location;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeModifier;
 import java.util.*;
 
 public class AutoKillManager {
@@ -208,25 +206,34 @@ public class AutoKillManager {
                 if (fireAspect > 0) base += 1.0;
             }
             
-            // Lấy sức mạnh từ armor
+            // Lấy sức mạnh từ armor (dùng cách khác)
             double armorAttack = 0.0;
             for (ItemStack armor : player.getInventory().getArmorContents()) {
                 if (armor != null && !armor.getType().isAir()) {
-                    try {
-                        if (armor.getAttributeModifiers(Attribute.GENERIC_ATTACK_DAMAGE) != null) {
-                            for (AttributeModifier modifier : armor.getAttributeModifiers(Attribute.GENERIC_ATTACK_DAMAGE)) {
-                                if (modifier != null) {
-                                    armorAttack += modifier.getAmount();
-                                }
-                            }
-                        }
-                    } catch (Exception ignored) {}
-                    
+                    // Kiểm tra tên armor custom
                     if (armor.hasItemMeta() && armor.getItemMeta().hasDisplayName()) {
                         String name = armor.getItemMeta().getDisplayName();
                         if (name.contains("Lục Bảo") || name.contains("Bảo vệ") || 
-                            name.contains("tấn công") || name.contains("Sức mạnh")) {
+                            name.contains("tấn công") || name.contains("Sức mạnh") ||
+                            name.contains("Attack") || name.contains("Damage")) {
                             armorAttack += 2.0;
+                        }
+                    }
+                    
+                    // Kiểm tra lore
+                    if (armor.hasItemMeta() && armor.getItemMeta().hasLore()) {
+                        List<String> lore = armor.getItemMeta().getLore();
+                        for (String line : lore) {
+                            if (line.contains("Sức tận công") || line.contains("Attack") || 
+                                line.contains("+") && line.contains("tấn công")) {
+                                try {
+                                    String[] parts = line.split("\\+");
+                                    if (parts.length > 1) {
+                                        String num = parts[1].replaceAll("[^0-9.]", "");
+                                        armorAttack += Double.parseDouble(num);
+                                    }
+                                } catch (Exception ignored) {}
+                            }
                         }
                     }
                 }

@@ -7,6 +7,7 @@ public class Schoolminer extends JavaPlugin {
     private static Schoolminer instance;
     private AutoMineManager autoMineManager;
     private AutoKillManager autoKillManager;
+    private AutoCraftManager autoCraftManager;
     private ConfigManager configManager;
 
     @Override
@@ -17,9 +18,11 @@ public class Schoolminer extends JavaPlugin {
         configManager = new ConfigManager(this);
         autoMineManager = new AutoMineManager(this);
         autoKillManager = new AutoKillManager(this);
+        autoCraftManager = new AutoCraftManager(this);
         
         getCommand("automine").setExecutor(new AutoMineCommand(this));
         getCommand("autokill").setExecutor(new AutoKillCommand(this));
+        getCommand("autocraft").setExecutor(new AutoCraftCommand(this));
         getCommand("schoolminer").setExecutor(new SchoolminerCommand(this));
         
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
@@ -29,8 +32,9 @@ public class Schoolminer extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        autoMineManager.stopAll();
-        autoKillManager.stopAll();
+        if (autoMineManager != null) autoMineManager.stopAll();
+        if (autoKillManager != null) autoKillManager.stopAll();
+        if (autoCraftManager != null) autoCraftManager.stopAll();
         getLogger().log(Level.INFO, "§c⛔ Schoolminer đã tắt!");
     }
 
@@ -44,6 +48,10 @@ public class Schoolminer extends JavaPlugin {
 
     public AutoKillManager getAutoKillManager() {
         return autoKillManager;
+    }
+
+    public AutoCraftManager getAutoCraftManager() {
+        return autoCraftManager;
     }
 
     public ConfigManager getConfigManager() {

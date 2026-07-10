@@ -8,64 +8,12 @@ commands:
   automine:
     description: Tự động đào block
     usage: /automine
-    permission: schoolminer.automine
   autokill:
     description: Tự động tấn công mob
     usage: /autokill
-    permission: schoolminer.autokill
   autocraft:
     description: Tự động chế tạo
     usage: /autocraft <type> [off]
-    permission: schoolminer.autocraft
   schoolminer:
     description: Quản lý plugin
     usage: /schoolminer reload
-    permission: schoolminer.admin
-
-permissions:
-  schoolminer.automine:
-    description: Cho phép sử dụng lệnh /automine
-    default: true
-  schoolminer.autokill:
-    description: Cho phép sử dụng lệnh /autokill
-    default: true
-  schoolminer.autocraft:
-    description: Cho phép sử dụng lệnh /autocraft
-    default: op
-  schoolminer.admin:
-    description: Quyền admin
-    default: op
-  
-  # Range permissions
-  schoolminer.range.1:
-    description: Phạm vi đào 1 block
-    default: true
-  schoolminer.range.2:
-    description: Phạm vi đào 2 block
-    default: op
-  schoolminer.range.3:
-    description: Phạm vi đào 3 block
-    default: op
-  schoolminer.range.4:
-    description: Phạm vi đào 4 block
-    default: op
-  schoolminer.range.5:
-    description: Phạm vi đào 5 block
-    default: op
-  
-  # AutoCraft Permissions
-  schoolminer.autocraft.go:
-    description: Cho phép craft gỗ
-    default: op
-  schoolminer.autocraft.da:
-    description: Cho phép craft đá
-    default: op
-  schoolminer.autocraft.kimcuong:
-    description: Cho phép craft kim cương
-    default: op
-  schoolminer.autocraft.sat:
-    description: Cho phép craft sắt
-    default: op
-  schoolminer.autocraft.vang:
-    description: Cho phép craft vàng
-    default: op

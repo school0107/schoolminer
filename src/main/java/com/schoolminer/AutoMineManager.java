@@ -38,6 +38,7 @@ public class AutoMineManager {
         
         player.sendMessage("§a✅ Đã bật Auto Mine!");
         player.sendMessage("§7Đứng yên và cầm công cụ để đào tự động.");
+        player.sendMessage("§7Block hợp lệ: §e" + config.getWhitelistCount() + " §7loại");
     }
 
     public void stopMining(Player player) {
@@ -75,19 +76,18 @@ public class AutoMineManager {
         private final int range;
         private Block currentBlock = null;
         private int breakTicks = 0;
-        private int requiredTicks = 10; // Mặc định 10 ticks
+        private int requiredTicks;
         private boolean isBreaking = false;
         private final UUID playerUUID;
-        private boolean hasNotified = false;
+        private int debugCounter = 0;
 
         public MineTask(Player player) {
             this.player = player;
             this.playerUUID = player.getUniqueId();
-            this.range = getRange(player);
+            this.range = 5; // Mặc định range 5
             this.requiredTicks = config.getMineDelay();
             
-            // Debug log
-            plugin.getLogger().info("§aAutoMine started for: " + player.getName() + " | Delay: " + requiredTicks + " ticks");
+            plugin.getLogger().info("§a[Schoolminer] AutoMine started for: " + player.getName());
         }
 
         @Override
@@ -108,49 +108,40 @@ public class AutoMineManager {
                 }
             }
 
-            // Kiểm tra công cụ
+            // KIỂM TRA CÔNG CỤ
             ItemStack tool = player.getInventory().getItemInMainHand();
             if (tool.getType().isAir()) {
-                if (!hasNotified) {
-                    player.sendMessage("§e⚠️ Hãy cầm công cụ để đào!");
-                    hasNotified = true;
-                }
                 resetBreak();
                 return;
             }
-            
-            hasNotified = false;
 
-            // Lấy block đang nhìn
+            // LẤY BLOCK ĐANG NHÌN
             Block target = player.getTargetBlockExact(range);
             if (target == null) {
                 resetBreak();
                 return;
             }
 
-            // Kiểm tra whitelist
+            // KIỂM TRA WHITELIST
             if (!config.isWhitelisted(target.getType())) {
-                if (currentBlock != null) {
-                    player.sendMessage("§e⚠️ Block này không nằm trong whitelist!");
-                }
                 resetBreak();
                 return;
             }
 
-            // Kiểm tra khoảng cách
+            // KIỂM TRA KHOẢNG CÁCH
             if (target.getLocation().distance(player.getLocation()) > range) {
                 resetBreak();
                 return;
             }
 
-            // Reset nếu block khác
+            // RESET NẾU BLOCK KHÁC
             if (currentBlock == null || !currentBlock.equals(target)) {
                 currentBlock = target;
                 breakTicks = 0;
                 isBreaking = false;
             }
 
-            // Bắt đầu đào
+            // BẮT ĐẦU ĐÀO
             if (!isBreaking) {
                 isBreaking = true;
                 try {
@@ -160,7 +151,7 @@ public class AutoMineManager {
 
             breakTicks++;
 
-            // Hiển thị tiến độ
+            // HIỂN THỊ TIẾN ĐỘ
             float progress = Math.min((float) breakTicks / requiredTicks, 1.0f);
             int stage = (int) (progress * 9);
             if (stage >= 0 && stage <= 9) {
@@ -169,17 +160,17 @@ public class AutoMineManager {
                 } catch (Exception ignored) {}
             }
 
-            // Khi đào xong
+            // ĐÀO XONG
             if (breakTicks >= requiredTicks) {
-                // Tạo sự kiện BlockBreakEvent
+                // GỌI SỰ KIỆN BLOCK BREAK
                 BlockBreakEvent breakEvent = new BlockBreakEvent(target, player);
                 Bukkit.getPluginManager().callEvent(breakEvent);
                 
                 if (!breakEvent.isCancelled()) {
-                    // Lấy drops
+                    // LẤY DROPS
                     Collection<ItemStack> drops = target.getDrops(tool);
                     
-                    // Fortune
+                    // FORTUNE
                     int fortune = tool.getEnchantmentLevel(Enchantment.FORTUNE);
                     if (fortune > 0 && isFortuneable(target.getType())) {
                         for (ItemStack drop : drops) {
@@ -188,11 +179,11 @@ public class AutoMineManager {
                         }
                     }
                     
-                    // Double drop
+                    // DOUBLE DROP
                     boolean doubleDrop = config.isDoubleDrop();
                     PlayerInventory inventory = player.getInventory();
                     
-                    // Thêm item vào túi
+                    // THÊM ITEM VÀO TÚI
                     for (ItemStack drop : drops) {
                         if (drop != null && !drop.getType().isAir()) {
                             int amount = drop.getAmount();
@@ -219,14 +210,14 @@ public class AutoMineManager {
                         player.giveExp(exp);
                     }
                     
-                    // Hiệu ứng
+                    // HIỆU ỨNG
                     player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
                     player.getWorld().spawnParticle(Particle.BLOCK,
                         target.getLocation().add(0.5, 0.5, 0.5), 10,
                         target.getBlockData());
                 }
                 
-                // Reset để đào tiếp
+                // RESET ĐỂ ĐÀO TIẾP
                 breakTicks = 0;
                 isBreaking = false;
                 
@@ -299,16 +290,6 @@ public class AutoMineManager {
             currentBlock = null;
             breakTicks = 0;
             isBreaking = false;
-        }
-
-        private int getRange(Player player) {
-            // Mặc định range 5 nếu không có permission
-            for (int i = 5; i >= 1; i--) {
-                if (player.hasPermission("schoolminer.range." + i)) {
-                    return i;
-                }
-            }
-            return 3; // Mặc định range 3
         }
     }
 }

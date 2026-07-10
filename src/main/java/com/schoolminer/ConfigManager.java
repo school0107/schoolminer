@@ -72,6 +72,8 @@ public class ConfigManager {
         // Auto Craft
         craftDelay = config.getInt("autocraft.craft-delay", 20);
         loadCrafts(config);
+        
+        plugin.getLogger().info("§a✅ Đã load " + whitelist.size() + " block vào whitelist");
     }
 
     private void loadCrafts(FileConfiguration config) {
@@ -141,6 +143,10 @@ public class ConfigManager {
             craftConfigs.put(craftId, new AutoCraftConfig(craftId, displayName, materials, result, glow));
             plugin.getLogger().info("§a✅ Đã load AutoCraft: " + craftId);
         }
+    }
+
+    public int getWhitelistCount() {
+        return whitelist.size();
     }
 
     public boolean isWhitelisted(Material material) {

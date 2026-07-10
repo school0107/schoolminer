@@ -20,34 +20,9 @@ public class AutoMineCommand implements CommandExecutor {
             return true;
         }
 
-        // Kiểm tra permission
-        if (!player.hasPermission("schoolminer.automine")) {
-            player.sendMessage("§c❌ Bạn không có quyền sử dụng lệnh này!");
-            player.sendMessage("§7Yêu cầu permission: §eschoolminer.automine");
-            return true;
-        }
-
+        // KHÔNG KIỂM TRA PERMISSION - TẤT CẢ ĐỀU DÙNG ĐƯỢC
         AutoMineManager manager = plugin.getAutoMineManager();
         
-        // Kiểm tra nếu có argument "on" hoặc "off"
-        if (args.length > 0) {
-            if (args[0].equalsIgnoreCase("on")) {
-                if (manager.isMining(player)) {
-                    player.sendMessage("§e⚠️ Auto Mine đã được bật rồi!");
-                } else {
-                    manager.startMining(player);
-                }
-                return true;
-            } else if (args[0].equalsIgnoreCase("off")) {
-                if (!manager.isMining(player)) {
-                    player.sendMessage("§e⚠️ Auto Mine đã được tắt rồi!");
-                } else {
-                    manager.stopMining(player);
-                }
-                return true;
-            }
-        }
-
         // Toggle
         if (manager.isMining(player)) {
             manager.stopMining(player);

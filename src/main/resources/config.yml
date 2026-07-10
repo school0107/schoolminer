@@ -1,41 +1,15 @@
-# ===== AUTO MINE =====
-automine:
-  delay: 20  # 20 ticks = 1 giây (đặt nhỏ để test: 5 ticks)
-  max-range: 5
-  auto-pickup: true
-  double-drop: true
-
-# ===== WHITELIST =====
-whitelist:
-  - STONE
-  - DEEPSLATE
-  - COAL_ORE
-  - IRON_ORE
-  - GOLD_ORE
-  - DIAMOND_ORE
-  - EMERALD_ORE
-  - REDSTONE_ORE
-  - LAPIS_ORE
-  - NETHER_QUARTZ_ORE
-  - NETHER_GOLD_ORE
-  - ANCIENT_DEBRIS
-  - DEEPSLATE_COAL_ORE
-  - DEEPSLATE_IRON_ORE
-  - DEEPSLATE_GOLD_ORE
-  - DEEPSLATE_DIAMOND_ORE
-  - DEEPSLATE_EMERALD_ORE
-  - DEEPSLATE_REDSTONE_ORE
-  - DEEPSLATE_LAPIS_ORE
-  - GRANITE
-  - DIORITE
-  - ANDESITE
-  - CALCITE
-  - TUFF
-  - OBSIDIAN
-  - CRYING_OBSIDIAN
-  - END_STONE
-  - NETHERRACK
-  - BASALT
-  - BLACKSTONE
-  - SANDSTONE
-  - RED_SANDSTONE
+autocraft:
+  crafts:
+    ten_craft:
+      display-name: "&aTên hiển thị"
+      glow: true
+      materials:
+        nguyen_lieu_1:
+          material: MATERIAL_NAME
+          amount: 8
+      result:
+        material: MATERIAL_NAME
+        amount: 1
+        display-name: "&e✨ Tên Sản Phẩm"
+        lore:
+          - "&7Mô tả"

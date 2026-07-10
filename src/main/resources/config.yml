@@ -1,7 +1,9 @@
 settings:
-  mine-delay: 2  # Giảm xuống 2 tick để mượt hơn
-  attack-delay: 10
+  mine-delay: 1  # 1 tick cho độ chính xác
+  attack-delay: 40  # 40 ticks = 2 giây
   max-range: 5
+  min-break-time: 1
+  max-break-time: 1200
 
 whitelist:
   - STONE
@@ -36,11 +38,12 @@ whitelist:
   - BLACKSTONE
   - OBSIDIAN
   - CRYING_OBSIDIAN
+  - END_STONE
 
 messages:
-  enabled: "&a✅ Đã bật Auto Mine! (Click giữ chuột trái tự động)"
+  enabled: "&a✅ Đã bật Auto Mine! (Không di chuyển để đào)"
   disabled: "&c⛔ Đã tắt Auto Mine!"
-  kill-enabled: "&a⚔️ Đã bật Auto Kill!"
+  kill-enabled: "&a⚔️ Đã bật Auto Kill! (2 giây/lần)"
   kill-disabled: "&c⛔ Đã tắt Auto Kill!"
   no-permission: "&c❌ Bạn không có quyền sử dụng lệnh này!"
   reloaded: "&a🔄 Đã reload config thành công!"

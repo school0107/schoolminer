@@ -1,5 +1,5 @@
 settings:
-  mine-delay: 5
+  mine-delay: 2  # Giảm xuống 2 tick để mượt hơn
   attack-delay: 10
   max-range: 5
 
@@ -23,16 +23,25 @@ whitelist:
   - DEEPSLATE_EMERALD_ORE
   - DEEPSLATE_REDSTONE_ORE
   - DEEPSLATE_LAPIS_ORE
+  - GRANITE
+  - DIORITE
+  - ANDESITE
+  - CALCITE
+  - TUFF
+  - DRIPSTONE_BLOCK
+  - SANDSTONE
+  - RED_SANDSTONE
+  - NETHERRACK
+  - BASALT
+  - BLACKSTONE
+  - OBSIDIAN
+  - CRYING_OBSIDIAN
 
 messages:
-  enabled: "&a✅ Đã bật Auto Mine!"
+  enabled: "&a✅ Đã bật Auto Mine! (Click giữ chuột trái tự động)"
   disabled: "&c⛔ Đã tắt Auto Mine!"
   kill-enabled: "&a⚔️ Đã bật Auto Kill!"
   kill-disabled: "&c⛔ Đã tắt Auto Kill!"
   no-permission: "&c❌ Bạn không có quyền sử dụng lệnh này!"
   reloaded: "&a🔄 Đã reload config thành công!"
   wrong-usage: "&c⚠️ Sai cú pháp! /schoolminer reload"
-  already-enabled: "&e⚠️ Auto Mine đã được bật!"
-  already-disabled: "&e⚠️ Auto Mine đã được tắt!"
-  kill-already-enabled: "&e⚠️ Auto Kill đã được bật!"
-  kill-already-disabled: "&e⚠️ Auto Kill đã được tắt!"

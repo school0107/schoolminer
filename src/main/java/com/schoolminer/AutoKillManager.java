@@ -10,6 +10,9 @@ import org.bukkit.Location;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.Bukkit;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.inventory.meta.ItemMeta;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -122,7 +125,6 @@ public class AutoKillManager {
             double damage = calculateDamage(player, weapon);
             
             if (target instanceof LivingEntity living) {
-                // Tạo sự kiện damage để plugin khác nhận diện
                 EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(
                     player, 
                     living, 
@@ -133,18 +135,14 @@ public class AutoKillManager {
                 Bukkit.getPluginManager().callEvent(damageEvent);
                 
                 if (!damageEvent.isCancelled()) {
-                    // CHỈ GỌI 1 LẦN DAMAGE DUY NHẤT
-                    // KHÔNG GỌI player.attack() để tránh double damage
                     living.damage(damage, player);
                     
-                    // Hiệu ứng
                     player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, 
                         Material.REDSTONE_BLOCK);
                     player.getWorld().spawnParticle(Particle.CRIT, 
                         target.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3);
                 }
                 
-                // Kiểm tra nếu mob chết
                 if (living.isDead() || living.getHealth() <= 0) {
                     if (config.isDropItems() && living instanceof Monster monster) {
                         ItemStack handItem = monster.getEquipment().getItemInMainHand();
@@ -187,27 +185,58 @@ public class AutoKillManager {
         }
 
         private double calculateDamage(Player player, ItemStack weapon) {
-            double base = config.getBaseDamage();
+            // Lấy damage cơ bản từ attribute của người chơi
+            double base = 1.0;
             
-            // Sát thương từ vũ khí
+            // Lấy attribute GENERIC_ATTACK_DAMAGE từ player
+            if (player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE) != null) {
+                base = player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).getValue();
+            }
+            
+            // Cộng thêm damage từ tay trái (offhand) nếu có
+            ItemStack offhand = player.getInventory().getItemInOffHand();
+            if (offhand != null && !offhand.getType().isAir()) {
+                if (offhand.getAttributeModifiers(Attribute.GENERIC_ATTACK_DAMAGE) != null) {
+                    for (AttributeModifier modifier : offhand.getAttributeModifiers(Attribute.GENERIC_ATTACK_DAMAGE)) {
+                        base += modifier.getAmount();
+                    }
+                }
+            }
+            
+            // Sát thương từ vũ khí trên tay
             if (weapon != null && !weapon.getType().isAir()) {
+                // Lấy attribute từ weapon
+                if (weapon.getAttributeModifiers(Attribute.GENERIC_ATTACK_DAMAGE) != null) {
+                    for (AttributeModifier modifier : weapon.getAttributeModifiers(Attribute.GENERIC_ATTACK_DAMAGE)) {
+                        base += modifier.getAmount();
+                    }
+                }
+                
+                // Base damage theo loại vũ khí (nếu attribute không có)
                 String name = weapon.getType().name();
+                double weaponBase = 0;
                 
-                if (name.contains("NETHERITE_SWORD")) base = 8.0;
-                else if (name.contains("DIAMOND_SWORD")) base = 7.0;
-                else if (name.contains("IRON_SWORD")) base = 6.0;
-                else if (name.contains("STONE_SWORD")) base = 5.0;
-                else if (name.contains("WOODEN_SWORD") || name.contains("WOOD_SWORD")) base = 4.0;
-                else if (name.contains("GOLDEN_SWORD") || name.contains("GOLD_SWORD")) base = 4.0;
-                else if (name.contains("NETHERITE_AXE")) base = 10.0;
-                else if (name.contains("DIAMOND_AXE")) base = 9.0;
-                else if (name.contains("IRON_AXE")) base = 8.0;
-                else if (name.contains("STONE_AXE")) base = 7.0;
-                else if (name.contains("WOODEN_AXE") || name.contains("WOOD_AXE")) base = 5.0;
-                else if (name.contains("GOLDEN_AXE") || name.contains("GOLD_AXE")) base = 5.0;
-                else if (name.contains("TRIDENT")) base = 9.0;
-                else if (name.contains("MACE")) base = 12.0;
+                if (name.contains("NETHERITE_SWORD")) weaponBase = 8.0;
+                else if (name.contains("DIAMOND_SWORD")) weaponBase = 7.0;
+                else if (name.contains("IRON_SWORD")) weaponBase = 6.0;
+                else if (name.contains("STONE_SWORD")) weaponBase = 5.0;
+                else if (name.contains("WOODEN_SWORD") || name.contains("WOOD_SWORD")) weaponBase = 4.0;
+                else if (name.contains("GOLDEN_SWORD") || name.contains("GOLD_SWORD")) weaponBase = 4.0;
+                else if (name.contains("NETHERITE_AXE")) weaponBase = 10.0;
+                else if (name.contains("DIAMOND_AXE")) weaponBase = 9.0;
+                else if (name.contains("IRON_AXE")) weaponBase = 8.0;
+                else if (name.contains("STONE_AXE")) weaponBase = 7.0;
+                else if (name.contains("WOODEN_AXE") || name.contains("WOOD_AXE")) weaponBase = 5.0;
+                else if (name.contains("GOLDEN_AXE") || name.contains("GOLD_AXE")) weaponBase = 5.0;
+                else if (name.contains("TRIDENT")) weaponBase = 9.0;
+                else if (name.contains("MACE")) weaponBase = 12.0;
                 
+                // Chỉ cộng weaponBase nếu nó lớn hơn base hiện tại
+                if (weaponBase > base) {
+                    base = weaponBase;
+                }
+                
+                // Enchantments
                 int sharpness = weapon.getEnchantmentLevel(Enchantment.SHARPNESS);
                 if (sharpness > 0) base += (sharpness * 1.5);
                 
@@ -221,11 +250,24 @@ public class AutoKillManager {
                 if (fireAspect > 0) base += 1.0;
             }
             
-            // Lấy sát thương từ armor
+            // Lấy tất cả attribute modifiers từ armor
             double armorAttack = 0.0;
             for (ItemStack armor : player.getInventory().getArmorContents()) {
                 if (armor == null || armor.getType().isAir()) continue;
                 
+                // Lấy attribute từ armor
+                if (armor.getAttributeModifiers(Attribute.GENERIC_ATTACK_DAMAGE) != null) {
+                    for (AttributeModifier modifier : armor.getAttributeModifiers(Attribute.GENERIC_ATTACK_DAMAGE)) {
+                        armorAttack += modifier.getAmount();
+                    }
+                }
+                
+                // Kiểm tra attribute khác
+                if (armor.getAttributeModifiers(Attribute.GENERIC_ATTACK_SPEED) != null) {
+                    // Attack speed cũng có thể ảnh hưởng đến damage trong 1 số plugin
+                }
+                
+                // Kiểm tra tên item (display name) - cho armor custom
                 if (armor.hasItemMeta() && armor.getItemMeta().hasDisplayName()) {
                     String displayName = armor.getItemMeta().getDisplayName();
                     String cleanName = ChatColor.stripColor(displayName);
@@ -256,6 +298,7 @@ public class AutoKillManager {
                     }
                 }
                 
+                // Kiểm tra lore
                 if (armor.hasItemMeta() && armor.getItemMeta().hasLore()) {
                     List<String> lore = armor.getItemMeta().getLore();
                     for (String line : lore) {
@@ -286,15 +329,21 @@ public class AutoKillManager {
             
             base += armorAttack;
             
+            // Lấy attribute từ potion effects
             if (player.hasPotionEffect(PotionEffectType.STRENGTH)) {
                 int level = player.getPotionEffect(PotionEffectType.STRENGTH).getAmplifier() + 1;
                 base *= (1 + (0.3 * level));
             }
             
+            // Lấy attribute từ beacon (nếu có)
+            // Thông qua potion effect HASTE không ảnh hưởng damage
+            
+            // Critical hit
             if (Math.random() < 0.2) {
                 base *= 1.5;
             }
             
+            // Đảm bảo damage tối thiểu
             return Math.max(base, 1.0);
         }
     }

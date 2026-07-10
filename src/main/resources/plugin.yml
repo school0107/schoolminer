@@ -1,0 +1,36 @@
+name: Schoolminer
+version: 1.0.0
+main: com.schoolminer.Schoolminer
+api-version: 1.21
+author: school0107
+description: Auto mine and auto kill plugin
+commands:
+  automine:
+    description: Tự động đào block
+    usage: /automine
+    permission: schoolminer.automine
+  autokill:
+    description: Tự động tấn công mob
+    usage: /autokill
+    permission: schoolminer.autokill
+  schoolminer:
+    description: Quản lý plugin
+    usage: /schoolminer reload
+    permission: schoolminer.admin
+permissions:
+  schoolminer.automine:
+    default: true
+  schoolminer.autokill:
+    default: true
+  schoolminer.admin:
+    default: op
+  schoolminer.range.1:
+    default: true
+  schoolminer.range.2:
+    default: op
+  schoolminer.range.3:
+    default: op
+  schoolminer.range.4:
+    default: op
+  schoolminer.range.5:
+    default: op

@@ -1,9 +1,7 @@
 package com.schoolminer;
 
 import org.bukkit.*;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Item;
+import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.enchantments.Enchantment;
@@ -11,265 +9,248 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.Location;
 import java.util.*;
 
-public class AutoMineManager {
+public class AutoKillManager {
     private final Schoolminer plugin;
-    private final Map<UUID, MineTask> tasks = new HashMap<>();
+    private final Map<UUID, KillTask> tasks = new HashMap<>();
     private final ConfigManager config;
     private final Map<UUID, Location> lastLocations = new HashMap<>();
 
-    public AutoMineManager(Schoolminer plugin) {
+    public AutoKillManager(Schoolminer plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfigManager();
     }
 
-    public void startMining(Player player) {
+    public void startKilling(Player player) {
         UUID uuid = player.getUniqueId();
         if (tasks.containsKey(uuid)) return;
         
         lastLocations.put(uuid, player.getLocation().clone());
-        MineTask task = new MineTask(player);
-        task.runTaskTimer(plugin, 0L, 1L);
+        KillTask task = new KillTask(player);
+        task.runTaskTimer(plugin, 0L, 40L);
         tasks.put(uuid, task);
         
-        player.sendMessage(config.getMessage("enabled"));
+        player.sendMessage(config.getMessage("kill-enabled"));
     }
 
-    public void stopMining(Player player) {
+    public void stopKilling(Player player) {
         UUID uuid = player.getUniqueId();
-        MineTask task = tasks.remove(uuid);
+        KillTask task = tasks.remove(uuid);
         if (task != null) {
             task.cancel();
-            Block target = player.getTargetBlockExact(5);
-            if (target != null && target.getLocation() != null) {
-                player.sendBlockDamage(target.getLocation(), 0.0f);
-            }
-            player.sendMessage(config.getMessage("disabled"));
+            player.sendMessage(config.getMessage("kill-disabled"));
         }
         lastLocations.remove(uuid);
     }
 
     public void stopAll() {
-        for (MineTask task : tasks.values()) {
+        for (KillTask task : tasks.values()) {
             task.cancel();
         }
         tasks.clear();
         lastLocations.clear();
     }
 
-    public boolean isMining(Player player) {
+    public boolean isKilling(Player player) {
         return tasks.containsKey(player.getUniqueId());
     }
 
-    private class MineTask extends BukkitRunnable {
+    private class KillTask extends BukkitRunnable {
         private final Player player;
-        private final int range;
-        private Block currentBlock = null;
-        private int breakTicks = 0;
-        private int requiredTicks = 0;
-        private boolean isBreaking = false;
+        private final int range = 2;
         private final UUID playerUUID;
 
-        public MineTask(Player player) {
+        public KillTask(Player player) {
             this.player = player;
             this.playerUUID = player.getUniqueId();
-            this.range = getRange(player);
         }
 
         @Override
         public void run() {
             if (!player.isOnline() || player.isDead()) {
-                stopMining(player);
+                stopKilling(player);
                 return;
             }
 
             Location lastLoc = lastLocations.get(playerUUID);
             if (lastLoc != null) {
                 Location currentLoc = player.getLocation();
-                if (lastLoc.distance(currentLoc) > 0.1) {
-                    player.sendMessage("§c⚠️ Bạn đã di chuyển, Auto Mine đã tắt!");
-                    stopMining(player);
+                boolean isSitting = false;
+                
+                try {
+                    if (player.hasMetadata("GSit")) {
+                        isSitting = true;
+                    }
+                } catch (Exception ignored) {}
+                
+                try {
+                    if (player.hasMetadata("CMISit")) {
+                        isSitting = true;
+                    }
+                } catch (Exception ignored) {}
+                
+                try {
+                    if (player.hasMetadata("Sit")) {
+                        isSitting = true;
+                    }
+                } catch (Exception ignored) {}
+                
+                if (!isSitting && lastLoc.distance(currentLoc) > 0.1) {
+                    player.sendMessage("§c⚠️ Bạn đã di chuyển, Auto Kill đã tắt!");
+                    stopKilling(player);
                     return;
                 }
             }
 
-            ItemStack tool = player.getInventory().getItemInMainHand();
-            if (tool.getType().isAir()) {
-                resetBreak();
-                return;
-            }
+            Entity target = player.getNearbyEntities(range, range, range).stream()
+                .filter(e -> e instanceof Monster || e instanceof Animals || e instanceof Mob)
+                .filter(e -> e.isValid() && !e.isDead())
+                .min((e1, e2) -> Double.compare(
+                    e1.getLocation().distanceSquared(player.getLocation()),
+                    e2.getLocation().distanceSquared(player.getLocation())))
+                .orElse(null);
+
+            if (target == null) return;
+
+            if (target.getLocation().distance(player.getLocation()) > range) return;
+
+            ItemStack weapon = player.getInventory().getItemInMainHand();
+            double damage = calculateDamage(player, weapon);
             
-            String toolName = tool.getType().name();
-            boolean isValidTool = toolName.contains("PICKAXE") || 
-                                  toolName.contains("AXE") || 
-                                  toolName.contains("SHOVEL") ||
-                                  toolName.contains("HOE");
-            
-            if (!isValidTool) {
-                resetBreak();
-                return;
-            }
-
-            Block target = player.getTargetBlockExact(range);
-            if (target == null) {
-                resetBreak();
-                return;
-            }
-
-            if (!config.isWhitelisted(target.getType())) {
-                resetBreak();
-                return;
-            }
-
-            if (target.getLocation().distance(player.getLocation()) > range) {
-                resetBreak();
-                return;
-            }
-
-            if (currentBlock == null || !currentBlock.equals(target)) {
-                currentBlock = target;
-                breakTicks = 0;
-                isBreaking = false;
-                requiredTicks = calculateRequiredTicks(tool, target);
-            }
-
-            if (!isBreaking) {
-                isBreaking = true;
-                player.sendBlockDamage(target.getLocation(), 1.0f);
-            }
-
-            breakTicks++;
-
-            float progress = Math.min((float) breakTicks / requiredTicks, 1.0f);
-            
-            int stage = (int) (progress * 9);
-            if (stage >= 0 && stage <= 9) {
-                player.sendBlockDamage(target.getLocation(), stage / 9.0f);
-            }
-
-            if (breakTicks >= requiredTicks) {
-                Collection<ItemStack> drops = target.getDrops(tool);
+            if (target instanceof LivingEntity living) {
+                living.damage(damage, player);
+                player.attack(target);
                 
-                target.setType(Material.AIR);
+                player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, 
+                    Material.REDSTONE_BLOCK);
+                player.getWorld().spawnParticle(Particle.CRIT, 
+                    target.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3);
                 
-                for (ItemStack drop : drops) {
-                    int fortune = tool.getEnchantmentLevel(Enchantment.FORTUNE);
-                    if (fortune > 0 && isFortuneable(target.getType())) {
-                        int bonus = getFortuneBonus(fortune);
-                        drop.setAmount(drop.getAmount() * (1 + bonus));
+                if (living.isDead() || living.getHealth() <= 0) {
+                    if (living instanceof Monster monster) {
+                        ItemStack handItem = monster.getEquipment().getItemInMainHand();
+                        if (handItem != null && !handItem.getType().isAir()) {
+                            Item item = player.getWorld().dropItem(living.getLocation(), handItem);
+                            item.setPickupDelay(0);
+                            item.setVelocity(player.getLocation().toVector()
+                                .subtract(item.getLocation().toVector())
+                                .normalize().multiply(0.5));
+                        }
+                        
+                        for (ItemStack armor : monster.getEquipment().getArmorContents()) {
+                            if (armor != null && !armor.getType().isAir()) {
+                                Item item = player.getWorld().dropItem(living.getLocation(), armor);
+                                item.setPickupDelay(0);
+                                item.setVelocity(player.getLocation().toVector()
+                                    .subtract(item.getLocation().toVector())
+                                    .normalize().multiply(0.5));
+                            }
+                        }
                     }
                     
-                    Location loc = target.getLocation().add(0.5, 0.5, 0.5);
-                    Item item = player.getWorld().dropItem(loc, drop);
-                    item.setPickupDelay(0);
-                    item.setVelocity(player.getLocation().toVector()
-                        .subtract(item.getLocation().toVector())
-                        .normalize().multiply(0.5));
+                    int xp = 0;
+                    if (living instanceof Monster) {
+                        xp = 5 + new Random().nextInt(3);
+                    } else if (living instanceof Animals) {
+                        xp = 1 + new Random().nextInt(3);
+                    } else if (living instanceof Mob) {
+                        xp = 3 + new Random().nextInt(5);
+                    }
+                    
+                    if (xp > 0) {
+                        player.giveExp(xp);
+                    }
+                    
+                    player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,
+                        living.getLocation(), 30, 0.5, 0.5, 0.5);
+                    
+                    try {
+                        if (living.hasMetadata("MythicMobs")) {
+                            // MythicMobs auto drop
+                        }
+                    } catch (Exception ignored) {}
                 }
+            }
+        }
+
+        private double calculateDamage(Player player, ItemStack weapon) {
+            double base = 1.0;
+            
+            if (weapon != null && !weapon.getType().isAir()) {
+                String name = weapon.getType().name();
                 
-                resetBreak();
+                if (name.contains("NETHERITE_SWORD")) base = 8.0;
+                else if (name.contains("DIAMOND_SWORD")) base = 7.0;
+                else if (name.contains("IRON_SWORD")) base = 6.0;
+                else if (name.contains("STONE_SWORD")) base = 5.0;
+                else if (name.contains("WOODEN_SWORD") || name.contains("WOOD_SWORD")) base = 4.0;
+                else if (name.contains("GOLDEN_SWORD") || name.contains("GOLD_SWORD")) base = 4.0;
+                else if (name.contains("NETHERITE_AXE")) base = 10.0;
+                else if (name.contains("DIAMOND_AXE")) base = 9.0;
+                else if (name.contains("IRON_AXE")) base = 8.0;
+                else if (name.contains("STONE_AXE")) base = 7.0;
+                else if (name.contains("WOODEN_AXE") || name.contains("WOOD_AXE")) base = 5.0;
+                else if (name.contains("GOLDEN_AXE") || name.contains("GOLD_AXE")) base = 5.0;
+                else if (name.contains("TRIDENT")) base = 9.0;
+                else if (name.contains("MACE")) base = 12.0;
                 
-                player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
-                player.getWorld().spawnParticle(Particle.BLOCK,
-                    target.getLocation().add(0.5, 0.5, 0.5), 15,
-                    target.getBlockData());
+                int sharpness = weapon.getEnchantmentLevel(Enchantment.SHARPNESS);
+                if (sharpness > 0) base += (sharpness * 1.5);
+                
+                int smite = weapon.getEnchantmentLevel(Enchantment.SMITE);
+                if (smite > 0) base += (smite * 2.5);
+                
+                int bane = weapon.getEnchantmentLevel(Enchantment.BANE_OF_ARTHROPODS);
+                if (bane > 0) base += (bane * 2.5);
+                
+                int fireAspect = weapon.getEnchantmentLevel(Enchantment.FIRE_ASPECT);
+                if (fireAspect > 0) base += 1.0;
             }
-        }
-
-        private int calculateRequiredTicks(ItemStack tool, Block block) {
-            float hardness = block.getType().getHardness();
-            if (hardness < 0) return 1;
             
-            String toolName = tool.getType().name();
-            float toolMultiplier = 1.0f;
-            
-            if (toolName.contains("NETHERITE_PICKAXE")) toolMultiplier = 9.0f;
-            else if (toolName.contains("DIAMOND_PICKAXE")) toolMultiplier = 8.0f;
-            else if (toolName.contains("IRON_PICKAXE")) toolMultiplier = 6.0f;
-            else if (toolName.contains("GOLDEN_PICKAXE") || toolName.contains("GOLD_PICKAXE")) toolMultiplier = 12.0f;
-            else if (toolName.contains("STONE_PICKAXE")) toolMultiplier = 4.0f;
-            else if (toolName.contains("WOODEN_PICKAXE") || toolName.contains("WOOD_PICKAXE")) toolMultiplier = 2.0f;
-            else if (toolName.contains("NETHERITE_AXE")) toolMultiplier = 8.0f;
-            else if (toolName.contains("DIAMOND_AXE")) toolMultiplier = 7.0f;
-            else if (toolName.contains("IRON_AXE")) toolMultiplier = 5.0f;
-            else if (toolName.contains("NETHERITE_SHOVEL")) toolMultiplier = 6.5f;
-            else if (toolName.contains("DIAMOND_SHOVEL")) toolMultiplier = 5.5f;
-            else if (toolName.contains("IRON_SHOVEL")) toolMultiplier = 4.0f;
-
-            float materialMultiplier = 1.0f;
-            String material = block.getType().name();
-            if (material.contains("WOOD") || material.contains("LOG") || material.contains("PLANK")) {
-                materialMultiplier = 2.0f;
-            } else if (material.contains("STONE") || material.contains("DEEPSLATE") || 
-                       material.contains("GRANITE") || material.contains("DIORITE") || 
-                       material.contains("ANDESITE") || material.contains("TUFF")) {
-                materialMultiplier = 1.5f;
-            } else if (material.contains("OBSIDIAN") || material.contains("CRYING_OBSIDIAN")) {
-                materialMultiplier = 0.5f;
-            }
-
-            float toolSpeed = toolMultiplier * materialMultiplier;
-
-            int efficiency = tool.getEnchantmentLevel(Enchantment.EFFICIENCY);
-            float efficiencyBonus = 0f;
-            if (efficiency > 0) {
-                efficiencyBonus = (float) (Math.pow(efficiency, 2) + 1);
-                efficiencyBonus = Math.min(efficiencyBonus, 2000f);
-            }
-
-            float speed = toolSpeed + efficiencyBonus;
-
-            if (player.hasPotionEffect(PotionEffectType.HASTE)) {
-                int level = player.getPotionEffect(PotionEffectType.HASTE).getAmplifier() + 1;
-                speed *= (1 + (0.2 * level));
-            }
-
-            if (player.hasPotionEffect(PotionEffectType.MINING_FATIGUE)) {
-                int level = player.getPotionEffect(PotionEffectType.MINING_FATIGUE).getAmplifier() + 1;
-                speed /= (1 + (0.3 * level));
-            }
-
-            float ticks = (hardness * 20) / speed;
-            ticks = Math.max(1, Math.min(ticks, 1200));
-            
-            return (int) Math.ceil(ticks);
-        }
-
-        private boolean isFortuneable(Material material) {
-            String name = material.name();
-            return name.contains("ORE") || name.contains("COAL") || 
-                   name.contains("DIAMOND") || name.contains("EMERALD") ||
-                   name.contains("LAPIS") || name.contains("REDSTONE") ||
-                   name.contains("QUARTZ") || name.contains("NETHER_GOLD");
-        }
-
-        private int getFortuneBonus(int fortuneLevel) {
-            Random rand = new Random();
-            int bonus = 0;
-            for (int i = 0; i < fortuneLevel; i++) {
-                if (rand.nextDouble() < 0.33) {
-                    bonus++;
+            // Lấy sức mạnh từ armor (dùng cách khác)
+            double armorAttack = 0.0;
+            for (ItemStack armor : player.getInventory().getArmorContents()) {
+                if (armor != null && !armor.getType().isAir()) {
+                    // Kiểm tra tên armor custom
+                    if (armor.hasItemMeta() && armor.getItemMeta().hasDisplayName()) {
+                        String name = armor.getItemMeta().getDisplayName();
+                        if (name.contains("Lục Bảo") || name.contains("Bảo vệ") || 
+                            name.contains("tấn công") || name.contains("Sức mạnh") ||
+                            name.contains("Attack") || name.contains("Damage")) {
+                            armorAttack += 2.0;
+                        }
+                    }
+                    
+                    // Kiểm tra lore
+                    if (armor.hasItemMeta() && armor.getItemMeta().hasLore()) {
+                        List<String> lore = armor.getItemMeta().getLore();
+                        for (String line : lore) {
+                            if (line.contains("Sức tận công") || line.contains("Attack") || 
+                                line.contains("+") && line.contains("tấn công")) {
+                                try {
+                                    String[] parts = line.split("\\+");
+                                    if (parts.length > 1) {
+                                        String num = parts[1].replaceAll("[^0-9.]", "");
+                                        armorAttack += Double.parseDouble(num);
+                                    }
+                                } catch (Exception ignored) {}
+                            }
+                        }
+                    }
                 }
             }
-            return bonus;
-        }
-
-        private void resetBreak() {
-            if (currentBlock != null && currentBlock.getLocation() != null) {
-                player.sendBlockDamage(currentBlock.getLocation(), 0.0f);
+            
+            base += armorAttack;
+            
+            if (player.hasPotionEffect(PotionEffectType.STRENGTH)) {
+                int level = player.getPotionEffect(PotionEffectType.STRENGTH).getAmplifier() + 1;
+                base *= (1 + (0.3 * level));
             }
-            currentBlock = null;
-            breakTicks = 0;
-            requiredTicks = 0;
-            isBreaking = false;
-        }
-
-        private int getRange(Player player) {
-            for (int i = config.getMaxRange(); i >= 1; i--) {
-                if (player.hasPermission("schoolminer.range." + i)) {
-                    return i;
-                }
+            
+            if (Math.random() < 0.2) {
+                base *= 1.5;
             }
-            return 1;
+            
+            return Math.max(base, 1.0);
         }
     }
 }

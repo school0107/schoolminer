@@ -82,8 +82,10 @@ public class AutoMineManager {
             target.breakNaturally(tool, true);
             
             player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
-            player.getWorld().spawnParticle(Particle.BLOCK_CRACK, 
-                target.getLocation().add(0.5, 0.5, 0.5), 10, target.getBlockData());
+            // Sửa dòng này
+            player.getWorld().spawnParticle(Particle.BLOCK, 
+                target.getLocation().add(0.5, 0.5, 0.5), 10, 
+                target.getBlockData());
         }
     }
 

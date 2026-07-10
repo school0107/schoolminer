@@ -11,7 +11,6 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.event.Event;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -124,7 +123,7 @@ public class AutoKillManager {
             double damage = calculateDamage(player, weapon);
             
             if (target instanceof LivingEntity living) {
-                // Tạo sự kiện damage giả lập như người chơi đánh
+                // Tạo sự kiện damage
                 EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(
                     player, 
                     living, 
@@ -132,11 +131,10 @@ public class AutoKillManager {
                     damage
                 );
                 
-                // Gọi sự kiện để các plugin khác nhận diện
                 Bukkit.getPluginManager().callEvent(damageEvent);
                 
                 if (!damageEvent.isCancelled()) {
-                    living.damage(damageEvent.getDamage(), player);
+                    living.damage(damageEvent.getFinalDamage(), player);
                     player.attack(target);
                     
                     player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, 
@@ -147,17 +145,15 @@ public class AutoKillManager {
                 
                 // Kiểm tra nếu mob chết
                 if (living.isDead() || living.getHealth() <= 0) {
-                    // Tạo sự kiện EntityDeathEvent để plugin khác nhận diện
-                    EntityDeathEvent deathEvent = new EntityDeathEvent(living, living.getDrops(), 0);
-                    Bukkit.getPluginManager().callEvent(deathEvent);
-                    
-                    // Drop items từ mob
+                    // Lấy drops từ mob
                     if (config.isDropItems() && living instanceof Monster monster) {
+                        // Lấy item trên tay
                         ItemStack handItem = monster.getEquipment().getItemInMainHand();
                         if (handItem != null && !handItem.getType().isAir()) {
                             player.getInventory().addItem(handItem);
                         }
                         
+                        // Lấy armor
                         for (ItemStack armor : monster.getEquipment().getArmorContents()) {
                             if (armor != null && !armor.getType().isAir()) {
                                 player.getInventory().addItem(armor);
@@ -180,6 +176,10 @@ public class AutoKillManager {
                             player.giveExp(xp);
                         }
                     }
+                    
+                    // Tạo sự kiện death để plugin khác nhận diện
+                    EntityDeathEvent deathEvent = new EntityDeathEvent(living, new ArrayList<>(), 0);
+                    Bukkit.getPluginManager().callEvent(deathEvent);
                     
                     // Hiệu ứng
                     player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,
@@ -217,7 +217,6 @@ public class AutoKillManager {
                 else if (name.contains("TRIDENT")) base = 9.0;
                 else if (name.contains("MACE")) base = 12.0;
                 
-                // Enchantments
                 int sharpness = weapon.getEnchantmentLevel(Enchantment.SHARPNESS);
                 if (sharpness > 0) base += (sharpness * 1.5);
                 
@@ -231,18 +230,17 @@ public class AutoKillManager {
                 if (fireAspect > 0) base += 1.0;
             }
             
-            // Lấy sát thương từ armor - NHẬN DIỆN TỐT HƠN
+            // Lấy sát thương từ armor
             double armorAttack = 0.0;
             for (ItemStack armor : player.getInventory().getArmorContents()) {
                 if (armor == null || armor.getType().isAir()) continue;
                 
-                // Kiểm tra tên item (display name)
+                // Kiểm tra tên item
                 if (armor.hasItemMeta() && armor.getItemMeta().hasDisplayName()) {
                     String displayName = armor.getItemMeta().getDisplayName();
-                    // Chuyển về không màu để check
                     String cleanName = ChatColor.stripColor(displayName);
                     
-                    // Tìm kiếm các từ khóa tăng sát thương
+                    // Tìm kiếm từ khóa
                     if (cleanName.toLowerCase().contains("lục bảo") ||
                         cleanName.toLowerCase().contains("bảo vệ") ||
                         cleanName.toLowerCase().contains("tấn công") ||
@@ -254,7 +252,7 @@ public class AutoKillManager {
                         armorAttack += 2.0;
                     }
                     
-                    // Tìm kiếm số trong tên (ví dụ "+2 Sức tấn công")
+                    // Tìm số trong tên
                     Pattern pattern = Pattern.compile("\\+([0-9.]+)");
                     java.util.regex.Matcher matcher = pattern.matcher(cleanName);
                     while (matcher.find()) {
@@ -276,7 +274,6 @@ public class AutoKillManager {
                     for (String line : lore) {
                         String cleanLine = ChatColor.stripColor(line);
                         
-                        // Tìm "+X Sức tấn công" hoặc "+X% Sức tấn công"
                         if (cleanLine.contains("Sức tấn công") || 
                             cleanLine.contains("Sức tận công") ||
                             cleanLine.contains("Attack") || 
@@ -289,7 +286,6 @@ public class AutoKillManager {
                                 try {
                                     double value = Double.parseDouble(matcher.group(1));
                                     if (cleanLine.contains("%")) {
-                                        // Nếu là %, tính theo base
                                         armorAttack += base * (value / 100.0);
                                     } else {
                                         armorAttack += value;

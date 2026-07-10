@@ -3,7 +3,7 @@ version: 1.0.0
 main: com.schoolminer.Schoolminer
 api-version: 1.21
 author: school0107
-description: Auto mine and auto kill plugin
+description: Auto mine and auto kill plugin with autocraft
 commands:
   automine:
     description: Tự động đào block
@@ -13,6 +13,10 @@ commands:
     description: Tự động tấn công mob
     usage: /autokill
     permission: schoolminer.autokill
+  autocraft:
+    description: Tự động chế tạo
+    usage: /autocraft <type> [off]
+    permission: schoolminer.autocraft
   schoolminer:
     description: Quản lý plugin
     usage: /schoolminer reload
@@ -22,6 +26,8 @@ permissions:
     default: true
   schoolminer.autokill:
     default: true
+  schoolminer.autocraft:
+    default: op
   schoolminer.admin:
     default: op
   schoolminer.range.1:
@@ -33,4 +39,15 @@ permissions:
   schoolminer.range.4:
     default: op
   schoolminer.range.5:
+    default: op
+  # AutoCraft Permissions
+  schoolminer.autocraft.go:
+    default: op
+  schoolminer.autocraft.da:
+    default: op
+  schoolminer.autocraft.kimcuong:
+    default: op
+  schoolminer.autocraft.sat:
+    default: op
+  schoolminer.autocraft.vang:
     default: op

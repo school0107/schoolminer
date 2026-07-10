@@ -7,7 +7,7 @@ automine:
   delay: 20
   max-range: 5
   auto-pickup: true
-  double-drop: true  # BẬT X2 ITEM
+  double-drop: true
 
 # ===== WHITELIST =====
 whitelist:
@@ -47,85 +47,90 @@ autokill:
 
 # ===== AUTO CRAFT =====
 autocraft:
-  # Craft Gỗ (Oak -> Gỗ custom)
-  go:
-    display-name: "&6Gỗ Sồi &7→ &eGỗ Cao Cấp"
-    glow: true
-    materials:
-      oak_wood:
+  # Thời gian craft mỗi lần (ticks, 20 ticks = 1 giây)
+  craft-delay: 20
+  
+  # Danh sách các công thức craft
+  crafts:
+    # Craft Gỗ (Oak -> Gỗ custom)
+    go:
+      display-name: "&6Gỗ Sồi &7→ &eGỗ Cao Cấp"
+      glow: true
+      materials:
+        oak_wood:
+          material: OAK_LOG
+          amount: 8
+      result:
         material: OAK_LOG
-        amount: 8
-    result:
-      material: OAK_LOG
-      amount: 1
-      display-name: "&e✨ Gỗ Cao Cấp"
-      lore:
-        - "&7Tự động chế tạo từ gỗ sồi"
-        - "&a✨ Hiệu ứng Glow!"
-  
-  # Craft Đá (Stone -> Đá custom)
-  da:
-    display-name: "&7Đá &7→ &fĐá Tinh Khiết"
-    glow: true
-    materials:
-      stone:
+        amount: 1
+        display-name: "&e✨ Gỗ Cao Cấp"
+        lore:
+          - "&7Tự động chế tạo từ gỗ sồi"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # Craft Đá (Stone -> Đá custom)
+    da:
+      display-name: "&7Đá &7→ &fĐá Tinh Khiết"
+      glow: true
+      materials:
+        stone:
+          material: STONE
+          amount: 8
+      result:
         material: STONE
-        amount: 8
-    result:
-      material: STONE
-      amount: 1
-      display-name: "&f💎 Đá Tinh Khiết"
-      lore:
-        - "&7Tự động chế tạo từ đá"
-        - "&a✨ Hiệu ứng Glow!"
-  
-  # Craft Kim Cương
-  kimcuong:
-    display-name: "&bKim Cương &7→ &b💎 Kim Cương Hoàn Hảo"
-    glow: true
-    materials:
-      diamond:
+        amount: 1
+        display-name: "&f💎 Đá Tinh Khiết"
+        lore:
+          - "&7Tự động chế tạo từ đá"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # Craft Kim Cương
+    kimcuong:
+      display-name: "&bKim Cương &7→ &b💎 Kim Cương Hoàn Hảo"
+      glow: true
+      materials:
+        diamond:
+          material: DIAMOND
+          amount: 4
+      result:
         material: DIAMOND
-        amount: 4
-    result:
-      material: DIAMOND
-      amount: 1
-      display-name: "&b💎 Kim Cương Hoàn Hảo"
-      lore:
-        - "&7Tự động chế tạo từ kim cương"
-        - "&a✨ Hiệu ứng Glow!"
-  
-  # Craft Sắt
-  sat:
-    display-name: "&fSắt &7→ &f🔩 Sắt Tinh Luyện"
-    glow: true
-    materials:
-      iron_ingot:
+        amount: 1
+        display-name: "&b💎 Kim Cương Hoàn Hảo"
+        lore:
+          - "&7Tự động chế tạo từ kim cương"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # Craft Sắt
+    sat:
+      display-name: "&fSắt &7→ &f🔩 Sắt Tinh Luyện"
+      glow: true
+      materials:
+        iron_ingot:
+          material: IRON_INGOT
+          amount: 8
+      result:
         material: IRON_INGOT
-        amount: 8
-    result:
-      material: IRON_INGOT
-      amount: 1
-      display-name: "&f🔩 Sắt Tinh Luyện"
-      lore:
-        - "&7Tự động chế tạo từ sắt"
-        - "&a✨ Hiệu ứng Glow!"
-  
-  # Craft Vàng
-  vang:
-    display-name: "&eVàng &7→ &e⭐ Vàng Nguyên Chất"
-    glow: true
-    materials:
-      gold_ingot:
+        amount: 1
+        display-name: "&f🔩 Sắt Tinh Luyện"
+        lore:
+          - "&7Tự động chế tạo từ sắt"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # Craft Vàng
+    vang:
+      display-name: "&eVàng &7→ &e⭐ Vàng Nguyên Chất"
+      glow: true
+      materials:
+        gold_ingot:
+          material: GOLD_INGOT
+          amount: 8
+      result:
         material: GOLD_INGOT
-        amount: 8
-    result:
-      material: GOLD_INGOT
-      amount: 1
-      display-name: "&e⭐ Vàng Nguyên Chất"
-      lore:
-        - "&7Tự động chế tạo từ vàng"
-        - "&a✨ Hiệu ứng Glow!"
+        amount: 1
+        display-name: "&e⭐ Vàng Nguyên Chất"
+        lore:
+          - "&7Tự động chế tạo từ vàng"
+          - "&a✨ Hiệu ứng Glow!"
 
 # ===== MESSAGES =====
 messages:

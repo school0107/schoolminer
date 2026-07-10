@@ -39,7 +39,8 @@ public class AutoCraftManager {
         }
         
         CraftTask task = new CraftTask(player, craftConfig);
-        task.runTaskTimer(plugin, 0L, 20L);
+        int craftDelay = config.getCraftDelay();
+        task.runTaskTimer(plugin, 0L, craftDelay);
         tasks.put(uuid, task);
         
         player.sendMessage("§a✅ Đã bật AutoCraft: " + craftConfig.getDisplayName() + "!");
@@ -78,6 +79,7 @@ public class AutoCraftManager {
     private class CraftTask extends BukkitRunnable {
         private final Player player;
         private final AutoCraftConfig craftConfig;
+        private int craftedCount = 0;
 
         public CraftTask(Player player, AutoCraftConfig craftConfig) {
             this.player = player;
@@ -93,6 +95,7 @@ public class AutoCraftManager {
 
             PlayerInventory inventory = player.getInventory();
             
+            // Kiểm tra xem có đủ nguyên liệu để craft 1 lần không
             boolean hasMaterials = true;
             Map<Integer, Integer> materialSlots = new HashMap<>();
             
@@ -101,13 +104,14 @@ public class AutoCraftManager {
                 
                 int needed = material.getAmount();
                 int found = 0;
+                int foundSlot = -1;
                 
                 for (int i = 0; i < inventory.getSize(); i++) {
                     ItemStack item = inventory.getItem(i);
                     if (item != null && item.isSimilar(material)) {
                         found += item.getAmount();
                         if (found >= needed) {
-                            materialSlots.put(i, needed);
+                            foundSlot = i;
                             break;
                         }
                     }
@@ -117,12 +121,22 @@ public class AutoCraftManager {
                     hasMaterials = false;
                     break;
                 }
+                
+                if (foundSlot != -1) {
+                    materialSlots.put(foundSlot, needed);
+                }
             }
             
             if (!hasMaterials) {
+                // Không đủ nguyên liệu, hiển thị thông báo và dừng
+                if (craftedCount > 0) {
+                    player.sendMessage("§e⚠️ Đã hết nguyên liệu! Đã craft §a" + craftedCount + " §elần!");
+                }
+                stopCraft(player);
                 return;
             }
             
+            // Xóa nguyên liệu
             for (Map.Entry<Integer, Integer> entry : materialSlots.entrySet()) {
                 int slot = entry.getKey();
                 int amount = entry.getValue();
@@ -136,6 +150,7 @@ public class AutoCraftManager {
                 }
             }
             
+            // Tạo sản phẩm
             ItemStack result = craftConfig.getResult().clone();
             
             if (craftConfig.isGlow()) {
@@ -145,13 +160,17 @@ public class AutoCraftManager {
                 result.setItemMeta(meta);
             }
             
+            // Thêm vào túi
             if (inventory.firstEmpty() != -1) {
                 inventory.addItem(result);
-                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);
+                craftedCount++;
+                
+                // Hiệu ứng
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1);
                 player.getWorld().spawnParticle(Particle.ENCHANT, 
-                    player.getLocation().add(0, 1, 0), 10, 0.3, 0.3, 0.3);
+                    player.getLocation().add(0, 1, 0), 5, 0.3, 0.3, 0.3);
             } else {
-                player.sendMessage("§c⚠️ Túi đồ đầy! Không thể craft!");
+                player.sendMessage("§c⚠️ Túi đồ đầy! Đã craft §a" + craftedCount + " §cvật phẩm!");
                 stopCraft(player);
             }
         }

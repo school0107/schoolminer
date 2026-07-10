@@ -3,11 +3,11 @@ package com.schoolminer;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.Location;
+import org.bukkit.inventory.PlayerInventory;
 import java.util.*;
 
 public class AutoMineManager {
@@ -69,13 +69,12 @@ public class AutoMineManager {
         private int requiredTicks;
         private boolean isBreaking = false;
         private final UUID playerUUID;
-        private Random random = new Random();
+        private final Random random = new Random();
 
         public MineTask(Player player) {
             this.player = player;
             this.playerUUID = player.getUniqueId();
             this.range = getRange(player);
-            // Lấy thời gian đào từ config (mặc định 20 ticks = 1 giây)
             this.requiredTicks = config.getMineDelay();
         }
 
@@ -86,6 +85,7 @@ public class AutoMineManager {
                 return;
             }
 
+            // Kiểm tra di chuyển
             Location lastLoc = lastLocations.get(playerUUID);
             if (lastLoc != null) {
                 Location currentLoc = player.getLocation();
@@ -96,19 +96,9 @@ public class AutoMineManager {
                 }
             }
 
+            // Kiểm tra tool trên tay (TẤT CẢ TOOL ĐỀU ĐƯỢC)
             ItemStack tool = player.getInventory().getItemInMainHand();
             if (tool.getType().isAir()) {
-                resetBreak();
-                return;
-            }
-            
-            String toolName = tool.getType().name();
-            boolean isValidTool = toolName.contains("PICKAXE") || 
-                                  toolName.contains("AXE") || 
-                                  toolName.contains("SHOVEL") ||
-                                  toolName.contains("HOE");
-            
-            if (!isValidTool) {
                 resetBreak();
                 return;
             }
@@ -167,15 +157,19 @@ public class AutoMineManager {
                     }
                 }
                 
-                // Drop items
+                // THÊM VÀO THẲNG TÚI ĐỒ - KHÔNG DROP RA NGOÀI
+                PlayerInventory inventory = player.getInventory();
                 for (ItemStack drop : drops) {
-                    if (random.nextDouble() < 0.8) { // 80% chance drop
-                        Location loc = target.getLocation().add(0.5, 0.5, 0.5);
-                        Item item = player.getWorld().dropItem(loc, drop);
-                        item.setPickupDelay(0);
-                        item.setVelocity(player.getLocation().toVector()
-                            .subtract(item.getLocation().toVector())
-                            .normalize().multiply(0.7));
+                    if (drop != null && !drop.getType().isAir()) {
+                        // Kiểm tra nếu còn chỗ trong túi
+                        if (inventory.firstEmpty() != -1) {
+                            inventory.addItem(drop);
+                        } else {
+                            // Nếu đầy túi thì drop ra ngoài
+                            Location loc = target.getLocation().add(0.5, 0.5, 0.5);
+                            org.bukkit.entity.Item item = player.getWorld().dropItem(loc, drop);
+                            item.setPickupDelay(0);
+                        }
                     }
                 }
                 
@@ -183,10 +177,10 @@ public class AutoMineManager {
                 breakTicks = 0;
                 isBreaking = false;
                 
-                // Hiệu ứng
+                // Hiệu ứng nhẹ
                 player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
                 player.getWorld().spawnParticle(Particle.BLOCK,
-                    target.getLocation().add(0.5, 0.5, 0.5), 10,
+                    target.getLocation().add(0.5, 0.5, 0.5), 5,
                     target.getBlockData());
                 
                 // Tiếp tục đào
@@ -201,7 +195,8 @@ public class AutoMineManager {
             return name.contains("ORE") || name.contains("COAL") || 
                    name.contains("DIAMOND") || name.contains("EMERALD") ||
                    name.contains("LAPIS") || name.contains("REDSTONE") ||
-                   name.contains("QUARTZ") || name.contains("NETHER_GOLD");
+                   name.contains("QUARTZ") || name.contains("NETHER_GOLD") ||
+                   name.contains("AMETHYST");
         }
 
         private int getFortuneBonus(int fortuneLevel) {

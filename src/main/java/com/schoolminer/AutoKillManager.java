@@ -5,6 +5,7 @@ import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.potion.PotionEffectType;
 import java.util.*;
 
 public class AutoKillManager {
@@ -109,7 +110,7 @@ public class AutoKillManager {
             base += weapon.getEnchantmentLevel(Enchantment.BANE_OF_ARTHROPODS) * 2.5;
         }
         
-        if (player.hasPotionEffect(org.bukkit.potion.PotionEffectType.STRENGTH)) {
+        if (player.hasPotionEffect(PotionEffectType.STRENGTH)) {
             base *= 1.3;
         }
         

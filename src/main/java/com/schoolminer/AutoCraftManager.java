@@ -21,14 +21,12 @@ public class AutoCraftManager {
     public void startCraft(Player player, String craftType) {
         UUID uuid = player.getUniqueId();
         
-        // Kiểm tra permission
         String permission = "schoolminer.autocraft." + craftType;
         if (!player.hasPermission(permission)) {
             player.sendMessage("§c❌ Bạn không có quyền sử dụng autocraft " + craftType + "!");
             return;
         }
         
-        // Kiểm tra config
         AutoCraftConfig craftConfig = config.getCraftConfig(craftType);
         if (craftConfig == null) {
             player.sendMessage("§c❌ Không tìm thấy cấu hình autocraft cho " + craftType + "!");
@@ -41,7 +39,7 @@ public class AutoCraftManager {
         }
         
         CraftTask task = new CraftTask(player, craftConfig);
-        task.runTaskTimer(plugin, 0L, 20L); // Mỗi giây craft 1 lần
+        task.runTaskTimer(plugin, 0L, 20L);
         tasks.put(uuid, task);
         
         player.sendMessage("§a✅ Đã bật AutoCraft: " + craftConfig.getDisplayName() + "!");
@@ -95,7 +93,6 @@ public class AutoCraftManager {
 
             PlayerInventory inventory = player.getInventory();
             
-            // Kiểm tra đủ nguyên liệu
             boolean hasMaterials = true;
             Map<Integer, Integer> materialSlots = new HashMap<>();
             
@@ -123,11 +120,9 @@ public class AutoCraftManager {
             }
             
             if (!hasMaterials) {
-                // Không đủ nguyên liệu
                 return;
             }
             
-            // Xóa nguyên liệu
             for (Map.Entry<Integer, Integer> entry : materialSlots.entrySet()) {
                 int slot = entry.getKey();
                 int amount = entry.getValue();
@@ -141,10 +136,8 @@ public class AutoCraftManager {
                 }
             }
             
-            // Tạo sản phẩm
             ItemStack result = craftConfig.getResult().clone();
             
-            // Thêm glow nếu có
             if (craftConfig.isGlow()) {
                 ItemMeta meta = result.getItemMeta();
                 meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
@@ -152,10 +145,8 @@ public class AutoCraftManager {
                 result.setItemMeta(meta);
             }
             
-            // Thêm vào túi
             if (inventory.firstEmpty() != -1) {
                 inventory.addItem(result);
-                // Hiệu ứng
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);
                 player.getWorld().spawnParticle(Particle.ENCHANT, 
                     player.getLocation().add(0, 1, 0), 10, 0.3, 0.3, 0.3);

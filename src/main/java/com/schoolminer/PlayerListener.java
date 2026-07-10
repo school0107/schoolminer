@@ -18,6 +18,7 @@ public class PlayerListener implements Listener {
         Player player = event.getPlayer();
         plugin.getAutoMineManager().stopMining(player);
         plugin.getAutoKillManager().stopKilling(player);
+        plugin.getAutoCraftManager().stopCraft(player);
     }
 
     @EventHandler
@@ -25,5 +26,6 @@ public class PlayerListener implements Listener {
         Player player = event.getPlayer();
         plugin.getAutoMineManager().stopMining(player);
         plugin.getAutoKillManager().stopKilling(player);
+        plugin.getAutoCraftManager().stopCraft(player);
     }
 }

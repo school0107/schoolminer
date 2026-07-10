@@ -3,7 +3,7 @@ version: 1.0.0
 main: com.schoolminer.Schoolminer
 api-version: 1.21
 author: school0107
-description: Auto mine and auto kill plugin with autocraft
+description: Auto mine, auto kill and autocraft plugin
 commands:
   automine:
     description: Tự động đào block

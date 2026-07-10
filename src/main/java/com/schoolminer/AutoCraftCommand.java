@@ -9,11 +9,9 @@ import java.util.List;
 
 public class AutoCraftCommand implements CommandExecutor {
     private final Schoolminer plugin;
-    private final AutoCraftManager craftManager;
 
     public AutoCraftCommand(Schoolminer plugin) {
         this.plugin = plugin;
-        this.craftManager = plugin.getAutoCraftManager();
     }
 
     @Override
@@ -28,8 +26,9 @@ public class AutoCraftCommand implements CommandExecutor {
             return true;
         }
 
+        AutoCraftManager craftManager = plugin.getAutoCraftManager();
+
         if (args.length == 0) {
-            // Hiển thị danh sách craft có sẵn
             List<String> available = craftManager.getAvailableCrafts(player);
             if (available.isEmpty()) {
                 player.sendMessage("§c❌ Bạn không có quyền sử dụng autocraft nào!");
@@ -53,7 +52,6 @@ public class AutoCraftCommand implements CommandExecutor {
             return true;
         }
 
-        // Kiểm tra xem craft có tồn tại không
         if (plugin.getConfigManager().getCraftConfig(craftType) == null) {
             player.sendMessage("§c❌ Không tìm thấy autocraft: " + craftType);
             return true;

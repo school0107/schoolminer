@@ -4,17 +4,12 @@
 
 # ===== AUTO MINE =====
 automine:
-  # Thời gian đào 1 lần (ticks, 20 ticks = 1 giây)
-  # Mặc định: 20 ticks = 1 giây
   delay: 20
-  
-  # Phạm vi đào tối đa
   max-range: 5
-  
-  # Tự động nhặt item vào túi (true/false)
   auto-pickup: true
+  double-drop: true  # BẬT X2 ITEM
 
-# Danh sách block được phép đào (TẤT CẢ BLOCK)
+# ===== WHITELIST =====
 whitelist:
   - STONE
   - DEEPSLATE
@@ -35,66 +30,106 @@ whitelist:
   - DEEPSLATE_EMERALD_ORE
   - DEEPSLATE_REDSTONE_ORE
   - DEEPSLATE_LAPIS_ORE
-  - GRANITE
-  - DIORITE
-  - ANDESITE
-  - CALCITE
-  - TUFF
-  - OBSIDIAN
-  - CRYING_OBSIDIAN
-  - END_STONE
-  - NETHERRACK
-  - BASALT
-  - BLACKSTONE
-  - SANDSTONE
-  - RED_SANDSTONE
-  - DRIPSTONE_BLOCK
-  - SAND
-  - RED_SAND
-  - GRAVEL
-  - DIRT
-  - GRASS_BLOCK
-  - PODZOL
-  - MYCELIUM
-  - SNOW_BLOCK
-  - ICE
-  - PACKED_ICE
-  - BLUE_ICE
-  - CLAY
-  - FARMLAND
-  - SOUL_SAND
-  - SOUL_SOIL
 
 # ===== AUTO KILL =====
 autokill:
-  # Thời gian hồi đòn (ticks, 20 ticks = 1 giây)
   attack-delay: 40
-  
-  # Khoảng cách tấn công (block)
   range: 3
-  
-  # Sát thương cơ bản
   base-damage: 4.0
-  
-  # Loại mob được tấn công
   kill-monster: true
   kill-animal: false
   kill-mob: true
-  
-  # Drop items khi kill
   drop-items: true
-  
-  # Drop XP khi kill
   drop-xp: true
-  
-  # XP nhận được
   xp-monster: 5
   xp-animal: 1
   xp-mob: 3
 
+# ===== AUTO CRAFT =====
+autocraft:
+  # Craft Gỗ (Oak -> Gỗ custom)
+  go:
+    display-name: "&6Gỗ Sồi &7→ &eGỗ Cao Cấp"
+    glow: true
+    materials:
+      oak_wood:
+        material: OAK_LOG
+        amount: 8
+    result:
+      material: OAK_LOG
+      amount: 1
+      display-name: "&e✨ Gỗ Cao Cấp"
+      lore:
+        - "&7Tự động chế tạo từ gỗ sồi"
+        - "&a✨ Hiệu ứng Glow!"
+  
+  # Craft Đá (Stone -> Đá custom)
+  da:
+    display-name: "&7Đá &7→ &fĐá Tinh Khiết"
+    glow: true
+    materials:
+      stone:
+        material: STONE
+        amount: 8
+    result:
+      material: STONE
+      amount: 1
+      display-name: "&f💎 Đá Tinh Khiết"
+      lore:
+        - "&7Tự động chế tạo từ đá"
+        - "&a✨ Hiệu ứng Glow!"
+  
+  # Craft Kim Cương
+  kimcuong:
+    display-name: "&bKim Cương &7→ &b💎 Kim Cương Hoàn Hảo"
+    glow: true
+    materials:
+      diamond:
+        material: DIAMOND
+        amount: 4
+    result:
+      material: DIAMOND
+      amount: 1
+      display-name: "&b💎 Kim Cương Hoàn Hảo"
+      lore:
+        - "&7Tự động chế tạo từ kim cương"
+        - "&a✨ Hiệu ứng Glow!"
+  
+  # Craft Sắt
+  sat:
+    display-name: "&fSắt &7→ &f🔩 Sắt Tinh Luyện"
+    glow: true
+    materials:
+      iron_ingot:
+        material: IRON_INGOT
+        amount: 8
+    result:
+      material: IRON_INGOT
+      amount: 1
+      display-name: "&f🔩 Sắt Tinh Luyện"
+      lore:
+        - "&7Tự động chế tạo từ sắt"
+        - "&a✨ Hiệu ứng Glow!"
+  
+  # Craft Vàng
+  vang:
+    display-name: "&eVàng &7→ &e⭐ Vàng Nguyên Chất"
+    glow: true
+    materials:
+      gold_ingot:
+        material: GOLD_INGOT
+        amount: 8
+    result:
+      material: GOLD_INGOT
+      amount: 1
+      display-name: "&e⭐ Vàng Nguyên Chất"
+      lore:
+        - "&7Tự động chế tạo từ vàng"
+        - "&a✨ Hiệu ứng Glow!"
+
 # ===== MESSAGES =====
 messages:
-  enabled: "&a✅ Đã bật Auto Mine! (Đào mỗi giây, item vào thẳng túi)"
+  enabled: "&a✅ Đã bật Auto Mine! (x2 item)"
   disabled: "&c⛔ Đã tắt Auto Mine!"
   kill-enabled: "&a⚔️ Đã bật Auto Kill!"
   kill-disabled: "&c⛔ Đã tắt Auto Kill!"

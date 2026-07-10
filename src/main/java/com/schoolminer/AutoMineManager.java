@@ -8,6 +8,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.Location;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.Bukkit;
 import java.util.*;
 
 public class AutoMineManager {
@@ -142,50 +144,64 @@ public class AutoMineManager {
             }
 
             if (breakTicks >= requiredTicks) {
-                Collection<ItemStack> drops = target.getDrops(tool);
+                // TẠO SỰ KIỆN BLOCK BREAK ĐỂ PLUGIN KHÁC NHẬN DIỆN
+                BlockBreakEvent breakEvent = new BlockBreakEvent(target, player);
+                Bukkit.getPluginManager().callEvent(breakEvent);
                 
-                int fortune = tool.getEnchantmentLevel(Enchantment.FORTUNE);
-                if (fortune > 0 && isFortuneable(target.getType())) {
+                // Kiểm tra nếu sự kiện không bị cancel
+                if (!breakEvent.isCancelled()) {
+                    // Lấy drops từ block
+                    Collection<ItemStack> drops = target.getDrops(tool);
+                    
+                    int fortune = tool.getEnchantmentLevel(Enchantment.FORTUNE);
+                    if (fortune > 0 && isFortuneable(target.getType())) {
+                        for (ItemStack drop : drops) {
+                            int bonus = getFortuneBonus(fortune);
+                            drop.setAmount(drop.getAmount() * (1 + bonus));
+                        }
+                    }
+                    
+                    // X2 ITEM
+                    boolean doubleDrop = config.isDoubleDrop();
+                    PlayerInventory inventory = player.getInventory();
+                    
                     for (ItemStack drop : drops) {
-                        int bonus = getFortuneBonus(fortune);
-                        drop.setAmount(drop.getAmount() * (1 + bonus));
-                    }
-                }
-                
-                // X2 ITEM
-                boolean doubleDrop = config.isDoubleDrop();
-                PlayerInventory inventory = player.getInventory();
-                
-                for (ItemStack drop : drops) {
-                    if (drop != null && !drop.getType().isAir()) {
-                        int amount = drop.getAmount();
-                        
-                        // X2 số lượng
-                        if (doubleDrop) {
-                            amount *= 2;
-                        }
-                        
-                        // Thêm vào túi
-                        ItemStack finalDrop = drop.clone();
-                        finalDrop.setAmount(amount);
-                        
-                        if (inventory.firstEmpty() != -1) {
-                            inventory.addItem(finalDrop);
-                        } else {
-                            Location loc = target.getLocation().add(0.5, 0.5, 0.5);
-                            org.bukkit.entity.Item item = player.getWorld().dropItem(loc, finalDrop);
-                            item.setPickupDelay(0);
+                        if (drop != null && !drop.getType().isAir()) {
+                            int amount = drop.getAmount();
+                            
+                            if (doubleDrop) {
+                                amount *= 2;
+                            }
+                            
+                            ItemStack finalDrop = drop.clone();
+                            finalDrop.setAmount(amount);
+                            
+                            if (inventory.firstEmpty() != -1) {
+                                inventory.addItem(finalDrop);
+                            } else {
+                                Location loc = target.getLocation().add(0.5, 0.5, 0.5);
+                                org.bukkit.entity.Item item = player.getWorld().dropItem(loc, finalDrop);
+                                item.setPickupDelay(0);
+                            }
                         }
                     }
+                    
+                    // EXP từ block
+                    int exp = target.getExpDrop(tool);
+                    if (exp > 0) {
+                        player.giveExp(exp);
+                    }
+                    
+                    // Hiệu ứng
+                    player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
+                    player.getWorld().spawnParticle(Particle.BLOCK,
+                        target.getLocation().add(0.5, 0.5, 0.5), 5,
+                        target.getBlockData());
                 }
                 
+                // Reset để đào tiếp
                 breakTicks = 0;
                 isBreaking = false;
-                
-                player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
-                player.getWorld().spawnParticle(Particle.BLOCK,
-                    target.getLocation().add(0.5, 0.5, 0.5), 5,
-                    target.getBlockData());
                 
                 try {
                     player.sendBlockDamage(target.getLocation(), 1.0f);

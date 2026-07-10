@@ -10,9 +10,6 @@ import org.bukkit.Location;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeModifier;
-import org.bukkit.inventory.meta.ItemMeta;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -185,14 +182,7 @@ public class AutoKillManager {
         }
 
         private double calculateDamage(Player player, ItemStack weapon) {
-            double base = config.getBaseDamage();
-            
-            // Lấy damage từ attribute của player (dùng tên string)
-            try {
-                if (player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE) != null) {
-                    base = player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).getValue();
-                }
-            } catch (Exception ignored) {}
+            double base = config.getBaseDamage(); // Lấy từ config
             
             // Sát thương từ vũ khí
             if (weapon != null && !weapon.getType().isAir()) {
@@ -227,19 +217,10 @@ public class AutoKillManager {
                 if (fireAspect > 0) base += 1.0;
             }
             
-            // Lấy sát thương từ armor
+            // Lấy sát thương từ armor (chỉ qua display name và lore)
             double armorAttack = 0.0;
             for (ItemStack armor : player.getInventory().getArmorContents()) {
                 if (armor == null || armor.getType().isAir()) continue;
-                
-                // Lấy attribute từ armor
-                try {
-                    if (armor.getAttributeModifiers(Attribute.GENERIC_ATTACK_DAMAGE) != null) {
-                        for (AttributeModifier modifier : armor.getAttributeModifiers(Attribute.GENERIC_ATTACK_DAMAGE)) {
-                            armorAttack += modifier.getAmount();
-                        }
-                    }
-                } catch (Exception ignored) {}
                 
                 // Kiểm tra tên item (display name)
                 if (armor.hasItemMeta() && armor.getItemMeta().hasDisplayName()) {
@@ -309,7 +290,7 @@ public class AutoKillManager {
                 base *= (1 + (0.3 * level));
             }
             
-            // Critical hit
+            // Critical hit (20% chance)
             if (Math.random() < 0.2) {
                 base *= 1.5;
             }

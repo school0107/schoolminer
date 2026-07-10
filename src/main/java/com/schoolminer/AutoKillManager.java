@@ -6,12 +6,16 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.Location;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import java.util.*;
 
 public class AutoKillManager {
     private final Schoolminer plugin;
     private final Map<UUID, KillTask> tasks = new HashMap<>();
     private final ConfigManager config;
+    private final Map<UUID, Location> lastLocations = new HashMap<>();
 
     public AutoKillManager(Schoolminer plugin) {
         this.plugin = plugin;
@@ -22,6 +26,7 @@ public class AutoKillManager {
         UUID uuid = player.getUniqueId();
         if (tasks.containsKey(uuid)) return;
         
+        lastLocations.put(uuid, player.getLocation().clone());
         KillTask task = new KillTask(player);
         task.runTaskTimer(plugin, 0L, 40L);
         tasks.put(uuid, task);
@@ -36,6 +41,7 @@ public class AutoKillManager {
             task.cancel();
             player.sendMessage(config.getMessage("kill-disabled"));
         }
+        lastLocations.remove(uuid);
     }
 
     public void stopAll() {
@@ -43,6 +49,7 @@ public class AutoKillManager {
             task.cancel();
         }
         tasks.clear();
+        lastLocations.clear();
     }
 
     public boolean isKilling(Player player) {
@@ -52,9 +59,11 @@ public class AutoKillManager {
     private class KillTask extends BukkitRunnable {
         private final Player player;
         private final int range = 2;
+        private final UUID playerUUID;
 
         public KillTask(Player player) {
             this.player = player;
+            this.playerUUID = player.getUniqueId();
         }
 
         @Override
@@ -62,6 +71,40 @@ public class AutoKillManager {
             if (!player.isOnline() || player.isDead()) {
                 stopKilling(player);
                 return;
+            }
+
+            // Kiểm tra di chuyển (trừ khi đang /sit)
+            Location lastLoc = lastLocations.get(playerUUID);
+            if (lastLoc != null) {
+                Location currentLoc = player.getLocation();
+                boolean isSitting = false;
+                
+                // Kiểm tra GSit
+                try {
+                    if (player.hasMetadata("GSit")) {
+                        isSitting = true;
+                    }
+                } catch (Exception ignored) {}
+                
+                // Kiểm tra CMISit
+                try {
+                    if (player.hasMetadata("CMISit")) {
+                        isSitting = true;
+                    }
+                } catch (Exception ignored) {}
+                
+                // Kiểm tra Sit
+                try {
+                    if (player.isSneaking() && !player.isFlying()) {
+                        // Kiểm tra nếu đang ngồi qua plugin khác
+                    }
+                } catch (Exception ignored) {}
+                
+                if (!isSitting && lastLoc.distance(currentLoc) > 0.1) {
+                    player.sendMessage("§c⚠️ Bạn đã di chuyển, Auto Kill đã tắt!");
+                    stopKilling(player);
+                    return;
+                }
             }
 
             Entity target = player.getNearbyEntities(range, range, range).stream()
@@ -89,9 +132,8 @@ public class AutoKillManager {
                     target.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3);
                 
                 if (living.isDead() || living.getHealth() <= 0) {
-                    // Lấy drops từ mob
+                    // Drop items
                     if (living instanceof Monster monster) {
-                        // Drop item trên tay
                         ItemStack handItem = monster.getEquipment().getItemInMainHand();
                         if (handItem != null && !handItem.getType().isAir()) {
                             Item item = player.getWorld().dropItem(living.getLocation(), handItem);
@@ -101,7 +143,6 @@ public class AutoKillManager {
                                 .normalize().multiply(0.5));
                         }
                         
-                        // Drop armor
                         for (ItemStack armor : monster.getEquipment().getArmorContents()) {
                             if (armor != null && !armor.getType().isAir()) {
                                 Item item = player.getWorld().dropItem(living.getLocation(), armor);
@@ -113,7 +154,6 @@ public class AutoKillManager {
                         }
                     }
                     
-                    // XP cho player
                     int xp = 0;
                     if (living instanceof Monster) {
                         xp = 5 + new Random().nextInt(3);
@@ -121,22 +161,18 @@ public class AutoKillManager {
                         xp = 1 + new Random().nextInt(3);
                     } else if (living instanceof Mob) {
                         xp = 3 + new Random().nextInt(5);
-                    } else if (living instanceof Player) {
-                        xp = 0;
                     }
                     
                     if (xp > 0) {
                         player.giveExp(xp);
                     }
                     
-                    // Hiệu ứng
                     player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,
                         living.getLocation(), 30, 0.5, 0.5, 0.5);
                     
-                    // MythicMobs compatibility
                     try {
                         if (living.hasMetadata("MythicMobs")) {
-                            // MythicMobs sẽ tự động xử lý drops
+                            // MythicMobs auto drop
                         }
                     } catch (Exception ignored) {}
                 }
@@ -146,6 +182,7 @@ public class AutoKillManager {
         private double calculateDamage(Player player, ItemStack weapon) {
             double base = 1.0;
             
+            // Base damage từ weapon
             if (weapon != null && !weapon.getType().isAir()) {
                 String name = weapon.getType().name();
                 
@@ -164,32 +201,51 @@ public class AutoKillManager {
                 else if (name.contains("TRIDENT")) base = 9.0;
                 else if (name.contains("MACE")) base = 12.0;
                 
+                // Enchantments
                 int sharpness = weapon.getEnchantmentLevel(Enchantment.SHARPNESS);
-                if (sharpness > 0) {
-                    base += (sharpness * 1.5);
-                }
+                if (sharpness > 0) base += (sharpness * 1.5);
                 
                 int smite = weapon.getEnchantmentLevel(Enchantment.SMITE);
-                if (smite > 0) {
-                    base += (smite * 2.5);
-                }
+                if (smite > 0) base += (smite * 2.5);
                 
                 int bane = weapon.getEnchantmentLevel(Enchantment.BANE_OF_ARTHROPODS);
-                if (bane > 0) {
-                    base += (bane * 2.5);
-                }
+                if (bane > 0) base += (bane * 2.5);
                 
                 int fireAspect = weapon.getEnchantmentLevel(Enchantment.FIRE_ASPECT);
-                if (fireAspect > 0) {
-                    base += 1.0;
+                if (fireAspect > 0) base += 1.0;
+            }
+            
+            // Lấy sức mạnh từ armor (attribute modifiers)
+            double armorAttack = 0.0;
+            for (ItemStack armor : player.getInventory().getArmorContents()) {
+                if (armor != null && !armor.getType().isAir()) {
+                    // Kiểm tra attribute modifiers trên armor
+                    for (AttributeModifier modifier : armor.getAttributeModifiers(Attribute.GENERIC_ATTACK_DAMAGE)) {
+                        if (modifier != null) {
+                            armorAttack += modifier.getAmount();
+                        }
+                    }
+                    
+                    // Kiểm tra nếu armor có tên custom (như giáp lục bảo)
+                    if (armor.hasItemMeta() && armor.getItemMeta().hasDisplayName()) {
+                        String name = armor.getItemMeta().getDisplayName();
+                        if (name.contains("Lục Bảo") || name.contains("Bảo vệ") || name.contains("tấn công")) {
+                            // Cộng thêm sức mạnh từ armor custom
+                            armorAttack += 2.0;
+                        }
+                    }
                 }
             }
             
+            base += armorAttack;
+            
+            // Strength potion
             if (player.hasPotionEffect(PotionEffectType.STRENGTH)) {
                 int level = player.getPotionEffect(PotionEffectType.STRENGTH).getAmplifier() + 1;
                 base *= (1 + (0.3 * level));
             }
             
+            // Critical hit
             if (Math.random() < 0.2) {
                 base *= 1.5;
             }

@@ -7,7 +7,13 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.Location;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.Bukkit;
+import org.bukkit.event.Event;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class AutoKillManager {
     private final Schoolminer plugin;
@@ -97,7 +103,6 @@ public class AutoKillManager {
                 }
             }
 
-            // Lọc mob theo config
             Entity target = player.getNearbyEntities(range, range, range).stream()
                 .filter(e -> {
                     if (e instanceof Monster) return config.isKillMonster();
@@ -119,33 +124,43 @@ public class AutoKillManager {
             double damage = calculateDamage(player, weapon);
             
             if (target instanceof LivingEntity living) {
-                living.damage(damage, player);
-                player.attack(target);
+                // Tạo sự kiện damage giả lập như người chơi đánh
+                EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(
+                    player, 
+                    living, 
+                    EntityDamageEvent.DamageCause.ENTITY_ATTACK, 
+                    damage
+                );
                 
-                player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, 
-                    Material.REDSTONE_BLOCK);
-                player.getWorld().spawnParticle(Particle.CRIT, 
-                    target.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3);
+                // Gọi sự kiện để các plugin khác nhận diện
+                Bukkit.getPluginManager().callEvent(damageEvent);
                 
+                if (!damageEvent.isCancelled()) {
+                    living.damage(damageEvent.getDamage(), player);
+                    player.attack(target);
+                    
+                    player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, 
+                        Material.REDSTONE_BLOCK);
+                    player.getWorld().spawnParticle(Particle.CRIT, 
+                        target.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3);
+                }
+                
+                // Kiểm tra nếu mob chết
                 if (living.isDead() || living.getHealth() <= 0) {
-                    // Drop items
+                    // Tạo sự kiện EntityDeathEvent để plugin khác nhận diện
+                    EntityDeathEvent deathEvent = new EntityDeathEvent(living, living.getDrops(), 0);
+                    Bukkit.getPluginManager().callEvent(deathEvent);
+                    
+                    // Drop items từ mob
                     if (config.isDropItems() && living instanceof Monster monster) {
                         ItemStack handItem = monster.getEquipment().getItemInMainHand();
                         if (handItem != null && !handItem.getType().isAir()) {
-                            Item item = player.getWorld().dropItem(living.getLocation(), handItem);
-                            item.setPickupDelay(0);
-                            item.setVelocity(player.getLocation().toVector()
-                                .subtract(item.getLocation().toVector())
-                                .normalize().multiply(0.5));
+                            player.getInventory().addItem(handItem);
                         }
                         
                         for (ItemStack armor : monster.getEquipment().getArmorContents()) {
                             if (armor != null && !armor.getType().isAir()) {
-                                Item item = player.getWorld().dropItem(living.getLocation(), armor);
-                                item.setPickupDelay(0);
-                                item.setVelocity(player.getLocation().toVector()
-                                    .subtract(item.getLocation().toVector())
-                                    .normalize().multiply(0.5));
+                                player.getInventory().addItem(armor);
                             }
                         }
                     }
@@ -166,12 +181,14 @@ public class AutoKillManager {
                         }
                     }
                     
+                    // Hiệu ứng
                     player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,
                         living.getLocation(), 30, 0.5, 0.5, 0.5);
                     
+                    // MythicMobs compatibility
                     try {
                         if (living.hasMetadata("MythicMobs")) {
-                            // MythicMobs auto drop
+                            // MythicMobs sẽ tự xử lý
                         }
                     } catch (Exception ignored) {}
                 }
@@ -181,6 +198,7 @@ public class AutoKillManager {
         private double calculateDamage(Player player, ItemStack weapon) {
             double base = config.getBaseDamage();
             
+            // Sát thương từ vũ khí
             if (weapon != null && !weapon.getType().isAir()) {
                 String name = weapon.getType().name();
                 
@@ -199,6 +217,7 @@ public class AutoKillManager {
                 else if (name.contains("TRIDENT")) base = 9.0;
                 else if (name.contains("MACE")) base = 12.0;
                 
+                // Enchantments
                 int sharpness = weapon.getEnchantmentLevel(Enchantment.SHARPNESS);
                 if (sharpness > 0) base += (sharpness * 1.5);
                 
@@ -212,29 +231,68 @@ public class AutoKillManager {
                 if (fireAspect > 0) base += 1.0;
             }
             
-            // Lấy sức mạnh từ armor
+            // Lấy sát thương từ armor - NHẬN DIỆN TỐT HƠN
             double armorAttack = 0.0;
             for (ItemStack armor : player.getInventory().getArmorContents()) {
-                if (armor != null && !armor.getType().isAir()) {
-                    if (armor.hasItemMeta() && armor.getItemMeta().hasDisplayName()) {
-                        String name = armor.getItemMeta().getDisplayName();
-                        if (name.contains("Lục Bảo") || name.contains("Bảo vệ") || 
-                            name.contains("tấn công") || name.contains("Sức mạnh") ||
-                            name.contains("Attack") || name.contains("Damage")) {
-                            armorAttack += 2.0;
-                        }
+                if (armor == null || armor.getType().isAir()) continue;
+                
+                // Kiểm tra tên item (display name)
+                if (armor.hasItemMeta() && armor.getItemMeta().hasDisplayName()) {
+                    String displayName = armor.getItemMeta().getDisplayName();
+                    // Chuyển về không màu để check
+                    String cleanName = ChatColor.stripColor(displayName);
+                    
+                    // Tìm kiếm các từ khóa tăng sát thương
+                    if (cleanName.toLowerCase().contains("lục bảo") ||
+                        cleanName.toLowerCase().contains("bảo vệ") ||
+                        cleanName.toLowerCase().contains("tấn công") ||
+                        cleanName.toLowerCase().contains("sức mạnh") ||
+                        cleanName.toLowerCase().contains("strength") ||
+                        cleanName.toLowerCase().contains("attack") ||
+                        cleanName.toLowerCase().contains("damage") ||
+                        cleanName.toLowerCase().contains("sát thương")) {
+                        armorAttack += 2.0;
                     }
                     
-                    if (armor.hasItemMeta() && armor.getItemMeta().hasLore()) {
-                        List<String> lore = armor.getItemMeta().getLore();
-                        for (String line : lore) {
-                            if (line.contains("Sức tận công") || line.contains("Attack") || 
-                                line.contains("+") && line.contains("tấn công")) {
+                    // Tìm kiếm số trong tên (ví dụ "+2 Sức tấn công")
+                    Pattern pattern = Pattern.compile("\\+([0-9.]+)");
+                    java.util.regex.Matcher matcher = pattern.matcher(cleanName);
+                    while (matcher.find()) {
+                        try {
+                            double value = Double.parseDouble(matcher.group(1));
+                            if (cleanName.toLowerCase().contains("tấn công") ||
+                                cleanName.toLowerCase().contains("sức mạnh") ||
+                                cleanName.toLowerCase().contains("attack") ||
+                                cleanName.toLowerCase().contains("damage")) {
+                                armorAttack += value;
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                }
+                
+                // Kiểm tra lore
+                if (armor.hasItemMeta() && armor.getItemMeta().hasLore()) {
+                    List<String> lore = armor.getItemMeta().getLore();
+                    for (String line : lore) {
+                        String cleanLine = ChatColor.stripColor(line);
+                        
+                        // Tìm "+X Sức tấn công" hoặc "+X% Sức tấn công"
+                        if (cleanLine.contains("Sức tấn công") || 
+                            cleanLine.contains("Sức tận công") ||
+                            cleanLine.contains("Attack") || 
+                            cleanLine.contains("Damage") ||
+                            cleanLine.contains("sát thương")) {
+                            
+                            Pattern pattern = Pattern.compile("\\+([0-9.]+)");
+                            java.util.regex.Matcher matcher = pattern.matcher(cleanLine);
+                            while (matcher.find()) {
                                 try {
-                                    String[] parts = line.split("\\+");
-                                    if (parts.length > 1) {
-                                        String num = parts[1].replaceAll("[^0-9.]", "");
-                                        armorAttack += Double.parseDouble(num);
+                                    double value = Double.parseDouble(matcher.group(1));
+                                    if (cleanLine.contains("%")) {
+                                        // Nếu là %, tính theo base
+                                        armorAttack += base * (value / 100.0);
+                                    } else {
+                                        armorAttack += value;
                                     }
                                 } catch (Exception ignored) {}
                             }
@@ -245,11 +303,13 @@ public class AutoKillManager {
             
             base += armorAttack;
             
+            // Strength potion
             if (player.hasPotionEffect(PotionEffectType.STRENGTH)) {
                 int level = player.getPotionEffect(PotionEffectType.STRENGTH).getAmplifier() + 1;
                 base *= (1 + (0.3 * level));
             }
             
+            // Critical hit
             if (Math.random() < 0.2) {
                 base *= 1.5;
             }

@@ -73,30 +73,26 @@ public class AutoKillManager {
                 return;
             }
 
-            // Kiểm tra di chuyển (trừ khi đang /sit)
             Location lastLoc = lastLocations.get(playerUUID);
             if (lastLoc != null) {
                 Location currentLoc = player.getLocation();
                 boolean isSitting = false;
                 
-                // Kiểm tra GSit
                 try {
                     if (player.hasMetadata("GSit")) {
                         isSitting = true;
                     }
                 } catch (Exception ignored) {}
                 
-                // Kiểm tra CMISit
                 try {
                     if (player.hasMetadata("CMISit")) {
                         isSitting = true;
                     }
                 } catch (Exception ignored) {}
                 
-                // Kiểm tra Sit
                 try {
-                    if (player.isSneaking() && !player.isFlying()) {
-                        // Kiểm tra nếu đang ngồi qua plugin khác
+                    if (player.hasMetadata("Sit")) {
+                        isSitting = true;
                     }
                 } catch (Exception ignored) {}
                 
@@ -132,7 +128,6 @@ public class AutoKillManager {
                     target.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3);
                 
                 if (living.isDead() || living.getHealth() <= 0) {
-                    // Drop items
                     if (living instanceof Monster monster) {
                         ItemStack handItem = monster.getEquipment().getItemInMainHand();
                         if (handItem != null && !handItem.getType().isAir()) {
@@ -182,7 +177,6 @@ public class AutoKillManager {
         private double calculateDamage(Player player, ItemStack weapon) {
             double base = 1.0;
             
-            // Base damage từ weapon
             if (weapon != null && !weapon.getType().isAir()) {
                 String name = weapon.getType().name();
                 
@@ -201,7 +195,6 @@ public class AutoKillManager {
                 else if (name.contains("TRIDENT")) base = 9.0;
                 else if (name.contains("MACE")) base = 12.0;
                 
-                // Enchantments
                 int sharpness = weapon.getEnchantmentLevel(Enchantment.SHARPNESS);
                 if (sharpness > 0) base += (sharpness * 1.5);
                 
@@ -215,22 +208,24 @@ public class AutoKillManager {
                 if (fireAspect > 0) base += 1.0;
             }
             
-            // Lấy sức mạnh từ armor (attribute modifiers)
+            // Lấy sức mạnh từ armor
             double armorAttack = 0.0;
             for (ItemStack armor : player.getInventory().getArmorContents()) {
                 if (armor != null && !armor.getType().isAir()) {
-                    // Kiểm tra attribute modifiers trên armor
-                    for (AttributeModifier modifier : armor.getAttributeModifiers(Attribute.GENERIC_ATTACK_DAMAGE)) {
-                        if (modifier != null) {
-                            armorAttack += modifier.getAmount();
+                    try {
+                        if (armor.getAttributeModifiers(Attribute.GENERIC_ATTACK_DAMAGE) != null) {
+                            for (AttributeModifier modifier : armor.getAttributeModifiers(Attribute.GENERIC_ATTACK_DAMAGE)) {
+                                if (modifier != null) {
+                                    armorAttack += modifier.getAmount();
+                                }
+                            }
                         }
-                    }
+                    } catch (Exception ignored) {}
                     
-                    // Kiểm tra nếu armor có tên custom (như giáp lục bảo)
                     if (armor.hasItemMeta() && armor.getItemMeta().hasDisplayName()) {
                         String name = armor.getItemMeta().getDisplayName();
-                        if (name.contains("Lục Bảo") || name.contains("Bảo vệ") || name.contains("tấn công")) {
-                            // Cộng thêm sức mạnh từ armor custom
+                        if (name.contains("Lục Bảo") || name.contains("Bảo vệ") || 
+                            name.contains("tấn công") || name.contains("Sức mạnh")) {
                             armorAttack += 2.0;
                         }
                     }
@@ -239,13 +234,11 @@ public class AutoKillManager {
             
             base += armorAttack;
             
-            // Strength potion
             if (player.hasPotionEffect(PotionEffectType.STRENGTH)) {
                 int level = player.getPotionEffect(PotionEffectType.STRENGTH).getAmplifier() + 1;
                 base *= (1 + (0.3 * level));
             }
             
-            // Critical hit
             if (Math.random() < 0.2) {
                 base *= 1.5;
             }

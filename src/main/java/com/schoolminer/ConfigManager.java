@@ -21,6 +21,7 @@ public class ConfigManager {
     private int xpMonster;
     private int xpAnimal;
     private int xpMob;
+    private boolean autoPickup;
 
     public ConfigManager(Schoolminer plugin) {
         this.plugin = plugin;
@@ -45,6 +46,7 @@ public class ConfigManager {
         
         mineDelay = config.getInt("automine.delay", 20);
         maxRange = config.getInt("automine.max-range", 5);
+        autoPickup = config.getBoolean("automine.auto-pickup", true);
         
         // Auto Kill
         attackDelay = config.getInt("autokill.attack-delay", 40);
@@ -114,6 +116,10 @@ public class ConfigManager {
 
     public int getXpMob() {
         return xpMob;
+    }
+
+    public boolean isAutoPickup() {
+        return autoPickup;
     }
 
     public String getMessage(String key) {

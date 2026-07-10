@@ -9,7 +9,6 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.Location;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.Bukkit;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -147,13 +146,11 @@ public class AutoKillManager {
                 if (living.isDead() || living.getHealth() <= 0) {
                     // Lấy drops từ mob
                     if (config.isDropItems() && living instanceof Monster monster) {
-                        // Lấy item trên tay
                         ItemStack handItem = monster.getEquipment().getItemInMainHand();
                         if (handItem != null && !handItem.getType().isAir()) {
                             player.getInventory().addItem(handItem);
                         }
                         
-                        // Lấy armor
                         for (ItemStack armor : monster.getEquipment().getArmorContents()) {
                             if (armor != null && !armor.getType().isAir()) {
                                 player.getInventory().addItem(armor);
@@ -177,9 +174,9 @@ public class AutoKillManager {
                         }
                     }
                     
-                    // Tạo sự kiện death để plugin khác nhận diện
-                    EntityDeathEvent deathEvent = new EntityDeathEvent(living, new ArrayList<>(), 0);
-                    Bukkit.getPluginManager().callEvent(deathEvent);
+                    // Gọi sự kiện death - CÁCH MỚI CHO PAPER 1.21
+                    // Không cần tạo EntityDeathEvent vì Paper 1.21 đã tự xử lý
+                    // Chỉ cần drop items và XP là đủ
                     
                     // Hiệu ứng
                     player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,

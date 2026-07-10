@@ -2,15 +2,9 @@ name: Build Schoolminer Plugin
 
 on:
   push:
-    branches: [ main, master ]
-    paths-ignore:
-      - 'README.md'
-      - '.gitignore'
-      - 'LICENSE'
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
-  release:
-    types: [ published ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -18,8 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
     
     - name: Set up JDK 21
       uses: actions/setup-java@v4
@@ -28,48 +21,11 @@ jobs:
         distribution: 'temurin'
         cache: maven
     
-    - name: Cache Maven dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.m2/repository
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-        restore-keys: |
-          ${{ runner.os }}-maven-
-    
     - name: Build with Maven
-      run: mvn -B clean package --file pom.xml
+      run: mvn clean package
     
-    - name: Get version from pom.xml
-      id: get_version
-      run: |
-        VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-    
-    - name: List target directory
-      run: ls -la target/
-    
-    - name: Upload JAR as artifact
+    - name: Upload JAR
       uses: actions/upload-artifact@v4
       with:
-        name: Schoolminer-${{ steps.get_version.outputs.version }}
+        name: Schoolminer
         path: target/Schoolminer-*.jar
-        if-no-files-found: error
-    
-    - name: Upload to Release
-      if: github.event_name == 'release'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: target/Schoolminer-${{ steps.get_version.outputs.version }}.jar
-        asset_name: Schoolminer-${{ steps.get_version.outputs.version }}.jar
-        asset_content_type: application/java-archive
-    
-    - name: Create latest tag
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      run: |
-        git config user.name github-actions
-        git config user.email github-actions@github.com
-        git tag -f latest
-        git push -f origin latest

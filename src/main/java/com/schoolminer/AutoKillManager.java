@@ -89,19 +89,31 @@ public class AutoKillManager {
                     target.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3);
                 
                 if (living.isDead() || living.getHealth() <= 0) {
-                    // Drop items
+                    // Lấy drops từ mob
                     if (living instanceof Monster monster) {
-                        ItemStack weaponDrop = monster.getEquipment().getItemInMainHand();
-                        if (weaponDrop != null && !weaponDrop.getType().isAir()) {
-                            Item item = player.getWorld().dropItem(living.getLocation(), weaponDrop);
+                        // Drop item trên tay
+                        ItemStack handItem = monster.getEquipment().getItemInMainHand();
+                        if (handItem != null && !handItem.getType().isAir()) {
+                            Item item = player.getWorld().dropItem(living.getLocation(), handItem);
                             item.setPickupDelay(0);
                             item.setVelocity(player.getLocation().toVector()
                                 .subtract(item.getLocation().toVector())
-                                .normalize().multiply(0.3));
+                                .normalize().multiply(0.5));
+                        }
+                        
+                        // Drop armor
+                        for (ItemStack armor : monster.getEquipment().getArmorContents()) {
+                            if (armor != null && !armor.getType().isAir()) {
+                                Item item = player.getWorld().dropItem(living.getLocation(), armor);
+                                item.setPickupDelay(0);
+                                item.setVelocity(player.getLocation().toVector()
+                                    .subtract(item.getLocation().toVector())
+                                    .normalize().multiply(0.5));
+                            }
                         }
                     }
                     
-                    // XP
+                    // XP cho player
                     int xp = 0;
                     if (living instanceof Monster) {
                         xp = 5 + new Random().nextInt(3);
@@ -109,19 +121,22 @@ public class AutoKillManager {
                         xp = 1 + new Random().nextInt(3);
                     } else if (living instanceof Mob) {
                         xp = 3 + new Random().nextInt(5);
+                    } else if (living instanceof Player) {
+                        xp = 0;
                     }
                     
                     if (xp > 0) {
                         player.giveExp(xp);
                     }
                     
+                    // Hiệu ứng
                     player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,
                         living.getLocation(), 30, 0.5, 0.5, 0.5);
                     
-                    // MythicMobs
+                    // MythicMobs compatibility
                     try {
                         if (living.hasMetadata("MythicMobs")) {
-                            // MythicMobs auto drop
+                            // MythicMobs sẽ tự động xử lý drops
                         }
                     } catch (Exception ignored) {}
                 }

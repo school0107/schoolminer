@@ -3,10 +3,12 @@ package com.schoolminer;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.Location;
 import org.bukkit.inventory.PlayerInventory;
 import java.util.*;
 
@@ -14,6 +16,7 @@ public class AutoMineManager {
     private final Schoolminer plugin;
     private final Map<UUID, MineTask> tasks = new HashMap<>();
     private final ConfigManager config;
+    private final Map<UUID, Location> lastLocations = new HashMap<>();
 
     public AutoMineManager(Schoolminer plugin) {
         this.plugin = plugin;
@@ -24,6 +27,7 @@ public class AutoMineManager {
         UUID uuid = player.getUniqueId();
         if (tasks.containsKey(uuid)) return;
         
+        lastLocations.put(uuid, player.getLocation().clone());
         MineTask task = new MineTask(player);
         task.runTaskTimer(plugin, 0L, 1L);
         tasks.put(uuid, task);
@@ -40,6 +44,7 @@ public class AutoMineManager {
                 player.getTargetBlockExact(5).getLocation() : null, 0.0f);
             player.sendMessage(config.getMessage("disabled"));
         }
+        lastLocations.remove(uuid);
     }
 
     public void stopAll() {
@@ -47,6 +52,7 @@ public class AutoMineManager {
             task.cancel();
         }
         tasks.clear();
+        lastLocations.clear();
     }
 
     public boolean isMining(Player player) {
@@ -60,9 +66,11 @@ public class AutoMineManager {
         private int breakTicks = 0;
         private int requiredTicks = 0;
         private boolean isBreaking = false;
+        private final UUID playerUUID;
 
         public MineTask(Player player) {
             this.player = player;
+            this.playerUUID = player.getUniqueId();
             this.range = getRange(player);
         }
 
@@ -73,6 +81,18 @@ public class AutoMineManager {
                 return;
             }
 
+            // Kiểm tra di chuyển - tự động tắt nếu player di chuyển
+            Location lastLoc = lastLocations.get(playerUUID);
+            if (lastLoc != null) {
+                Location currentLoc = player.getLocation();
+                if (lastLoc.distance(currentLoc) > 0.1) {
+                    // Player đã di chuyển, tắt automine
+                    player.sendMessage("§c⚠️ Bạn đã di chuyển, Auto Mine đã tắt!");
+                    stopMining(player);
+                    return;
+                }
+            }
+
             ItemStack tool = player.getInventory().getItemInMainHand();
             if (tool.getType().isAir()) {
                 resetBreak();
@@ -80,10 +100,13 @@ public class AutoMineManager {
             }
             
             String toolName = tool.getType().name();
-            if (!toolName.contains("PICKAXE") && 
-                !toolName.contains("AXE") && 
-                !toolName.contains("SHOVEL") &&
-                !toolName.contains("HOE")) {
+            // Kiểm tra tool đúng loại
+            boolean isValidTool = toolName.contains("PICKAXE") || 
+                                  toolName.contains("AXE") || 
+                                  toolName.contains("SHOVEL") ||
+                                  toolName.contains("HOE");
+            
+            if (!isValidTool) {
                 resetBreak();
                 return;
             }
@@ -126,9 +149,34 @@ public class AutoMineManager {
             }
 
             if (breakTicks >= requiredTicks) {
-                target.breakNaturally(tool, true);
+                // Lưu drops trước khi break
+                Collection<ItemStack> drops = target.getDrops(tool);
+                
+                // Break block (không drop items tự nhiên)
+                target.setType(Material.AIR);
+                
+                // Drop items với Fortune
+                for (ItemStack drop : drops) {
+                    // Áp dụng Fortune
+                    int fortune = tool.getEnchantmentLevel(Enchantment.FORTUNE);
+                    if (fortune > 0 && isFortuneable(target.getType())) {
+                        int amount = drop.getAmount();
+                        int bonus = getFortuneBonus(fortune);
+                        drop.setAmount(amount * (1 + bonus));
+                    }
+                    
+                    // Hút item vào người chơi
+                    Location loc = target.getLocation().add(0.5, 0.5, 0.5);
+                    Item item = player.getWorld().dropItem(loc, drop);
+                    item.setPickupDelay(0);
+                    
+                    // Tự động hút item về phía player
+                    item.setVelocity(player.getLocation().toVector().subtract(item.getLocation().toVector()).normalize().multiply(0.5));
+                }
+                
                 resetBreak();
                 
+                // Hiệu ứng
                 player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
                 player.getWorld().spawnParticle(Particle.BLOCK,
                     target.getLocation().add(0.5, 0.5, 0.5), 15,
@@ -140,21 +188,35 @@ public class AutoMineManager {
             float hardness = block.getType().getHardness();
             if (hardness < 0) return 1;
             
-            // Base speed
-            float speed = 1.0f;
-            
-            // Tool speed multiplier
+            // Tool speed multiplier theo loại cúp
             String toolName = tool.getType().name();
             float toolMultiplier = 1.0f;
             
-            if (toolName.contains("PICKAXE")) {
-                toolMultiplier = 1.0f;
-            } else if (toolName.contains("SHOVEL")) {
-                toolMultiplier = 0.5f;
-            } else if (toolName.contains("AXE")) {
-                toolMultiplier = 0.7f;
-            } else if (toolName.contains("HOE")) {
-                toolMultiplier = 0.3f;
+            // Tốc độ đào của từng loại cúp
+            if (toolName.contains("NETHERITE_PICKAXE")) {
+                toolMultiplier = 9.0f;
+            } else if (toolName.contains("DIAMOND_PICKAXE")) {
+                toolMultiplier = 8.0f;
+            } else if (toolName.contains("IRON_PICKAXE")) {
+                toolMultiplier = 6.0f;
+            } else if (toolName.contains("GOLDEN_PICKAXE") || toolName.contains("GOLD_PICKAXE")) {
+                toolMultiplier = 12.0f;
+            } else if (toolName.contains("STONE_PICKAXE")) {
+                toolMultiplier = 4.0f;
+            } else if (toolName.contains("WOODEN_PICKAXE") || toolName.contains("WOOD_PICKAXE")) {
+                toolMultiplier = 2.0f;
+            } else if (toolName.contains("NETHERITE_AXE")) {
+                toolMultiplier = 8.0f;
+            } else if (toolName.contains("DIAMOND_AXE")) {
+                toolMultiplier = 7.0f;
+            } else if (toolName.contains("IRON_AXE")) {
+                toolMultiplier = 5.0f;
+            } else if (toolName.contains("NETHERITE_SHOVEL")) {
+                toolMultiplier = 6.5f;
+            } else if (toolName.contains("DIAMOND_SHOVEL")) {
+                toolMultiplier = 5.5f;
+            } else if (toolName.contains("IRON_SHOVEL")) {
+                toolMultiplier = 4.0f;
             }
 
             // Material multiplier
@@ -180,50 +242,54 @@ public class AutoMineManager {
                 materialMultiplier = 0.5f;
             }
 
-            // Tool speed = toolMultiplier * materialMultiplier
             float toolSpeed = toolMultiplier * materialMultiplier;
 
-            // Enchant Efficiency (hỗ trợ level cao > 40)
+            // Enchant Efficiency
             int efficiency = tool.getEnchantmentLevel(Enchantment.EFFICIENCY);
             float efficiencyBonus = 0f;
             if (efficiency > 0) {
-                // Công thức chuẩn Minecraft: speed += (level^2 + 1)
-                // Hỗ trợ level lên đến 40+
                 efficiencyBonus = (float) (Math.pow(efficiency, 2) + 1);
-                // Giới hạn để không bị quá nhanh (tối thiểu 0.5 ticks)
                 efficiencyBonus = Math.min(efficiencyBonus, 2000f);
             }
 
-            // Tổng speed
-            speed = toolSpeed + efficiencyBonus;
+            float speed = toolSpeed + efficiencyBonus;
 
-            // Enchant Haste
+            // Haste
             if (player.hasPotionEffect(PotionEffectType.HASTE)) {
                 int level = player.getPotionEffect(PotionEffectType.HASTE).getAmplifier() + 1;
                 speed *= (1 + (0.2 * level));
             }
 
-            // Enchant Mining Fatigue
+            // Mining Fatigue
             if (player.hasPotionEffect(PotionEffectType.MINING_FATIGUE)) {
                 int level = player.getPotionEffect(PotionEffectType.MINING_FATIGUE).getAmplifier() + 1;
                 speed /= (1 + (0.3 * level));
             }
 
-            // Aqua Affinity
-            if (player.hasPotionEffect(PotionEffectType.WATER_BREATHING) && player.isInWater()) {
-                speed *= 1.5f;
-            }
-
-            // Công thức tính ticks
-            // Ticks = (Hardness * 20) / Speed
             float ticks = (hardness * 20) / speed;
-            
-            // Giới hạn:
-            // - Tối thiểu: 1 tick (0.05s) 
-            // - Tối đa: 1200 ticks (60s)
             ticks = Math.max(1, Math.min(ticks, 1200));
             
             return (int) Math.ceil(ticks);
+        }
+
+        private boolean isFortuneable(Material material) {
+            String name = material.name();
+            return name.contains("ORE") || name.contains("COAL") || 
+                   name.contains("DIAMOND") || name.contains("EMERALD") ||
+                   name.contains("LAPIS") || name.contains("REDSTONE") ||
+                   name.contains("QUARTZ") || name.contains("NETHER_GOLD");
+        }
+
+        private int getFortuneBonus(int fortuneLevel) {
+            // Fortune: +1, +2, +3 items
+            Random rand = new Random();
+            int bonus = 0;
+            for (int i = 0; i < fortuneLevel; i++) {
+                if (rand.nextDouble() < 0.33) {
+                    bonus++;
+                }
+            }
+            return bonus;
         }
 
         private void resetBreak() {

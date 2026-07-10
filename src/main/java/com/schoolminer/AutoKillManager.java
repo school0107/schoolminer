@@ -206,11 +206,10 @@ public class AutoKillManager {
                 if (fireAspect > 0) base += 1.0;
             }
             
-            // Lấy sức mạnh từ armor (dùng cách khác)
+            // Lấy sức mạnh từ armor
             double armorAttack = 0.0;
             for (ItemStack armor : player.getInventory().getArmorContents()) {
                 if (armor != null && !armor.getType().isAir()) {
-                    // Kiểm tra tên armor custom
                     if (armor.hasItemMeta() && armor.getItemMeta().hasDisplayName()) {
                         String name = armor.getItemMeta().getDisplayName();
                         if (name.contains("Lục Bảo") || name.contains("Bảo vệ") || 
@@ -220,7 +219,6 @@ public class AutoKillManager {
                         }
                     }
                     
-                    // Kiểm tra lore
                     if (armor.hasItemMeta() && armor.getItemMeta().hasLore()) {
                         List<String> lore = armor.getItemMeta().getLore();
                         for (String line : lore) {

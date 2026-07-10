@@ -10,6 +10,8 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.Location;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import java.util.*;
 
 public class AutoMineManager {
@@ -40,8 +42,10 @@ public class AutoMineManager {
         MineTask task = tasks.remove(uuid);
         if (task != null) {
             task.cancel();
-            player.sendBlockDamage(player.getTargetBlockExact(5) != null ? 
-                player.getTargetBlockExact(5).getLocation() : null, 0.0f);
+            Block target = player.getTargetBlockExact(5);
+            if (target != null) {
+                player.sendBlockDamage(target.getLocation(), 0.0f);
+            }
             player.sendMessage(config.getMessage("disabled"));
         }
         lastLocations.remove(uuid);
@@ -81,12 +85,11 @@ public class AutoMineManager {
                 return;
             }
 
-            // Kiểm tra di chuyển - tự động tắt nếu player di chuyển
+            // Kiểm tra di chuyển
             Location lastLoc = lastLocations.get(playerUUID);
             if (lastLoc != null) {
                 Location currentLoc = player.getLocation();
                 if (lastLoc.distance(currentLoc) > 0.1) {
-                    // Player đã di chuyển, tắt automine
                     player.sendMessage("§c⚠️ Bạn đã di chuyển, Auto Mine đã tắt!");
                     stopMining(player);
                     return;
@@ -100,7 +103,6 @@ public class AutoMineManager {
             }
             
             String toolName = tool.getType().name();
-            // Kiểm tra tool đúng loại
             boolean isValidTool = toolName.contains("PICKAXE") || 
                                   toolName.contains("AXE") || 
                                   toolName.contains("SHOVEL") ||
@@ -149,34 +151,30 @@ public class AutoMineManager {
             }
 
             if (breakTicks >= requiredTicks) {
-                // Lưu drops trước khi break
+                // Lưu drops và break block
                 Collection<ItemStack> drops = target.getDrops(tool);
                 
-                // Break block (không drop items tự nhiên)
+                // Xóa block
                 target.setType(Material.AIR);
                 
-                // Drop items với Fortune
+                // Drop items
                 for (ItemStack drop : drops) {
-                    // Áp dụng Fortune
                     int fortune = tool.getEnchantmentLevel(Enchantment.FORTUNE);
                     if (fortune > 0 && isFortuneable(target.getType())) {
-                        int amount = drop.getAmount();
                         int bonus = getFortuneBonus(fortune);
-                        drop.setAmount(amount * (1 + bonus));
+                        drop.setAmount(drop.getAmount() * (1 + bonus));
                     }
                     
-                    // Hút item vào người chơi
                     Location loc = target.getLocation().add(0.5, 0.5, 0.5);
                     Item item = player.getWorld().dropItem(loc, drop);
                     item.setPickupDelay(0);
-                    
-                    // Tự động hút item về phía player
-                    item.setVelocity(player.getLocation().toVector().subtract(item.getLocation().toVector()).normalize().multiply(0.5));
+                    item.setVelocity(player.getLocation().toVector()
+                        .subtract(item.getLocation().toVector())
+                        .normalize().multiply(0.5));
                 }
                 
                 resetBreak();
                 
-                // Hiệu ứng
                 player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
                 player.getWorld().spawnParticle(Particle.BLOCK,
                     target.getLocation().add(0.5, 0.5, 0.5), 15,
@@ -188,38 +186,22 @@ public class AutoMineManager {
             float hardness = block.getType().getHardness();
             if (hardness < 0) return 1;
             
-            // Tool speed multiplier theo loại cúp
             String toolName = tool.getType().name();
             float toolMultiplier = 1.0f;
             
-            // Tốc độ đào của từng loại cúp
-            if (toolName.contains("NETHERITE_PICKAXE")) {
-                toolMultiplier = 9.0f;
-            } else if (toolName.contains("DIAMOND_PICKAXE")) {
-                toolMultiplier = 8.0f;
-            } else if (toolName.contains("IRON_PICKAXE")) {
-                toolMultiplier = 6.0f;
-            } else if (toolName.contains("GOLDEN_PICKAXE") || toolName.contains("GOLD_PICKAXE")) {
-                toolMultiplier = 12.0f;
-            } else if (toolName.contains("STONE_PICKAXE")) {
-                toolMultiplier = 4.0f;
-            } else if (toolName.contains("WOODEN_PICKAXE") || toolName.contains("WOOD_PICKAXE")) {
-                toolMultiplier = 2.0f;
-            } else if (toolName.contains("NETHERITE_AXE")) {
-                toolMultiplier = 8.0f;
-            } else if (toolName.contains("DIAMOND_AXE")) {
-                toolMultiplier = 7.0f;
-            } else if (toolName.contains("IRON_AXE")) {
-                toolMultiplier = 5.0f;
-            } else if (toolName.contains("NETHERITE_SHOVEL")) {
-                toolMultiplier = 6.5f;
-            } else if (toolName.contains("DIAMOND_SHOVEL")) {
-                toolMultiplier = 5.5f;
-            } else if (toolName.contains("IRON_SHOVEL")) {
-                toolMultiplier = 4.0f;
-            }
+            if (toolName.contains("NETHERITE_PICKAXE")) toolMultiplier = 9.0f;
+            else if (toolName.contains("DIAMOND_PICKAXE")) toolMultiplier = 8.0f;
+            else if (toolName.contains("IRON_PICKAXE")) toolMultiplier = 6.0f;
+            else if (toolName.contains("GOLDEN_PICKAXE") || toolName.contains("GOLD_PICKAXE")) toolMultiplier = 12.0f;
+            else if (toolName.contains("STONE_PICKAXE")) toolMultiplier = 4.0f;
+            else if (toolName.contains("WOODEN_PICKAXE") || toolName.contains("WOOD_PICKAXE")) toolMultiplier = 2.0f;
+            else if (toolName.contains("NETHERITE_AXE")) toolMultiplier = 8.0f;
+            else if (toolName.contains("DIAMOND_AXE")) toolMultiplier = 7.0f;
+            else if (toolName.contains("IRON_AXE")) toolMultiplier = 5.0f;
+            else if (toolName.contains("NETHERITE_SHOVEL")) toolMultiplier = 6.5f;
+            else if (toolName.contains("DIAMOND_SHOVEL")) toolMultiplier = 5.5f;
+            else if (toolName.contains("IRON_SHOVEL")) toolMultiplier = 4.0f;
 
-            // Material multiplier
             float materialMultiplier = 1.0f;
             String material = block.getType().name();
             if (material.contains("WOOD") || material.contains("LOG") || material.contains("PLANK")) {
@@ -228,23 +210,12 @@ public class AutoMineManager {
                        material.contains("GRANITE") || material.contains("DIORITE") || 
                        material.contains("ANDESITE") || material.contains("TUFF")) {
                 materialMultiplier = 1.5f;
-            } else if (material.contains("IRON") || material.contains("GOLD") || 
-                       material.contains("DIAMOND") || material.contains("EMERALD") ||
-                       material.contains("REDSTONE") || material.contains("LAPIS") ||
-                       material.contains("COAL")) {
-                materialMultiplier = 1.0f;
-            } else if (material.contains("NETHER") || material.contains("QUARTZ")) {
-                materialMultiplier = 1.0f;
             } else if (material.contains("OBSIDIAN") || material.contains("CRYING_OBSIDIAN")) {
-                materialMultiplier = 0.5f;
-            } else if (material.contains("SAND") || material.contains("GRAVEL") || 
-                       material.contains("DIRT") || material.contains("GRASS")) {
                 materialMultiplier = 0.5f;
             }
 
             float toolSpeed = toolMultiplier * materialMultiplier;
 
-            // Enchant Efficiency
             int efficiency = tool.getEnchantmentLevel(Enchantment.EFFICIENCY);
             float efficiencyBonus = 0f;
             if (efficiency > 0) {
@@ -254,13 +225,11 @@ public class AutoMineManager {
 
             float speed = toolSpeed + efficiencyBonus;
 
-            // Haste
             if (player.hasPotionEffect(PotionEffectType.HASTE)) {
                 int level = player.getPotionEffect(PotionEffectType.HASTE).getAmplifier() + 1;
                 speed *= (1 + (0.2 * level));
             }
 
-            // Mining Fatigue
             if (player.hasPotionEffect(PotionEffectType.MINING_FATIGUE)) {
                 int level = player.getPotionEffect(PotionEffectType.MINING_FATIGUE).getAmplifier() + 1;
                 speed /= (1 + (0.3 * level));
@@ -281,7 +250,6 @@ public class AutoMineManager {
         }
 
         private int getFortuneBonus(int fortuneLevel) {
-            // Fortune: +1, +2, +3 items
             Random rand = new Random();
             int bonus = 0;
             for (int i = 0; i < fortuneLevel; i++) {

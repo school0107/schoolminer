@@ -26,14 +26,18 @@ public class AutoMineManager {
 
     public void startMining(Player player) {
         UUID uuid = player.getUniqueId();
-        if (tasks.containsKey(uuid)) return;
+        if (tasks.containsKey(uuid)) {
+            player.sendMessage("§e⚠️ Auto Mine đã được bật rồi!");
+            return;
+        }
         
         lastLocations.put(uuid, player.getLocation().clone());
         MineTask task = new MineTask(player);
         task.runTaskTimer(plugin, 0L, 1L);
         tasks.put(uuid, task);
         
-        player.sendMessage(config.getMessage("enabled"));
+        player.sendMessage("§a✅ Đã bật Auto Mine!");
+        player.sendMessage("§7Đứng yên và cầm công cụ để đào tự động.");
     }
 
     public void stopMining(Player player) {
@@ -47,7 +51,9 @@ public class AutoMineManager {
                     player.sendBlockDamage(target.getLocation(), 0.0f);
                 }
             } catch (Exception ignored) {}
-            player.sendMessage(config.getMessage("disabled"));
+            player.sendMessage("§c⛔ Đã tắt Auto Mine!");
+        } else {
+            player.sendMessage("§e⚠️ Bạn chưa bật Auto Mine!");
         }
         lastLocations.remove(uuid);
     }
@@ -69,15 +75,19 @@ public class AutoMineManager {
         private final int range;
         private Block currentBlock = null;
         private int breakTicks = 0;
-        private int requiredTicks;
+        private int requiredTicks = 10; // Mặc định 10 ticks
         private boolean isBreaking = false;
         private final UUID playerUUID;
+        private boolean hasNotified = false;
 
         public MineTask(Player player) {
             this.player = player;
             this.playerUUID = player.getUniqueId();
             this.range = getRange(player);
             this.requiredTicks = config.getMineDelay();
+            
+            // Debug log
+            plugin.getLogger().info("§aAutoMine started for: " + player.getName() + " | Delay: " + requiredTicks + " ticks");
         }
 
         @Override
@@ -87,6 +97,7 @@ public class AutoMineManager {
                 return;
             }
 
+            // Kiểm tra di chuyển
             Location lastLoc = lastLocations.get(playerUUID);
             if (lastLoc != null) {
                 Location currentLoc = player.getLocation();
@@ -97,34 +108,49 @@ public class AutoMineManager {
                 }
             }
 
+            // Kiểm tra công cụ
             ItemStack tool = player.getInventory().getItemInMainHand();
             if (tool.getType().isAir()) {
+                if (!hasNotified) {
+                    player.sendMessage("§e⚠️ Hãy cầm công cụ để đào!");
+                    hasNotified = true;
+                }
                 resetBreak();
                 return;
             }
+            
+            hasNotified = false;
 
+            // Lấy block đang nhìn
             Block target = player.getTargetBlockExact(range);
             if (target == null) {
                 resetBreak();
                 return;
             }
 
+            // Kiểm tra whitelist
             if (!config.isWhitelisted(target.getType())) {
+                if (currentBlock != null) {
+                    player.sendMessage("§e⚠️ Block này không nằm trong whitelist!");
+                }
                 resetBreak();
                 return;
             }
 
+            // Kiểm tra khoảng cách
             if (target.getLocation().distance(player.getLocation()) > range) {
                 resetBreak();
                 return;
             }
 
+            // Reset nếu block khác
             if (currentBlock == null || !currentBlock.equals(target)) {
                 currentBlock = target;
                 breakTicks = 0;
                 isBreaking = false;
             }
 
+            // Bắt đầu đào
             if (!isBreaking) {
                 isBreaking = true;
                 try {
@@ -134,8 +160,8 @@ public class AutoMineManager {
 
             breakTicks++;
 
+            // Hiển thị tiến độ
             float progress = Math.min((float) breakTicks / requiredTicks, 1.0f);
-            
             int stage = (int) (progress * 9);
             if (stage >= 0 && stage <= 9) {
                 try {
@@ -143,15 +169,17 @@ public class AutoMineManager {
                 } catch (Exception ignored) {}
             }
 
+            // Khi đào xong
             if (breakTicks >= requiredTicks) {
-                // Tạo sự kiện BlockBreakEvent để plugin khác nhận diện
+                // Tạo sự kiện BlockBreakEvent
                 BlockBreakEvent breakEvent = new BlockBreakEvent(target, player);
                 Bukkit.getPluginManager().callEvent(breakEvent);
                 
                 if (!breakEvent.isCancelled()) {
-                    // Lấy drops từ block
+                    // Lấy drops
                     Collection<ItemStack> drops = target.getDrops(tool);
                     
+                    // Fortune
                     int fortune = tool.getEnchantmentLevel(Enchantment.FORTUNE);
                     if (fortune > 0 && isFortuneable(target.getType())) {
                         for (ItemStack drop : drops) {
@@ -160,14 +188,14 @@ public class AutoMineManager {
                         }
                     }
                     
-                    // X2 ITEM
+                    // Double drop
                     boolean doubleDrop = config.isDoubleDrop();
                     PlayerInventory inventory = player.getInventory();
                     
+                    // Thêm item vào túi
                     for (ItemStack drop : drops) {
                         if (drop != null && !drop.getType().isAir()) {
                             int amount = drop.getAmount();
-                            
                             if (doubleDrop) {
                                 amount *= 2;
                             }
@@ -185,7 +213,7 @@ public class AutoMineManager {
                         }
                     }
                     
-                    // EXP từ block - CÁCH MỚI CHO PAPER 1.21
+                    // EXP
                     int exp = getBlockExp(target, tool);
                     if (exp > 0) {
                         player.giveExp(exp);
@@ -194,7 +222,7 @@ public class AutoMineManager {
                     // Hiệu ứng
                     player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
                     player.getWorld().spawnParticle(Particle.BLOCK,
-                        target.getLocation().add(0.5, 0.5, 0.5), 5,
+                        target.getLocation().add(0.5, 0.5, 0.5), 10,
                         target.getBlockData());
                 }
                 
@@ -212,7 +240,6 @@ public class AutoMineManager {
             Material type = block.getType();
             String name = type.name();
             
-            // Ore EXP
             if (name.contains("COAL_ORE") || name.contains("DEEPSLATE_COAL_ORE")) {
                 return 0 + new Random().nextInt(2);
             }
@@ -239,13 +266,6 @@ public class AutoMineManager {
             }
             if (name.contains("ANCIENT_DEBRIS")) {
                 return 4 + new Random().nextInt(5);
-            }
-            
-            // Đá thường
-            if (name.contains("STONE") || name.contains("DEEPSLATE") || 
-                name.contains("GRANITE") || name.contains("DIORITE") || 
-                name.contains("ANDESITE") || name.contains("TUFF")) {
-                return 0;
             }
             
             return 0;
@@ -282,12 +302,13 @@ public class AutoMineManager {
         }
 
         private int getRange(Player player) {
-            for (int i = config.getMaxRange(); i >= 1; i--) {
+            // Mặc định range 5 nếu không có permission
+            for (int i = 5; i >= 1; i--) {
                 if (player.hasPermission("schoolminer.range." + i)) {
                     return i;
                 }
             }
-            return 1;
+            return 3; // Mặc định range 3
         }
     }
 }

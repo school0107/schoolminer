@@ -95,7 +95,6 @@ public class AutoCraftManager {
 
             PlayerInventory inventory = player.getInventory();
             
-            // Kiểm tra xem có đủ nguyên liệu để craft 1 lần không
             boolean hasMaterials = true;
             Map<Integer, Integer> materialSlots = new HashMap<>();
             
@@ -128,7 +127,6 @@ public class AutoCraftManager {
             }
             
             if (!hasMaterials) {
-                // Không đủ nguyên liệu, hiển thị thông báo và dừng
                 if (craftedCount > 0) {
                     player.sendMessage("§e⚠️ Đã hết nguyên liệu! Đã craft §a" + craftedCount + " §elần!");
                 }
@@ -136,7 +134,6 @@ public class AutoCraftManager {
                 return;
             }
             
-            // Xóa nguyên liệu
             for (Map.Entry<Integer, Integer> entry : materialSlots.entrySet()) {
                 int slot = entry.getKey();
                 int amount = entry.getValue();
@@ -150,7 +147,6 @@ public class AutoCraftManager {
                 }
             }
             
-            // Tạo sản phẩm
             ItemStack result = craftConfig.getResult().clone();
             
             if (craftConfig.isGlow()) {
@@ -160,12 +156,10 @@ public class AutoCraftManager {
                 result.setItemMeta(meta);
             }
             
-            // Thêm vào túi
             if (inventory.firstEmpty() != -1) {
                 inventory.addItem(result);
                 craftedCount++;
                 
-                // Hiệu ứng
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1);
                 player.getWorld().spawnParticle(Particle.ENCHANT, 
                     player.getLocation().add(0, 1, 0), 5, 0.3, 0.3, 0.3);

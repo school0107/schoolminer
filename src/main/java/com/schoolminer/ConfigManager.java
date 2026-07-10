@@ -26,6 +26,7 @@ public class ConfigManager {
     private int xpMob;
     private boolean autoPickup;
     private boolean doubleDrop;
+    private int craftDelay;
     private Map<String, AutoCraftConfig> craftConfigs;
 
     public ConfigManager(Schoolminer plugin) {
@@ -69,12 +70,13 @@ public class ConfigManager {
         xpMob = config.getInt("autokill.xp-mob", 3);
         
         // Auto Craft
+        craftDelay = config.getInt("autocraft.craft-delay", 20);
         loadCrafts(config);
     }
 
     private void loadCrafts(FileConfiguration config) {
         craftConfigs.clear();
-        ConfigurationSection crafts = config.getConfigurationSection("autocraft");
+        ConfigurationSection crafts = config.getConfigurationSection("autocraft.crafts");
         if (crafts == null) return;
         
         for (String craftId : crafts.getKeys(false)) {
@@ -84,7 +86,6 @@ public class ConfigManager {
             String displayName = craft.getString("display-name", craftId);
             boolean glow = craft.getBoolean("glow", false);
             
-            // Đọc nguyên liệu
             List<ItemStack> materials = new ArrayList<>();
             ConfigurationSection materialsSection = craft.getConfigurationSection("materials");
             if (materialsSection != null) {
@@ -101,7 +102,6 @@ public class ConfigManager {
                 }
             }
             
-            // Đọc sản phẩm
             ItemStack result = null;
             ConfigurationSection resultSection = craft.getConfigurationSection("result");
             if (resultSection != null) {
@@ -114,7 +114,6 @@ public class ConfigManager {
                     Material mat = Material.valueOf(matName.toUpperCase());
                     result = new ItemStack(mat, amount);
                     
-                    // Tùy chỉnh tên và lore
                     if (displayNameResult != null || !lore.isEmpty()) {
                         ItemMeta meta = result.getItemMeta();
                         if (displayNameResult != null) {
@@ -206,6 +205,10 @@ public class ConfigManager {
 
     public boolean isDoubleDrop() {
         return doubleDrop;
+    }
+
+    public int getCraftDelay() {
+        return craftDelay;
     }
 
     public AutoCraftConfig getCraftConfig(String id) {

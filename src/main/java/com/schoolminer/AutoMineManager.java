@@ -15,6 +15,7 @@ public class AutoMineManager {
     private final Map<UUID, MineTask> tasks = new HashMap<>();
     private final ConfigManager config;
     private final Map<UUID, Location> lastLocations = new HashMap<>();
+    private final Random random = new Random();
 
     public AutoMineManager(Schoolminer plugin) {
         this.plugin = plugin;
@@ -69,7 +70,6 @@ public class AutoMineManager {
         private int requiredTicks;
         private boolean isBreaking = false;
         private final UUID playerUUID;
-        private final Random random = new Random();
 
         public MineTask(Player player) {
             this.player = player;
@@ -85,7 +85,6 @@ public class AutoMineManager {
                 return;
             }
 
-            // Kiểm tra di chuyển
             Location lastLoc = lastLocations.get(playerUUID);
             if (lastLoc != null) {
                 Location currentLoc = player.getLocation();
@@ -96,7 +95,6 @@ public class AutoMineManager {
                 }
             }
 
-            // Kiểm tra tool trên tay (TẤT CẢ TOOL ĐỀU ĐƯỢC)
             ItemStack tool = player.getInventory().getItemInMainHand();
             if (tool.getType().isAir()) {
                 resetBreak();
@@ -143,12 +141,9 @@ public class AutoMineManager {
                 } catch (Exception ignored) {}
             }
 
-            // Khi đào xong
             if (breakTicks >= requiredTicks) {
-                // Lấy drops từ block
                 Collection<ItemStack> drops = target.getDrops(tool);
                 
-                // Áp dụng Fortune
                 int fortune = tool.getEnchantmentLevel(Enchantment.FORTUNE);
                 if (fortune > 0 && isFortuneable(target.getType())) {
                     for (ItemStack drop : drops) {
@@ -157,33 +152,41 @@ public class AutoMineManager {
                     }
                 }
                 
-                // THÊM VÀO THẲNG TÚI ĐỒ - KHÔNG DROP RA NGOÀI
+                // X2 ITEM
+                boolean doubleDrop = config.isDoubleDrop();
                 PlayerInventory inventory = player.getInventory();
+                
                 for (ItemStack drop : drops) {
                     if (drop != null && !drop.getType().isAir()) {
-                        // Kiểm tra nếu còn chỗ trong túi
+                        int amount = drop.getAmount();
+                        
+                        // X2 số lượng
+                        if (doubleDrop) {
+                            amount *= 2;
+                        }
+                        
+                        // Thêm vào túi
+                        ItemStack finalDrop = drop.clone();
+                        finalDrop.setAmount(amount);
+                        
                         if (inventory.firstEmpty() != -1) {
-                            inventory.addItem(drop);
+                            inventory.addItem(finalDrop);
                         } else {
-                            // Nếu đầy túi thì drop ra ngoài
                             Location loc = target.getLocation().add(0.5, 0.5, 0.5);
-                            org.bukkit.entity.Item item = player.getWorld().dropItem(loc, drop);
+                            org.bukkit.entity.Item item = player.getWorld().dropItem(loc, finalDrop);
                             item.setPickupDelay(0);
                         }
                     }
                 }
                 
-                // Reset để đào tiếp
                 breakTicks = 0;
                 isBreaking = false;
                 
-                // Hiệu ứng nhẹ
                 player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
                 player.getWorld().spawnParticle(Particle.BLOCK,
                     target.getLocation().add(0.5, 0.5, 0.5), 5,
                     target.getBlockData());
                 
-                // Tiếp tục đào
                 try {
                     player.sendBlockDamage(target.getLocation(), 1.0f);
                 } catch (Exception ignored) {}

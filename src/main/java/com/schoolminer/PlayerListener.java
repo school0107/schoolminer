@@ -22,8 +22,8 @@ public class PlayerListener implements Listener {
         Player player = event.getPlayer();
         plugin.getAutoMineManager().stopMining(player);
         plugin.getAutoKillManager().stopKilling(player);
-        plugin.getAutoCraftManager().stopCraft(player);
-        menu.removeCrafting(player);
+        // Dừng tất cả craft của player
+        plugin.getAutoCraftManager().stopAllCraft(player);
     }
 
     @EventHandler
@@ -31,8 +31,8 @@ public class PlayerListener implements Listener {
         Player player = event.getPlayer();
         plugin.getAutoMineManager().stopMining(player);
         plugin.getAutoKillManager().stopKilling(player);
-        plugin.getAutoCraftManager().stopCraft(player);
-        menu.removeCrafting(player);
+        // Dừng tất cả craft của player
+        plugin.getAutoCraftManager().stopAllCraft(player);
     }
 
     @EventHandler

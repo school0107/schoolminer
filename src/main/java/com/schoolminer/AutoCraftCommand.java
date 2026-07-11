@@ -39,16 +39,17 @@ public class AutoCraftCommand implements CommandExecutor {
 
         String craftType = args[0].toLowerCase();
         
+        // Tắt craft
         if (args.length >= 2 && args[1].equalsIgnoreCase("off")) {
-            if (craftManager.isCrafting(player)) {
-                craftManager.stopCraft(player);
-                menu.removeCrafting(player);
+            if (craftManager.isCrafting(player, craftType)) {
+                craftManager.stopCraft(player, craftType);
             } else {
-                player.sendMessage("§e⚠️ Bạn không đang craft gì cả!");
+                player.sendMessage("§e⚠️ Bạn không đang craft " + craftType + "!");
             }
             return true;
         }
 
+        // Bật craft
         craftManager.startCraft(player, craftType);
         return true;
     }

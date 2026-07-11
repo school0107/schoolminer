@@ -2,9 +2,9 @@ name: Build Schoolminer Plugin
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -24,8 +24,41 @@ jobs:
     - name: Build with Maven
       run: mvn clean package
     
-    - name: Upload JAR
+    - name: Get version from pom.xml
+      id: get_version
+      run: |
+        VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+    
+    - name: List target directory
+      run: ls -la target/
+    
+    # CÁCH 1: Upload artifact dạng file .jar trực tiếp (không nén)
+    - name: Upload JAR file
       uses: actions/upload-artifact@v4
       with:
-        name: Schoolminer
+        name: Schoolminer-${{ steps.get_version.outputs.version }}
         path: target/Schoolminer-*.jar
+        if-no-files-found: error
+        compression-level: 0  # Không nén
+    
+    # CÁCH 2: Upload với tên cố định
+    - name: Upload JAR as artifact (fixed name)
+      uses: actions/upload-artifact@v4
+      with:
+        name: Schoolminer.jar
+        path: target/Schoolminer-*.jar
+        if-no-files-found: error
+        compression-level: 0
+    
+    # Tạo release tự động khi có tag
+    - name: Upload to Release
+      if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: target/Schoolminer-${{ steps.get_version.outputs.version }}.jar
+        asset_name: Schoolminer-${{ steps.get_version.outputs.version }}.jar
+        asset_content_type: application/java-archive

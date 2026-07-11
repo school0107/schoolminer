@@ -13,7 +13,6 @@ public class AutoCraftManager {
     private final Map<UUID, Set<String>> playerCrafts = new HashMap<>();
     private final Map<UUID, Map<String, CraftTask>> tasks = new HashMap<>();
     private final ConfigManager config;
-    private final Map<UUID, Long> cooldownMap = new HashMap<>();
 
     public AutoCraftManager(Schoolminer plugin) {
         this.plugin = plugin;
@@ -35,25 +34,17 @@ public class AutoCraftManager {
             return;
         }
         
-        // KIỂM TRA COOLDOWN - CHỐNG SPAM
-        long now = System.currentTimeMillis();
-        long cooldown = config.getCraftCooldown();
-        if (cooldownMap.containsKey(uuid) && now - cooldownMap.get(uuid) < cooldown) {
-            long remaining = (cooldown - (now - cooldownMap.get(uuid))) / 1000;
-            player.sendMessage("§c⚠️ Vui lòng đợi §e" + remaining + " §cgiây trước khi bật craft mới!");
+        if (isCrafting(player, craftType)) {
+            player.sendMessage("§e⚠️ " + craftConfig.getDisplayName() + " đã được bật rồi!");
             return;
         }
         
-        // KHÔNG GIỚI HẠN SỐ LƯỢNG CRAFT - Cho phép nhiều craft cùng lúc
         CraftTask task = new CraftTask(player, craftConfig);
         int craftDelay = config.getCraftDelay();
         task.runTaskTimer(plugin, 0L, craftDelay);
         
-        // Lưu task
         tasks.computeIfAbsent(uuid, k -> new HashMap<>()).put(craftType, task);
         playerCrafts.computeIfAbsent(uuid, k -> new HashSet<>()).add(craftType);
-        
-        cooldownMap.put(uuid, now);
         
         player.sendMessage("§a✅ Đã bật AutoCraft: " + craftConfig.getDisplayName() + "!");
         player.sendMessage("§7Đang chạy: §e" + getActiveCrafts(player).size() + " §7craft");
@@ -78,7 +69,10 @@ public class AutoCraftManager {
             if (playerTasks.isEmpty()) {
                 tasks.remove(uuid);
             }
-            player.sendMessage("§c⛔ Đã tắt AutoCraft: " + craftType);
+            
+            AutoCraftConfig craftConfig = config.getCraftConfig(craftType);
+            String displayName = craftConfig != null ? craftConfig.getDisplayName() : craftType;
+            player.sendMessage("§c⛔ Đã tắt AutoCraft: " + displayName);
         }
     }
 
@@ -103,7 +97,6 @@ public class AutoCraftManager {
         }
         tasks.clear();
         playerCrafts.clear();
-        cooldownMap.clear();
     }
 
     public boolean isCrafting(Player player, String craftType) {
@@ -131,7 +124,7 @@ public class AutoCraftManager {
         private final Player player;
         private final AutoCraftConfig craftConfig;
         private int craftedCount = 0;
-        private int failCount = 0;
+        private boolean hasNotifiedEmpty = false;
 
         public CraftTask(Player player, AutoCraftConfig craftConfig) {
             this.player = player;
@@ -147,6 +140,7 @@ public class AutoCraftManager {
 
             PlayerInventory inventory = player.getInventory();
             
+            // Tính số lần craft có thể
             int maxCrafts = Integer.MAX_VALUE;
             
             for (ItemStack material : craftConfig.getMaterials()) {
@@ -168,20 +162,19 @@ public class AutoCraftManager {
                 }
             }
             
+            // Hết nguyên liệu - KHÔNG TẮT, chỉ thông báo 1 lần
             if (maxCrafts <= 0) {
-                failCount++;
-                // Nếu fail 5 lần liên tiếp thì thông báo và dừng
-                if (failCount >= 5) {
-                    if (craftedCount > 0) {
-                        player.sendMessage("§e⚠️ Đã hết nguyên liệu! Đã craft §a" + craftedCount + " §e" + craftConfig.getDisplayName());
-                    }
-                    stopCraft(player, craftConfig.getId());
+                if (!hasNotifiedEmpty && craftedCount > 0) {
+                    player.sendMessage("§e⚠️ Đã hết nguyên liệu cho §f" + craftConfig.getDisplayName());
+                    player.sendMessage("§7Đã craft §a" + craftedCount + " §7lần, thêm nguyên liệu để tiếp tục!");
+                    hasNotifiedEmpty = true;
                 }
                 return;
             }
             
-            failCount = 0;
+            hasNotifiedEmpty = false;
             
+            // Kiểm tra chỗ trống trong túi
             int emptySlots = 0;
             for (int i = 0; i < inventory.getSize(); i++) {
                 if (inventory.getItem(i) == null || inventory.getItem(i).getType().isAir()) {
@@ -190,8 +183,10 @@ public class AutoCraftManager {
             }
             
             if (emptySlots == 0) {
-                player.sendMessage("§c⚠️ Túi đồ đầy! Dừng craft " + craftConfig.getDisplayName());
-                stopCraft(player, craftConfig.getId());
+                if (!hasNotifiedEmpty) {
+                    player.sendMessage("§c⚠️ Túi đồ đầy! Dừng craft §f" + craftConfig.getDisplayName());
+                    hasNotifiedEmpty = true;
+                }
                 return;
             }
             
@@ -199,6 +194,7 @@ public class AutoCraftManager {
             int maxCraftPerTick = config.getMaxCraftPerTick();
             int actualCrafts = Math.min(Math.min(maxCrafts, emptySlots), maxCraftPerTick);
             
+            // Xóa nguyên liệu
             for (ItemStack material : craftConfig.getMaterials()) {
                 if (material == null || material.getType().isAir()) continue;
                 
@@ -219,6 +215,7 @@ public class AutoCraftManager {
                 }
             }
             
+            // Tạo sản phẩm
             ItemStack result = craftConfig.getResult().clone();
             
             if (craftConfig.isGlow()) {
@@ -228,7 +225,6 @@ public class AutoCraftManager {
                 result.setItemMeta(meta);
             }
             
-            // Thêm sản phẩm vào túi (giới hạn số lượng mỗi lần để tránh lag)
             int addedCount = 0;
             for (int i = 0; i < actualCrafts; i++) {
                 if (inventory.firstEmpty() != -1) {
@@ -240,11 +236,16 @@ public class AutoCraftManager {
                 }
             }
             
-            // Hiệu ứng - chỉ phát khi có craft
+            // Hiệu ứng
             if (addedCount > 0) {
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.3f, 1);
                 player.getWorld().spawnParticle(Particle.ENCHANT, 
                     player.getLocation().add(0, 1, 0), Math.min(addedCount * 2, 20), 0.3, 0.3, 0.3);
+                
+                // Thông báo mỗi 10 lần craft
+                if (craftedCount % 10 == 0 && craftedCount > 0) {
+                    player.sendMessage("§7Đã craft §a" + craftedCount + " §7" + craftConfig.getDisplayName());
+                }
             }
         }
     }

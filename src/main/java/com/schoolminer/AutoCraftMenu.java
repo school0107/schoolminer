@@ -23,6 +23,7 @@ public class AutoCraftMenu {
     public void openMenu(Player player) {
         Inventory menu = Bukkit.createInventory(null, 54, "§6§l⚒️ AutoCraft Menu");
 
+        // Tất cả craft theo thứ tự
         List<String> craftOrder = Arrays.asList(
             "go", "da", "da_cuoi", "than_cui", "sat", "vang", 
             "kimcuong", "ngoc_luc_bao", "da_nether", "manh_vo_co_dai",
@@ -31,7 +32,6 @@ public class AutoCraftMenu {
             "gach_nether", "gach_nether_do"
         );
 
-        // Lấy danh sách craft đang chạy
         Set<String> activeCrafts = craftManager.getActiveCrafts(player);
 
         int slot = 0;
@@ -54,13 +54,13 @@ public class AutoCraftMenu {
         ItemMeta stopMeta = stopAll.getItemMeta();
         stopMeta.setDisplayName(ChatColor.RED + "⛔ TẮT TẤT CẢ CRAFT");
         stopMeta.setLore(Arrays.asList(
-            ChatColor.GRAY + "Tắt tất cả các craft đang chạy",
+            ChatColor.GRAY + "Tắt tất cả craft đang chạy",
             ChatColor.GRAY + "Click để tắt tất cả"
         ));
         stopAll.setItemMeta(stopMeta);
         menu.setItem(49, stopAll);
 
-        // Nút Reload Menu
+        // Nút làm mới
         ItemStack reload = new ItemStack(Material.LIME_DYE);
         ItemMeta reloadMeta = reload.getItemMeta();
         reloadMeta.setDisplayName(ChatColor.GREEN + "🔄 LÀM MỚI");
@@ -77,8 +77,8 @@ public class AutoCraftMenu {
             ChatColor.GREEN + "✅ Đang bật",
             ChatColor.RED + "❌ Đang tắt",
             "",
-            ChatColor.GRAY + "Có thể bật nhiều craft cùng lúc",
-            ChatColor.GRAY + "Số craft đang chạy: §e" + activeCrafts.size()
+            ChatColor.GRAY + "Có thể bật §eNHIỀU §7craft cùng lúc",
+            ChatColor.GRAY + "Đang chạy: §e" + activeCrafts.size() + " §7/" + craftOrder.size() + " craft"
         ));
         info.setItemMeta(infoMeta);
         menu.setItem(51, info);
@@ -194,14 +194,14 @@ public class AutoCraftMenu {
             return;
         }
         
-        // Kiểm tra nếu craft đang chạy -> TẮT
+        // Nếu craft đang chạy -> TẮT
         if (craftManager.isCrafting(player, targetCraft)) {
             craftManager.stopCraft(player, targetCraft);
             openMenu(player);
             return;
         }
         
-        // Bật craft mới
+        // Bật craft mới (KHÔNG GIỚI HẠN SỐ LƯỢNG)
         craftManager.startCraft(player, targetCraft);
         openMenu(player);
     }

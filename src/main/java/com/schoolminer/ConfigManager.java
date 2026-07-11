@@ -27,6 +27,8 @@ public class ConfigManager {
     private boolean autoPickup;
     private boolean doubleDrop;
     private int craftDelay;
+    private int craftCooldown;
+    private int maxCraftPerTick;
     private Map<String, AutoCraftConfig> craftConfigs;
 
     public ConfigManager(Schoolminer plugin) {
@@ -71,9 +73,12 @@ public class ConfigManager {
         
         // Auto Craft
         craftDelay = config.getInt("autocraft.craft-delay", 20);
+        craftCooldown = config.getInt("autocraft.cooldown", 2000); // 2 giây
+        maxCraftPerTick = config.getInt("autocraft.max-craft-per-tick", 16); // Tối đa 16 craft mỗi tick
         loadCrafts(config);
         
         plugin.getLogger().info("§a✅ Đã load " + whitelist.size() + " block vào whitelist");
+        plugin.getLogger().info("§a✅ Đã load " + craftConfigs.size() + " công thức craft");
     }
 
     private void loadCrafts(FileConfiguration config) {
@@ -215,6 +220,14 @@ public class ConfigManager {
 
     public int getCraftDelay() {
         return craftDelay;
+    }
+
+    public int getCraftCooldown() {
+        return craftCooldown;
+    }
+
+    public int getMaxCraftPerTick() {
+        return maxCraftPerTick;
     }
 
     public AutoCraftConfig getCraftConfig(String id) {

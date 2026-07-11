@@ -199,6 +199,14 @@ autocraft:
   # Thời gian craft mỗi lần (ticks, 20 ticks = 1 giây)
   craft-delay: 20
   
+  # Thời gian chờ giữa các lần bật craft (milliseconds)
+  # Mặc định: 2000 = 2 giây
+  cooldown: 2000
+  
+  # Số lượng craft tối đa mỗi tick (tránh lag server)
+  # Mặc định: 16
+  max-craft-per-tick: 16
+  
   # Danh sách các công thức craft
   crafts:
     # ===== CRAFT GỖ (1 stack = 64) =====

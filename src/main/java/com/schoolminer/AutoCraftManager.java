@@ -21,15 +21,27 @@ public class AutoCraftManager {
     public void startCraft(Player player, String craftType) {
         UUID uuid = player.getUniqueId();
         
+        // KIỂM TRA PERMISSION CHO TỪNG LOẠI CRAFT
         String permission = "schoolminer.autocraft." + craftType;
         if (!player.hasPermission(permission)) {
             player.sendMessage("§c❌ Bạn không có quyền sử dụng autocraft " + craftType + "!");
+            player.sendMessage("§7Yêu cầu permission: §e" + permission);
             return;
         }
         
         AutoCraftConfig craftConfig = config.getCraftConfig(craftType);
         if (craftConfig == null) {
-            player.sendMessage("§c❌ Không tìm thấy cấu hình autocraft cho " + craftType + "!");
+            player.sendMessage("§c❌ Không tìm thấy autocraft: " + craftType);
+            player.sendMessage("§7Danh sách craft có sẵn:");
+            for (String type : config.getCraftTypes()) {
+                AutoCraftConfig c = config.getCraftConfig(type);
+                if (c != null) {
+                    // Chỉ hiển thị craft mà player có permission
+                    if (player.hasPermission("schoolminer.autocraft." + type)) {
+                        player.sendMessage("§e/autocraft " + type + " §7- §f" + c.getDisplayName());
+                    }
+                }
+            }
             return;
         }
         
@@ -69,6 +81,7 @@ public class AutoCraftManager {
     public List<String> getAvailableCrafts(Player player) {
         List<String> available = new ArrayList<>();
         for (String craftType : config.getCraftTypes()) {
+            // CHỈ HIỂN THỊ CRAFT MÀ PLAYER CÓ PERMISSION
             if (player.hasPermission("schoolminer.autocraft." + craftType)) {
                 available.add(craftType);
             }
@@ -95,11 +108,9 @@ public class AutoCraftManager {
 
             PlayerInventory inventory = player.getInventory();
             
-            // TÍNH SỐ LẦN CRAFT TỐI ĐA DỰA TRÊN NGUYÊN LIỆU CÓ TRONG TÚI
             int maxCrafts = Integer.MAX_VALUE;
             Map<ItemStack, Integer> materialCounts = new HashMap<>();
             
-            // Đếm số lượng nguyên liệu có trong túi
             for (ItemStack material : craftConfig.getMaterials()) {
                 if (material == null || material.getType().isAir()) continue;
                 
@@ -113,27 +124,22 @@ public class AutoCraftManager {
                     }
                 }
                 
-                // Tính số lần craft có thể làm dựa trên nguyên liệu này
                 int possibleCrafts = totalFound / needed;
                 if (possibleCrafts < maxCrafts) {
                     maxCrafts = possibleCrafts;
                 }
                 
-                // Lưu lại số lượng cần lấy
                 materialCounts.put(material, needed);
             }
             
-            // Nếu không đủ nguyên liệu
             if (maxCrafts <= 0) {
                 if (craftedCount > 0) {
                     player.sendMessage("§e⚠️ Đã hết nguyên liệu! Đã craft §a" + craftedCount + " §elần!");
                 }
-                // KHÔNG TỰ ĐỘNG TẮT, chỉ thông báo và đợi nguyên liệu mới
                 craftedCount = 0;
                 return;
             }
             
-            // Kiểm tra túi đồ còn chỗ không
             int emptySlots = 0;
             for (int i = 0; i < inventory.getSize(); i++) {
                 if (inventory.getItem(i) == null || inventory.getItem(i).getType().isAir()) {
@@ -141,19 +147,13 @@ public class AutoCraftManager {
                 }
             }
             
-            // Tính số lần craft dựa trên số chỗ trống trong túi
-            int craftLimit = maxCrafts;
-            
-            // Nếu túi đầy, chỉ craft 1 lần
             if (emptySlots == 0) {
                 player.sendMessage("§c⚠️ Túi đồ đầy! Không thể craft thêm!");
                 return;
             }
             
-            // Craft nhiều lần cùng lúc
-            int actualCrafts = Math.min(craftLimit, emptySlots);
+            int actualCrafts = Math.min(maxCrafts, emptySlots);
             
-            // Xóa nguyên liệu
             for (ItemStack material : craftConfig.getMaterials()) {
                 if (material == null || material.getType().isAir()) continue;
                 
@@ -174,7 +174,6 @@ public class AutoCraftManager {
                 }
             }
             
-            // Tạo sản phẩm
             ItemStack result = craftConfig.getResult().clone();
             
             if (craftConfig.isGlow()) {
@@ -184,7 +183,6 @@ public class AutoCraftManager {
                 result.setItemMeta(meta);
             }
             
-            // Thêm sản phẩm vào túi
             for (int i = 0; i < actualCrafts; i++) {
                 if (inventory.firstEmpty() != -1) {
                     inventory.addItem(result.clone());
@@ -192,12 +190,10 @@ public class AutoCraftManager {
                 }
             }
             
-            // Hiệu ứng
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1);
             player.getWorld().spawnParticle(Particle.ENCHANT, 
                 player.getLocation().add(0, 1, 0), 10 * actualCrafts, 0.3, 0.3, 0.3);
             
-            // Thông báo số lượng đã craft
             if (actualCrafts > 0) {
                 player.sendMessage("§a✅ Đã craft §e" + actualCrafts + " §ax §f" + craftConfig.getDisplayName());
                 player.sendMessage("§7Tổng đã craft: §a" + craftedCount + " §7lần");

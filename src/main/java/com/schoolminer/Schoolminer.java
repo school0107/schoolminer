@@ -20,11 +20,20 @@ public class Schoolminer extends JavaPlugin {
         autoKillManager = new AutoKillManager(this);
         autoCraftManager = new AutoCraftManager(this);
         
+        // Command Executors
         getCommand("automine").setExecutor(new AutoMineCommand(this));
         getCommand("autokill").setExecutor(new AutoKillCommand(this));
         getCommand("autocraft").setExecutor(new AutoCraftCommand(this));
         getCommand("schoolminer").setExecutor(new SchoolminerCommand(this));
         
+        // Tab Completer
+        SchoolminerTabCompleter tabCompleter = new SchoolminerTabCompleter(this);
+        getCommand("automine").setTabCompleter(tabCompleter);
+        getCommand("autokill").setTabCompleter(tabCompleter);
+        getCommand("autocraft").setTabCompleter(tabCompleter);
+        getCommand("schoolminer").setTabCompleter(tabCompleter);
+        
+        // Register events
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
         
         getLogger().log(Level.INFO, "§a✅ Schoolminer đã được khởi tạo thành công!");

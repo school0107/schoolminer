@@ -1,15 +1,476 @@
+# ============================================
+# SCHOOLMINER CONFIG
+# ============================================
+# Tác giả: school0107
+# Version: 1.0.0
+# ============================================
+
+# ===== AUTO MINE =====
+automine:
+  delay: 20
+  max-range: 5
+  auto-pickup: true
+  double-drop: true
+
+# ===== WHITELIST BLOCK ĐƯỢC PHÉP ĐÀO =====
+whitelist:
+  # Đá và các loại đá
+  - STONE
+  - DEEPSLATE
+  - GRANITE
+  - DIORITE
+  - ANDESITE
+  - CALCITE
+  - TUFF
+  - DRIPSTONE_BLOCK
+  
+  # Quặng
+  - COAL_ORE
+  - DEEPSLATE_COAL_ORE
+  - IRON_ORE
+  - DEEPSLATE_IRON_ORE
+  - GOLD_ORE
+  - DEEPSLATE_GOLD_ORE
+  - DIAMOND_ORE
+  - DEEPSLATE_DIAMOND_ORE
+  - EMERALD_ORE
+  - DEEPSLATE_EMERALD_ORE
+  - REDSTONE_ORE
+  - DEEPSLATE_REDSTONE_ORE
+  - LAPIS_ORE
+  - DEEPSLATE_LAPIS_ORE
+  - NETHER_QUARTZ_ORE
+  - NETHER_GOLD_ORE
+  - ANCIENT_DEBRIS
+  - COPPER_ORE
+  - DEEPSLATE_COPPER_ORE
+  
+  # Đá Nether và End
+  - NETHERRACK
+  - BASALT
+  - BLACKSTONE
+  - END_STONE
+  - SOUL_SAND
+  - SOUL_SOIL
+  - NETHER_BRICKS
+  - RED_NETHER_BRICKS
+  
+  # Các loại đá xây dựng
+  - SANDSTONE
+  - RED_SANDSTONE
+  - BRICK
+  - QUARTZ_BLOCK
+  - SMOOTH_QUARTZ
+  - SMOOTH_STONE
+  - SMOOTH_SANDSTONE
+  - SMOOTH_RED_SANDSTONE
+  
+  # Đất và các loại đất
+  - DIRT
+  - GRASS_BLOCK
+  - PODZOL
+  - MYCELIUM
+  - COARSE_DIRT
+  - ROOTED_DIRT
+  - FARMLAND
+  - DIRT_PATH
+  
+  # Cát
+  - SAND
+  - RED_SAND
+  - GRAVEL
+  
+  # Gỗ (Log)
+  - OAK_LOG
+  - SPRUCE_LOG
+  - BIRCH_LOG
+  - JUNGLE_LOG
+  - ACACIA_LOG
+  - DARK_OAK_LOG
+  - MANGROVE_LOG
+  - CHERRY_LOG
+  
+  # Gỗ (Striped)
+  - STRIPPED_OAK_LOG
+  - STRIPPED_SPRUCE_LOG
+  - STRIPPED_BIRCH_LOG
+  - STRIPPED_JUNGLE_LOG
+  - STRIPPED_ACACIA_LOG
+  - STRIPPED_DARK_OAK_LOG
+  - STRIPPED_MANGROVE_LOG
+  - STRIPPED_CHERRY_LOG
+  
+  # Ván gỗ
+  - OAK_PLANKS
+  - SPRUCE_PLANKS
+  - BIRCH_PLANKS
+  - JUNGLE_PLANKS
+  - ACACIA_PLANKS
+  - DARK_OAK_PLANKS
+  - MANGROVE_PLANKS
+  - CHERRY_PLANKS
+  
+  # Đá quý và vật liệu đặc biệt
+  - OBSIDIAN
+  - CRYING_OBSIDIAN
+  - GLOWSTONE
+  - SEA_LANTERN
+  - PRISMARINE
+  - DARK_PRISMARINE
+  - PRISMARINE_BRICKS
+  
+  # Băng và tuyết
+  - ICE
+  - PACKED_ICE
+  - BLUE_ICE
+  - SNOW_BLOCK
+  - SNOW
+  
+  # Các block khác
+  - CLAY
+  - BONE_BLOCK
+  - COAL_BLOCK
+  - IRON_BLOCK
+  - GOLD_BLOCK
+  - DIAMOND_BLOCK
+  - EMERALD_BLOCK
+  - REDSTONE_BLOCK
+  - LAPIS_BLOCK
+  - NETHERITE_BLOCK
+  - AMETHYST_BLOCK
+  - BUDDING_AMETHYST
+  - AMETHYST_CLUSTER
+  - LARGE_AMETHYST_BUD
+  - MEDIUM_AMETHYST_BUD
+  - SMALL_AMETHYST_BUD
+  
+  # Các loại đá cuội
+  - COBBLESTONE
+  - MOSSY_COBBLESTONE
+  - DEEPSLATE_COBBLESTONE
+  
+  # Gạch đá
+  - STONE_BRICKS
+  - MOSSY_STONE_BRICKS
+  - CRACKED_STONE_BRICKS
+  - CHISELED_STONE_BRICKS
+  - DEEPSLATE_BRICKS
+  - CRACKED_DEEPSLATE_BRICKS
+  - DEEPSLATE_TILES
+  - CRACKED_DEEPSLATE_TILES
+  - CHISELED_DEEPSLATE
+
+# ===== AUTO KILL =====
+autokill:
+  attack-delay: 40
+  range: 3
+  base-damage: 4.0
+  kill-monster: true
+  kill-animal: false
+  kill-mob: true
+  drop-items: true
+  drop-xp: true
+  xp-monster: 5
+  xp-animal: 1
+  xp-mob: 3
+
+# ===== AUTO CRAFT =====
 autocraft:
+  craft-delay: 20
+  
   crafts:
-    ten_craft:
-      display-name: "&aTên hiển thị"
+    # ===== CRAFT GỖ =====
+    go:
+      display-name: "&6Gỗ Sồi &7→ &eGỗ Cao Cấp"
       glow: true
       materials:
-        nguyen_lieu_1:
-          material: MATERIAL_NAME
+        oak_wood:
+          material: OAK_LOG
           amount: 8
       result:
-        material: MATERIAL_NAME
+        material: OAK_LOG
         amount: 1
-        display-name: "&e✨ Tên Sản Phẩm"
+        display-name: "&e✨ Gỗ Cao Cấp"
         lore:
-          - "&7Mô tả"
+          - "&7Tự động chế tạo từ gỗ sồi"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT ĐÁ =====
+    da:
+      display-name: "&7Đá &7→ &fĐá Tinh Khiết"
+      glow: true
+      materials:
+        stone:
+          material: STONE
+          amount: 8
+      result:
+        material: STONE
+        amount: 1
+        display-name: "&f💎 Đá Tinh Khiết"
+        lore:
+          - "&7Tự động chế tạo từ đá"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT KIM CƯƠNG =====
+    kimcuong:
+      display-name: "&bKim Cương &7→ &b💎 Kim Cương Hoàn Hảo"
+      glow: true
+      materials:
+        diamond:
+          material: DIAMOND
+          amount: 4
+      result:
+        material: DIAMOND
+        amount: 1
+        display-name: "&b💎 Kim Cương Hoàn Hảo"
+        lore:
+          - "&7Tự động chế tạo từ kim cương"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT SẮT =====
+    sat:
+      display-name: "&fSắt &7→ &f🔩 Sắt Tinh Luyện"
+      glow: true
+      materials:
+        iron_ingot:
+          material: IRON_INGOT
+          amount: 8
+      result:
+        material: IRON_INGOT
+        amount: 1
+        display-name: "&f🔩 Sắt Tinh Luyện"
+        lore:
+          - "&7Tự động chế tạo từ sắt"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT VÀNG =====
+    vang:
+      display-name: "&eVàng &7→ &e⭐ Vàng Nguyên Chất"
+      glow: true
+      materials:
+        gold_ingot:
+          material: GOLD_INGOT
+          amount: 8
+      result:
+        material: GOLD_INGOT
+        amount: 1
+        display-name: "&e⭐ Vàng Nguyên Chất"
+        lore:
+          - "&7Tự động chế tạo từ vàng"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT ĐÁ CUỘI =====
+    da_cuoi:
+      display-name: "&7Đá Cuội &7→ &fĐá"
+      glow: false
+      materials:
+        cobblestone:
+          material: COBBLESTONE
+          amount: 4
+      result:
+        material: STONE
+        amount: 1
+        display-name: "&fĐá"
+        lore:
+          - "&7Nấu chảy từ đá cuội"
+    
+    # ===== CRAFT THAN CỦI =====
+    than_cui:
+      display-name: "&7Gỗ &7→ &8Than củi"
+      glow: false
+      materials:
+        oak_log:
+          material: OAK_LOG
+          amount: 4
+      result:
+        material: CHARCOAL
+        amount: 1
+        display-name: "&8Than củi"
+        lore:
+          - "&7Đốt gỗ thành than"
+    
+    # ===== CRAFT NGỌC LỤC BẢO (EMERALD) =====
+    ngoc_luc_bao:
+      display-name: "&aNgọc Lục Bảo &7→ &a💚 Ngọc Lục Bảo Hoàn Hảo"
+      glow: true
+      materials:
+        emerald:
+          material: EMERALD
+          amount: 4
+      result:
+        material: EMERALD
+        amount: 1
+        display-name: "&a💚 Ngọc Lục Bảo Hoàn Hảo"
+        lore:
+          - "&7Tự động chế tạo từ ngọc lục bảo"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT ĐÁ NETHER =====
+    da_nether:
+      display-name: "&cĐá Nether &7→ &c🔥 Đá Nether Tinh Khiết"
+      glow: true
+      materials:
+        netherrack:
+          material: NETHERRACK
+          amount: 8
+      result:
+        material: NETHERRACK
+        amount: 1
+        display-name: "&c🔥 Đá Nether Tinh Khiết"
+        lore:
+          - "&7Tự động chế tạo từ đá nether"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT MẢNH VỠ CỔ ĐẠI =====
+    manh_vo_co_dai:
+      display-name: "&5Mảnh Vỡ Cổ Đại &7→ &5💀 Mảnh Vỡ Cổ Đại Hoàn Hảo"
+      glow: true
+      materials:
+        ancient_debris:
+          material: ANCIENT_DEBRIS
+          amount: 2
+      result:
+        material: ANCIENT_DEBRIS
+        amount: 1
+        display-name: "&5💀 Mảnh Vỡ Cổ Đại Hoàn Hảo"
+        lore:
+          - "&7Tự động chế tạo từ mảnh vỡ cổ đại"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT ĐÁ BAZAN =====
+    da_bazan:
+      display-name: "&8Đá Bazan &7→ &8🪨 Đá Bazan Tinh Khiết"
+      glow: true
+      materials:
+        basalt:
+          material: BASALT
+          amount: 8
+      result:
+        material: BASALT
+        amount: 1
+        display-name: "&8🪨 Đá Bazan Tinh Khiết"
+        lore:
+          - "&7Tự động chế tạo từ đá bazan"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT ĐÁ BLACKSTONE =====
+    da_blackstone:
+      display-name: "&0Blackstone &7→ &0🪨 Blackstone Tinh Khiết"
+      glow: true
+      materials:
+        blackstone:
+          material: BLACKSTONE
+          amount: 8
+      result:
+        material: BLACKSTONE
+        amount: 1
+        display-name: "&0🪨 Blackstone Tinh Khiết"
+        lore:
+          - "&7Tự động chế tạo từ blackstone"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT QUẶNG NETHER GOLD =====
+    quang_nether_gold:
+      display-name: "&eQuặng Nether Vàng &7→ &e✨ Vàng Nether Tinh Khiết"
+      glow: true
+      materials:
+        nether_gold_ore:
+          material: NETHER_GOLD_ORE
+          amount: 4
+      result:
+        material: GOLD_INGOT
+        amount: 1
+        display-name: "&e✨ Vàng Nether Tinh Khiết"
+        lore:
+          - "&7Tự động chế tạo từ quặng nether vàng"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT QUẶNG NETHER QUARTZ =====
+    quang_nether_quartz:
+      display-name: "&fQuặng Nether Quartz &7→ &f💎 Quartz Tinh Khiết"
+      glow: true
+      materials:
+        nether_quartz_ore:
+          material: NETHER_QUARTZ_ORE
+          amount: 4
+      result:
+        material: QUARTZ
+        amount: 1
+        display-name: "&f💎 Quartz Tinh Khiết"
+        lore:
+          - "&7Tự động chế tạo từ quặng nether quartz"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT SOUL SAND =====
+    soul_sand:
+      display-name: "&6Soul Sand &7→ &6💀 Soul Sand Tinh Khiết"
+      glow: true
+      materials:
+        soul_sand:
+          material: SOUL_SAND
+          amount: 8
+      result:
+        material: SOUL_SAND
+        amount: 1
+        display-name: "&6💀 Soul Sand Tinh Khiết"
+        lore:
+          - "&7Tự động chế tạo từ soul sand"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT SOUL SOIL =====
+    soul_soil:
+      display-name: "&6Soul Soil &7→ &6💀 Soul Soil Tinh Khiết"
+      glow: true
+      materials:
+        soul_soil:
+          material: SOUL_SOIL
+          amount: 8
+      result:
+        material: SOUL_SOIL
+        amount: 1
+        display-name: "&6💀 Soul Soil Tinh Khiết"
+        lore:
+          - "&7Tự động chế tạo từ soul soil"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT GẠCH NETHER =====
+    gach_nether:
+      display-name: "&cGạch Nether &7→ &c🧱 Gạch Nether Tinh Khiết"
+      glow: true
+      materials:
+        nether_brick:
+          material: NETHER_BRICK
+          amount: 8
+      result:
+        material: NETHER_BRICK
+        amount: 1
+        display-name: "&c🧱 Gạch Nether Tinh Khiết"
+        lore:
+          - "&7Tự động chế tạo từ gạch nether"
+          - "&a✨ Hiệu ứng Glow!"
+    
+    # ===== CRAFT RED NETHER BRICKS =====
+    gach_nether_do:
+      display-name: "&cGạch Nether Đỏ &7→ &c🧱 Gạch Nether Đỏ Tinh Khiết"
+      glow: true
+      materials:
+        red_nether_brick:
+          material: RED_NETHER_BRICKS
+          amount: 8
+      result:
+        material: RED_NETHER_BRICKS
+        amount: 1
+        display-name: "&c🧱 Gạch Nether Đỏ Tinh Khiết"
+        lore:
+          - "&7Tự động chế tạo từ gạch nether đỏ"
+          - "&a✨ Hiệu ứng Glow!"
+
+# ===== MESSAGES =====
+messages:
+  enabled: "&a✅ Đã bật Auto Mine! (Đứng yên để đào)"
+  disabled: "&c⛔ Đã tắt Auto Mine!"
+  kill-enabled: "&a⚔️ Đã bật Auto Kill!"
+  kill-disabled: "&c⛔ Đã tắt Auto Kill!"
+  no-permission: "&c❌ Bạn không có quyền sử dụng lệnh này!"
+  reloaded: "&a🔄 Đã reload config thành công!"
+  wrong-usage: "&c⚠️ Sai cú pháp! /schoolminer reload"

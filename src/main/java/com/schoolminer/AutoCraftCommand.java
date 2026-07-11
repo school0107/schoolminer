@@ -9,9 +9,11 @@ import java.util.List;
 
 public class AutoCraftCommand implements CommandExecutor {
     private final Schoolminer plugin;
+    private AutoCraftMenu menu;
 
     public AutoCraftCommand(Schoolminer plugin) {
         this.plugin = plugin;
+        this.menu = new AutoCraftMenu(plugin);
     }
 
     @Override
@@ -21,42 +23,36 @@ public class AutoCraftCommand implements CommandExecutor {
             return true;
         }
 
-        if (!player.hasPermission("schoolminer.autocraft")) {
-            player.sendMessage("§c❌ Bạn không có quyền sử dụng lệnh này!");
-            return true;
-        }
-
         AutoCraftManager craftManager = plugin.getAutoCraftManager();
 
+        // Nếu không có args -> mở menu
         if (args.length == 0) {
+            // Kiểm tra có craft nào không
             List<String> available = craftManager.getAvailableCrafts(player);
             if (available.isEmpty()) {
                 player.sendMessage("§c❌ Bạn không có quyền sử dụng autocraft nào!");
+                player.sendMessage("§7Liên hệ admin để được cấp quyền.");
                 return true;
             }
             
-            player.sendMessage("§6===== §eAutoCraft §6=====");
-            for (String craft : available) {
-                AutoCraftConfig config = plugin.getConfigManager().getCraftConfig(craft);
-                if (config != null) {
-                    player.sendMessage("§e/autocraft " + craft + " §7- §f" + config.getDisplayName());
-                }
-            }
+            // Mở menu GUI
+            menu.openMenu(player);
             return true;
         }
 
         String craftType = args[0].toLowerCase();
         
+        // Tắt craft
         if (args.length >= 2 && args[1].equalsIgnoreCase("off")) {
-            craftManager.stopCraft(player);
+            if (craftManager.isCrafting(player)) {
+                craftManager.stopCraft(player);
+            } else {
+                player.sendMessage("§e⚠️ Bạn không đang craft gì cả!");
+            }
             return true;
         }
 
-        if (plugin.getConfigManager().getCraftConfig(craftType) == null) {
-            player.sendMessage("§c❌ Không tìm thấy autocraft: " + craftType);
-            return true;
-        }
-
+        // Bật craft từ lệnh
         craftManager.startCraft(player, craftType);
         return true;
     }

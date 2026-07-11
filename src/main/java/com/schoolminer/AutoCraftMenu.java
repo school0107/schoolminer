@@ -13,6 +13,7 @@ public class AutoCraftMenu {
     private final Schoolminer plugin;
     private final AutoCraftManager craftManager;
     private final ConfigManager configManager;
+    private final Map<UUID, String> playerCrafting = new HashMap<>();
 
     public AutoCraftMenu(Schoolminer plugin) {
         this.plugin = plugin;
@@ -158,6 +159,7 @@ public class AutoCraftMenu {
         // Nút tắt tất cả
         if (slot == 49) {
             craftManager.stopCraft(player);
+            playerCrafting.remove(player.getUniqueId());
             player.sendMessage(ChatColor.RED + "⛔ Đã tắt tất cả AutoCraft!");
             openMenu(player);
             return;
@@ -201,6 +203,7 @@ public class AutoCraftMenu {
         // Nếu click vào craft đang chạy -> TẮT
         if (targetCraft.equals(currentCraft)) {
             craftManager.stopCraft(player);
+            playerCrafting.remove(player.getUniqueId());
             player.sendMessage(ChatColor.RED + "⛔ Đã tắt AutoCraft: " + targetCraft);
             openMenu(player);
             return;
@@ -209,10 +212,17 @@ public class AutoCraftMenu {
         // Nếu đang chạy craft khác -> tắt cũ, bật mới
         if (currentCraft != null) {
             craftManager.stopCraft(player);
+            playerCrafting.remove(player.getUniqueId());
         }
         
         // Bật craft mới
         craftManager.startCraft(player, targetCraft);
+        playerCrafting.put(player.getUniqueId(), targetCraft);
         openMenu(player);
+    }
+
+    // THÊM METHOD NÀY ĐỂ FIX LỖI
+    public void removeCrafting(Player player) {
+        playerCrafting.remove(player.getUniqueId());
     }
 }

@@ -25,7 +25,6 @@ public class AutoCraftCommand implements CommandExecutor {
 
         AutoCraftManager craftManager = plugin.getAutoCraftManager();
 
-        // Nếu không có args -> mở menu
         if (args.length == 0) {
             List<String> available = craftManager.getAvailableCrafts(player);
             if (available.isEmpty()) {
@@ -40,7 +39,6 @@ public class AutoCraftCommand implements CommandExecutor {
 
         String craftType = args[0].toLowerCase();
         
-        // Tắt craft
         if (args.length >= 2 && args[1].equalsIgnoreCase("off")) {
             if (craftManager.isCrafting(player)) {
                 craftManager.stopCraft(player);
@@ -51,7 +49,6 @@ public class AutoCraftCommand implements CommandExecutor {
             return true;
         }
 
-        // Bật craft từ lệnh
         craftManager.startCraft(player, craftType);
         return true;
     }

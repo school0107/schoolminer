@@ -7,7 +7,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.SkullMeta;
 import java.util.*;
 
 public class AutoCraftMenu {
@@ -24,10 +23,8 @@ public class AutoCraftMenu {
     public void openMenu(Player player) {
         Inventory menu = Bukkit.createInventory(null, 54, "§6§l⚒️ AutoCraft Menu");
 
-        // Lấy danh sách craft có permission
         List<String> availableCrafts = craftManager.getAvailableCrafts(player);
         
-        // Thêm các craft vào menu
         int slot = 0;
         for (String craftType : availableCrafts) {
             AutoCraftConfig craftConfig = configManager.getCraftConfig(craftType);
@@ -37,7 +34,6 @@ public class AutoCraftMenu {
             menu.setItem(slot, item);
             slot++;
             
-            // Mỗi hàng 9 slot, xuống hàng khi đủ
             if (slot % 9 == 0) slot++;
         }
 
@@ -81,33 +77,21 @@ public class AutoCraftMenu {
     }
 
     private ItemStack createCraftItem(String craftType, AutoCraftConfig craftConfig, Player player) {
-        boolean isActive = craftManager.isCrafting(player);
-        boolean isThisActive = false;
-        
-        // Kiểm tra xem craft này có đang chạy không
-        if (isActive) {
-            // Kiểm tra craft hiện tại của player
-            // (Chỉ có thể 1 craft chạy 1 lúc)
-            isThisActive = true;
-        }
+        boolean isThisActive = craftManager.isCrafting(player);
 
-        // Xác định material dựa trên craft type
         Material material = getMaterialForCraft(craftType);
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
 
-        // Tên hiển thị
         String displayName = isThisActive ? 
             "§a✅ " + craftConfig.getDisplayName() : 
             "§c❌ " + craftConfig.getDisplayName();
         meta.setDisplayName(displayName);
 
-        // Lore
         List<String> lore = new ArrayList<>();
         lore.add("§7" + craftType);
         lore.add("");
         
-        // Hiển thị nguyên liệu
         lore.add("§6§lNguyên liệu:");
         for (ItemStack materialItem : craftConfig.getMaterials()) {
             if (materialItem != null && !materialItem.getType().isAir()) {
@@ -131,7 +115,6 @@ public class AutoCraftMenu {
         
         meta.setLore(lore);
         
-        // Thêm glow nếu craft đang chạy
         if (isThisActive) {
             meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
             meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
@@ -166,7 +149,6 @@ public class AutoCraftMenu {
     }
 
     public void handleMenuClick(Player player, Inventory inventory, int slot) {
-        // Nút tắt tất cả
         if (slot == 49) {
             craftManager.stopCraft(player);
             player.sendMessage("§c⛔ Đã tắt tất cả AutoCraft!");
@@ -174,28 +156,23 @@ public class AutoCraftMenu {
             return;
         }
 
-        // Nút làm mới
         if (slot == 50) {
             openMenu(player);
             return;
         }
 
-        // Xử lý click vào craft
         ItemStack clicked = inventory.getItem(slot);
         if (clicked == null || !clicked.hasItemMeta()) return;
 
         String displayName = ChatColor.stripColor(clicked.getItemMeta().getDisplayName());
         
-        // Tìm craft type từ display name
         for (String craftType : configManager.getCraftTypes()) {
             AutoCraftConfig craftConfig = configManager.getCraftConfig(craftType);
             if (craftConfig == null) continue;
             
             String cleanDisplay = ChatColor.stripColor(craftConfig.getDisplayName());
             if (displayName.contains(cleanDisplay) || displayName.contains(craftType)) {
-                // Bật/tắt craft
                 if (craftManager.isCrafting(player)) {
-                    // Nếu đang craft, tắt craft hiện tại và bật craft mới
                     craftManager.stopCraft(player);
                     craftManager.startCraft(player, craftType);
                 } else {

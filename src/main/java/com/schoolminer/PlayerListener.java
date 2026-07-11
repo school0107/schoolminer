@@ -7,6 +7,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
 
 public class PlayerListener implements Listener {
     private final Schoolminer plugin;
@@ -37,10 +38,10 @@ public class PlayerListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         
-        Inventory inventory = event.getInventory();
-        if (inventory == null) return;
+        InventoryView view = event.getView();
+        if (view == null) return;
         
-        String title = inventory.getTitle();
+        String title = view.getTitle();
         if (title == null) return;
         
         // Kiểm tra đây là menu AutoCraft
@@ -48,9 +49,9 @@ public class PlayerListener implements Listener {
             event.setCancelled(true);
             
             int slot = event.getRawSlot();
-            if (slot < 0 || slot >= inventory.getSize()) return;
+            if (slot < 0 || slot >= event.getInventory().getSize()) return;
             
-            menu.handleMenuClick(player, inventory, slot);
+            menu.handleMenuClick(player, event.getInventory(), slot);
         }
     }
 }

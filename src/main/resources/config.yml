@@ -7,9 +7,16 @@
 
 # ===== AUTO MINE =====
 automine:
+  # Thời gian đào 1 lần (ticks, 20 ticks = 1 giây)
   delay: 20
+  
+  # Phạm vi đào tối đa (block)
   max-range: 5
+  
+  # Tự động nhặt item vào túi (true/false)
   auto-pickup: true
+  
+  # X2 số lượng item đào được (true/false)
   double-drop: true
 
 # ===== WHITELIST BLOCK ĐƯỢC PHÉP ĐÀO =====
@@ -162,308 +169,307 @@ whitelist:
 
 # ===== AUTO KILL =====
 autokill:
+  # Thời gian hồi đòn (ticks, 20 ticks = 1 giây)
   attack-delay: 40
+  
+  # Khoảng cách tấn công (block)
   range: 3
+  
+  # Sát thương cơ bản
   base-damage: 4.0
+  
+  # Loại mob được tấn công
   kill-monster: true
   kill-animal: false
   kill-mob: true
+  
+  # Drop items khi kill
   drop-items: true
+  
+  # Drop XP khi kill
   drop-xp: true
+  
+  # XP nhận được khi kill
   xp-monster: 5
   xp-animal: 1
   xp-mob: 3
 
 # ===== AUTO CRAFT =====
 autocraft:
+  # Thời gian craft mỗi lần (ticks, 20 ticks = 1 giây)
   craft-delay: 20
   
+  # Danh sách các công thức craft
   crafts:
-    # ===== CRAFT GỖ =====
+    # ===== CRAFT GỖ (1 stack = 64) =====
     go:
       display-name: "&6Gỗ Sồi &7→ &eGỗ Cao Cấp"
       glow: true
       materials:
         oak_wood:
           material: OAK_LOG
-          amount: 8
+          amount: 64
       result:
         material: OAK_LOG
         amount: 1
         display-name: "&e✨ Gỗ Cao Cấp"
         lore:
-          - "&7Tự động chế tạo từ gỗ sồi"
-          - "&a✨ Hiệu ứng Glow!"
+          - "&7Vật liệu chế tạo trang bị cao cấp"
     
-    # ===== CRAFT ĐÁ =====
+    # ===== CRAFT ĐÁ (1 stack = 64) =====
     da:
       display-name: "&7Đá &7→ &fĐá Tinh Khiết"
       glow: true
       materials:
         stone:
           material: STONE
-          amount: 8
+          amount: 64
       result:
         material: STONE
         amount: 1
         display-name: "&f💎 Đá Tinh Khiết"
         lore:
-          - "&7Tự động chế tạo từ đá"
-          - "&a✨ Hiệu ứng Glow!"
+          - "&7Vật liệu chế tạo trang bị cao cấp"
     
-    # ===== CRAFT KIM CƯƠNG =====
-    kimcuong:
-      display-name: "&bKim Cương &7→ &b💎 Kim Cương Hoàn Hảo"
-      glow: true
-      materials:
-        diamond:
-          material: DIAMOND
-          amount: 4
-      result:
-        material: DIAMOND
-        amount: 1
-        display-name: "&b💎 Kim Cương Hoàn Hảo"
-        lore:
-          - "&7Tự động chế tạo từ kim cương"
-          - "&a✨ Hiệu ứng Glow!"
-    
-    # ===== CRAFT SẮT =====
-    sat:
-      display-name: "&fSắt &7→ &f🔩 Sắt Tinh Luyện"
-      glow: true
-      materials:
-        iron_ingot:
-          material: IRON_INGOT
-          amount: 8
-      result:
-        material: IRON_INGOT
-        amount: 1
-        display-name: "&f🔩 Sắt Tinh Luyện"
-        lore:
-          - "&7Tự động chế tạo từ sắt"
-          - "&a✨ Hiệu ứng Glow!"
-    
-    # ===== CRAFT VÀNG =====
-    vang:
-      display-name: "&eVàng &7→ &e⭐ Vàng Nguyên Chất"
-      glow: true
-      materials:
-        gold_ingot:
-          material: GOLD_INGOT
-          amount: 8
-      result:
-        material: GOLD_INGOT
-        amount: 1
-        display-name: "&e⭐ Vàng Nguyên Chất"
-        lore:
-          - "&7Tự động chế tạo từ vàng"
-          - "&a✨ Hiệu ứng Glow!"
-    
-    # ===== CRAFT ĐÁ CUỘI =====
+    # ===== CRAFT ĐÁ CUỘI (1 stack = 64) =====
     da_cuoi:
       display-name: "&7Đá Cuội &7→ &fĐá"
       glow: false
       materials:
         cobblestone:
           material: COBBLESTONE
-          amount: 4
+          amount: 64
       result:
         material: STONE
         amount: 1
-        display-name: "&fĐá"
+        display-name: "&fĐá Nguyên Khối"
         lore:
-          - "&7Nấu chảy từ đá cuội"
+          - "&7Vật liệu chế tạo trang bị"
     
-    # ===== CRAFT THAN CỦI =====
+    # ===== CRAFT THAN CỦI (1 stack = 64) =====
     than_cui:
       display-name: "&7Gỗ &7→ &8Than củi"
       glow: false
       materials:
         oak_log:
           material: OAK_LOG
-          amount: 4
+          amount: 64
       result:
         material: CHARCOAL
         amount: 1
-        display-name: "&8Than củi"
+        display-name: "&8Than củi Chất Lượng Cao"
         lore:
-          - "&7Đốt gỗ thành than"
+          - "&7Vật liệu chế tạo trang bị"
     
-    # ===== CRAFT NGỌC LỤC BẢO (EMERALD) =====
+    # ===== CRAFT SẮT (1 stack = 64) =====
+    sat:
+      display-name: "&fSắt &7→ &f🔩 Sắt Tinh Luyện"
+      glow: true
+      materials:
+        iron_ingot:
+          material: IRON_INGOT
+          amount: 64
+      result:
+        material: IRON_INGOT
+        amount: 1
+        display-name: "&f🔩 Sắt Tinh Luyện"
+        lore:
+          - "&7Vật liệu chế tạo trang bị cao cấp"
+    
+    # ===== CRAFT VÀNG (2 stack = 128) =====
+    vang:
+      display-name: "&eVàng &7→ &e⭐ Vàng Nguyên Chất"
+      glow: true
+      materials:
+        gold_ingot:
+          material: GOLD_INGOT
+          amount: 128
+      result:
+        material: GOLD_INGOT
+        amount: 1
+        display-name: "&e⭐ Vàng Nguyên Chất"
+        lore:
+          - "&7Vật liệu chế tạo trang bị cao cấp"
+    
+    # ===== CRAFT KIM CƯƠNG (2 stack = 128) =====
+    kimcuong:
+      display-name: "&bKim Cương &7→ &b💎 Kim Cương Hoàn Hảo"
+      glow: true
+      materials:
+        diamond:
+          material: DIAMOND
+          amount: 128
+      result:
+        material: DIAMOND
+        amount: 1
+        display-name: "&b💎 Kim Cương Hoàn Hảo"
+        lore:
+          - "&7Vật liệu chế tạo trang bị thượng hạng"
+    
+    # ===== CRAFT NGỌC LỤC BẢO (2 stack = 128) =====
     ngoc_luc_bao:
       display-name: "&aNgọc Lục Bảo &7→ &a💚 Ngọc Lục Bảo Hoàn Hảo"
       glow: true
       materials:
         emerald:
           material: EMERALD
-          amount: 4
+          amount: 128
       result:
         material: EMERALD
         amount: 1
         display-name: "&a💚 Ngọc Lục Bảo Hoàn Hảo"
         lore:
-          - "&7Tự động chế tạo từ ngọc lục bảo"
-          - "&a✨ Hiệu ứng Glow!"
+          - "&7Vật liệu chế tạo trang bị thượng hạng"
     
-    # ===== CRAFT ĐÁ NETHER =====
+    # ===== CRAFT ĐÁ NETHER (2 stack = 128) =====
     da_nether:
       display-name: "&cĐá Nether &7→ &c🔥 Đá Nether Tinh Khiết"
       glow: true
       materials:
         netherrack:
           material: NETHERRACK
-          amount: 8
+          amount: 128
       result:
         material: NETHERRACK
         amount: 1
         display-name: "&c🔥 Đá Nether Tinh Khiết"
         lore:
-          - "&7Tự động chế tạo từ đá nether"
-          - "&a✨ Hiệu ứng Glow!"
+          - "&7Vật liệu chế tạo trang bị cao cấp"
     
-    # ===== CRAFT MẢNH VỠ CỔ ĐẠI =====
+    # ===== CRAFT MẢNH VỠ CỔ ĐẠI (2 stack = 128) =====
     manh_vo_co_dai:
       display-name: "&5Mảnh Vỡ Cổ Đại &7→ &5💀 Mảnh Vỡ Cổ Đại Hoàn Hảo"
       glow: true
       materials:
         ancient_debris:
           material: ANCIENT_DEBRIS
-          amount: 2
+          amount: 128
       result:
         material: ANCIENT_DEBRIS
         amount: 1
         display-name: "&5💀 Mảnh Vỡ Cổ Đại Hoàn Hảo"
         lore:
-          - "&7Tự động chế tạo từ mảnh vỡ cổ đại"
-          - "&a✨ Hiệu ứng Glow!"
+          - "&7Vật liệu chế tạo trang bị thượng hạng"
     
-    # ===== CRAFT ĐÁ BAZAN =====
+    # ===== CRAFT ĐÁ BAZAN (2 stack = 128) =====
     da_bazan:
       display-name: "&8Đá Bazan &7→ &8🪨 Đá Bazan Tinh Khiết"
       glow: true
       materials:
         basalt:
           material: BASALT
-          amount: 8
+          amount: 128
       result:
         material: BASALT
         amount: 1
         display-name: "&8🪨 Đá Bazan Tinh Khiết"
         lore:
-          - "&7Tự động chế tạo từ đá bazan"
-          - "&a✨ Hiệu ứng Glow!"
+          - "&7Vật liệu chế tạo trang bị"
     
-    # ===== CRAFT ĐÁ BLACKSTONE =====
+    # ===== CRAFT BLACKSTONE (2 stack = 128) =====
     da_blackstone:
       display-name: "&0Blackstone &7→ &0🪨 Blackstone Tinh Khiết"
       glow: true
       materials:
         blackstone:
           material: BLACKSTONE
-          amount: 8
+          amount: 128
       result:
         material: BLACKSTONE
         amount: 1
         display-name: "&0🪨 Blackstone Tinh Khiết"
         lore:
-          - "&7Tự động chế tạo từ blackstone"
-          - "&a✨ Hiệu ứng Glow!"
+          - "&7Vật liệu chế tạo trang bị"
     
-    # ===== CRAFT QUẶNG NETHER GOLD =====
+    # ===== CRAFT QUẶNG NETHER GOLD (2 stack = 128) =====
     quang_nether_gold:
       display-name: "&eQuặng Nether Vàng &7→ &e✨ Vàng Nether Tinh Khiết"
       glow: true
       materials:
         nether_gold_ore:
           material: NETHER_GOLD_ORE
-          amount: 4
+          amount: 128
       result:
         material: GOLD_INGOT
         amount: 1
         display-name: "&e✨ Vàng Nether Tinh Khiết"
         lore:
-          - "&7Tự động chế tạo từ quặng nether vàng"
-          - "&a✨ Hiệu ứng Glow!"
+          - "&7Vật liệu chế tạo trang bị cao cấp"
     
-    # ===== CRAFT QUẶNG NETHER QUARTZ =====
+    # ===== CRAFT QUẶNG NETHER QUARTZ (2 stack = 128) =====
     quang_nether_quartz:
       display-name: "&fQuặng Nether Quartz &7→ &f💎 Quartz Tinh Khiết"
       glow: true
       materials:
         nether_quartz_ore:
           material: NETHER_QUARTZ_ORE
-          amount: 4
+          amount: 128
       result:
         material: QUARTZ
         amount: 1
         display-name: "&f💎 Quartz Tinh Khiết"
         lore:
-          - "&7Tự động chế tạo từ quặng nether quartz"
-          - "&a✨ Hiệu ứng Glow!"
+          - "&7Vật liệu chế tạo trang bị"
     
-    # ===== CRAFT SOUL SAND =====
+    # ===== CRAFT SOUL SAND (2 stack = 128) =====
     soul_sand:
       display-name: "&6Soul Sand &7→ &6💀 Soul Sand Tinh Khiết"
       glow: true
       materials:
         soul_sand:
           material: SOUL_SAND
-          amount: 8
+          amount: 128
       result:
         material: SOUL_SAND
         amount: 1
         display-name: "&6💀 Soul Sand Tinh Khiết"
         lore:
-          - "&7Tự động chế tạo từ soul sand"
-          - "&a✨ Hiệu ứng Glow!"
+          - "&7Vật liệu chế tạo trang bị"
     
-    # ===== CRAFT SOUL SOIL =====
+    # ===== CRAFT SOUL SOIL (2 stack = 128) =====
     soul_soil:
       display-name: "&6Soul Soil &7→ &6💀 Soul Soil Tinh Khiết"
       glow: true
       materials:
         soul_soil:
           material: SOUL_SOIL
-          amount: 8
+          amount: 128
       result:
         material: SOUL_SOIL
         amount: 1
         display-name: "&6💀 Soul Soil Tinh Khiết"
         lore:
-          - "&7Tự động chế tạo từ soul soil"
-          - "&a✨ Hiệu ứng Glow!"
+          - "&7Vật liệu chế tạo trang bị"
     
-    # ===== CRAFT GẠCH NETHER =====
+    # ===== CRAFT GẠCH NETHER (2 stack = 128) =====
     gach_nether:
       display-name: "&cGạch Nether &7→ &c🧱 Gạch Nether Tinh Khiết"
       glow: true
       materials:
         nether_brick:
           material: NETHER_BRICK
-          amount: 8
+          amount: 128
       result:
         material: NETHER_BRICK
         amount: 1
         display-name: "&c🧱 Gạch Nether Tinh Khiết"
         lore:
-          - "&7Tự động chế tạo từ gạch nether"
-          - "&a✨ Hiệu ứng Glow!"
+          - "&7Vật liệu chế tạo trang bị"
     
-    # ===== CRAFT RED NETHER BRICKS =====
+    # ===== CRAFT GẠCH NETHER ĐỎ (2 stack = 128) =====
     gach_nether_do:
       display-name: "&cGạch Nether Đỏ &7→ &c🧱 Gạch Nether Đỏ Tinh Khiết"
       glow: true
       materials:
         red_nether_brick:
           material: RED_NETHER_BRICKS
-          amount: 8
+          amount: 128
       result:
         material: RED_NETHER_BRICKS
         amount: 1
         display-name: "&c🧱 Gạch Nether Đỏ Tinh Khiết"
         lore:
-          - "&7Tự động chế tạo từ gạch nether đỏ"
-          - "&a✨ Hiệu ứng Glow!"
+          - "&7Vật liệu chế tạo trang bị"
 
 # ===== MESSAGES =====
 messages:

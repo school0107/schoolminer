@@ -13,7 +13,6 @@ public class AutoCraftMenu {
     private final Schoolminer plugin;
     private final AutoCraftManager craftManager;
     private final ConfigManager configManager;
-    private final Map<UUID, String> playerCrafting = new HashMap<>();
 
     public AutoCraftMenu(Schoolminer plugin) {
         this.plugin = plugin;
@@ -24,41 +23,22 @@ public class AutoCraftMenu {
     public void openMenu(Player player) {
         Inventory menu = Bukkit.createInventory(null, 54, "§6§l⚒️ AutoCraft Menu");
 
-        // Danh sách craft theo thứ tự
         List<String> craftOrder = Arrays.asList(
-            "go",           // Gỗ
-            "da",           // Đá
-            "da_cuoi",      // Đá cuội
-            "than_cui",     // Than củi
-            "sat",          // Sắt
-            "vang",         // Vàng
-            "kimcuong",     // Kim cương
-            "ngoc_luc_bao", // Ngọc lục bảo
-            "da_nether",    // Đá Nether
-            "manh_vo_co_dai", // Mảnh vỡ cổ đại
-            "da_bazan",     // Đá Bazan
-            "da_blackstone", // Blackstone
-            "quang_nether_gold", // Quặng Nether Vàng
-            "quang_nether_quartz", // Quặng Nether Quartz
-            "soul_sand",    // Soul Sand
-            "soul_soil",    // Soul Soil
-            "gach_nether",  // Gạch Nether
-            "gach_nether_do" // Gạch Nether Đỏ
+            "go", "da", "da_cuoi", "than_cui", "sat", "vang", 
+            "kimcuong", "ngoc_luc_bao", "da_nether", "manh_vo_co_dai",
+            "da_bazan", "da_blackstone", "quang_nether_gold", 
+            "quang_nether_quartz", "soul_sand", "soul_soil",
+            "gach_nether", "gach_nether_do"
         );
 
-        // Lấy craft đang chạy của player
-        String currentCraft = null;
-        if (craftManager.isCrafting(player)) {
-            // Lấy craft type từ task (cách đơn giản là lưu vào map)
-            currentCraft = playerCrafting.get(player.getUniqueId());
-        }
+        // Lấy craft đang chạy
+        String currentCraft = craftManager.getCurrentCraft(player);
 
         int slot = 0;
         for (String craftType : craftOrder) {
             AutoCraftConfig craftConfig = configManager.getCraftConfig(craftType);
             if (craftConfig == null) continue;
             
-            // Kiểm tra permission
             if (!player.hasPermission("schoolminer.autocraft." + craftType)) continue;
             
             boolean isActive = craftType.equals(currentCraft);
@@ -66,7 +46,6 @@ public class AutoCraftMenu {
             menu.setItem(slot, item);
             slot++;
             
-            // Xuống hàng sau 9 slot
             if (slot % 9 == 0) slot++;
         }
 
@@ -81,17 +60,13 @@ public class AutoCraftMenu {
         stopAll.setItemMeta(stopMeta);
         menu.setItem(49, stopAll);
 
-        // Nút Reload Menu
         ItemStack reload = new ItemStack(Material.LIME_DYE);
         ItemMeta reloadMeta = reload.getItemMeta();
         reloadMeta.setDisplayName(ChatColor.GREEN + "🔄 LÀM MỚI");
-        reloadMeta.setLore(Arrays.asList(
-            ChatColor.GRAY + "Làm mới menu craft"
-        ));
+        reloadMeta.setLore(Arrays.asList(ChatColor.GRAY + "Làm mới menu craft"));
         reload.setItemMeta(reloadMeta);
         menu.setItem(50, reload);
 
-        // Thông tin
         ItemStack info = new ItemStack(Material.BOOK);
         ItemMeta infoMeta = info.getItemMeta();
         infoMeta.setDisplayName(ChatColor.YELLOW + "📖 HƯỚNG DẪN");
@@ -114,16 +89,11 @@ public class AutoCraftMenu {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
 
-        // Lấy display name không có màu để check
-        String rawDisplayName = ChatColor.stripColor(craftConfig.getDisplayName());
-        
-        // Tên hiển thị với trạng thái
         String displayName = isActive ? 
             ChatColor.GREEN + "✅ " + craftConfig.getDisplayName() : 
             ChatColor.RED + "❌ " + craftConfig.getDisplayName();
         meta.setDisplayName(displayName);
 
-        // Lore
         List<String> lore = new ArrayList<>();
         lore.add(ChatColor.GRAY + craftType);
         lore.add("");
@@ -151,7 +121,6 @@ public class AutoCraftMenu {
         
         meta.setLore(lore);
         
-        // Chỉ thêm glow khi đang chạy
         if (isActive) {
             meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
             meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
@@ -189,7 +158,6 @@ public class AutoCraftMenu {
         // Nút tắt tất cả
         if (slot == 49) {
             craftManager.stopCraft(player);
-            playerCrafting.remove(player.getUniqueId());
             player.sendMessage(ChatColor.RED + "⛔ Đã tắt tất cả AutoCraft!");
             openMenu(player);
             return;
@@ -201,49 +169,50 @@ public class AutoCraftMenu {
             return;
         }
 
-        // Xử lý click vào craft
         ItemStack clicked = inventory.getItem(slot);
         if (clicked == null || !clicked.hasItemMeta()) return;
 
         String displayName = ChatColor.stripColor(clicked.getItemMeta().getDisplayName());
         
         // Tìm craft type từ display name
+        String targetCraft = null;
         for (String craftType : configManager.getCraftTypes()) {
             AutoCraftConfig craftConfig = configManager.getCraftConfig(craftType);
             if (craftConfig == null) continue;
             
             String rawDisplayName = ChatColor.stripColor(craftConfig.getDisplayName());
             if (displayName.contains(rawDisplayName) || displayName.contains(craftType)) {
-                // Kiểm tra permission
-                if (!player.hasPermission("schoolminer.autocraft." + craftType)) {
-                    player.sendMessage(ChatColor.RED + "❌ Bạn không có quyền sử dụng craft này!");
-                    return;
-                }
-                
-                // Bật/tắt craft
-                if (craftManager.isCrafting(player)) {
-                    // Tắt craft hiện tại
-                    craftManager.stopCraft(player);
-                    playerCrafting.remove(player.getUniqueId());
-                    
-                    // Nếu click vào craft đang chạy thì chỉ tắt, không bật lại
-                    String currentCraft = playerCrafting.get(player.getUniqueId());
-                    if (craftType.equals(currentCraft)) {
-                        openMenu(player);
-                        return;
-                    }
-                }
-                
-                // Bật craft mới
-                craftManager.startCraft(player, craftType);
-                playerCrafting.put(player.getUniqueId(), craftType);
-                openMenu(player);
-                return;
+                targetCraft = craftType;
+                break;
             }
         }
-    }
-
-    public void removeCrafting(Player player) {
-        playerCrafting.remove(player.getUniqueId());
+        
+        if (targetCraft == null) return;
+        
+        // Kiểm tra permission
+        if (!player.hasPermission("schoolminer.autocraft." + targetCraft)) {
+            player.sendMessage(ChatColor.RED + "❌ Bạn không có quyền sử dụng craft này!");
+            return;
+        }
+        
+        // Lấy craft đang chạy
+        String currentCraft = craftManager.getCurrentCraft(player);
+        
+        // Nếu click vào craft đang chạy -> TẮT
+        if (targetCraft.equals(currentCraft)) {
+            craftManager.stopCraft(player);
+            player.sendMessage(ChatColor.RED + "⛔ Đã tắt AutoCraft: " + targetCraft);
+            openMenu(player);
+            return;
+        }
+        
+        // Nếu đang chạy craft khác -> tắt cũ, bật mới
+        if (currentCraft != null) {
+            craftManager.stopCraft(player);
+        }
+        
+        // Bật craft mới
+        craftManager.startCraft(player, targetCraft);
+        openMenu(player);
     }
 }

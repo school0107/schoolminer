@@ -6,7 +6,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 
 public class PlayerListener implements Listener {
@@ -24,6 +23,7 @@ public class PlayerListener implements Listener {
         plugin.getAutoMineManager().stopMining(player);
         plugin.getAutoKillManager().stopKilling(player);
         plugin.getAutoCraftManager().stopCraft(player);
+        menu.removeCrafting(player);
     }
 
     @EventHandler
@@ -32,6 +32,7 @@ public class PlayerListener implements Listener {
         plugin.getAutoMineManager().stopMining(player);
         plugin.getAutoKillManager().stopKilling(player);
         plugin.getAutoCraftManager().stopCraft(player);
+        menu.removeCrafting(player);
     }
 
     @EventHandler
@@ -44,7 +45,6 @@ public class PlayerListener implements Listener {
         String title = view.getTitle();
         if (title == null) return;
         
-        // Kiểm tra đây là menu AutoCraft
         if (title.equals("§6§l⚒️ AutoCraft Menu")) {
             event.setCancelled(true);
             

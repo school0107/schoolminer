@@ -27,7 +27,6 @@ public class AutoCraftCommand implements CommandExecutor {
 
         // Nếu không có args -> mở menu
         if (args.length == 0) {
-            // Kiểm tra có craft nào không
             List<String> available = craftManager.getAvailableCrafts(player);
             if (available.isEmpty()) {
                 player.sendMessage("§c❌ Bạn không có quyền sử dụng autocraft nào!");
@@ -35,7 +34,6 @@ public class AutoCraftCommand implements CommandExecutor {
                 return true;
             }
             
-            // Mở menu GUI
             menu.openMenu(player);
             return true;
         }
@@ -46,6 +44,7 @@ public class AutoCraftCommand implements CommandExecutor {
         if (args.length >= 2 && args[1].equalsIgnoreCase("off")) {
             if (craftManager.isCrafting(player)) {
                 craftManager.stopCraft(player);
+                menu.removeCrafting(player);
             } else {
                 player.sendMessage("§e⚠️ Bạn không đang craft gì cả!");
             }

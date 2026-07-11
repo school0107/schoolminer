@@ -12,6 +12,7 @@ public class AutoCraftManager {
     private final Schoolminer plugin;
     private final Map<UUID, CraftTask> tasks = new HashMap<>();
     private final ConfigManager config;
+    private final Map<UUID, String> playerCraftType = new HashMap<>();
 
     public AutoCraftManager(Schoolminer plugin) {
         this.plugin = plugin;
@@ -21,39 +22,28 @@ public class AutoCraftManager {
     public void startCraft(Player player, String craftType) {
         UUID uuid = player.getUniqueId();
         
-        // KIỂM TRA PERMISSION CHO TỪNG LOẠI CRAFT
         String permission = "schoolminer.autocraft." + craftType;
         if (!player.hasPermission(permission)) {
             player.sendMessage("§c❌ Bạn không có quyền sử dụng autocraft " + craftType + "!");
-            player.sendMessage("§7Yêu cầu permission: §e" + permission);
             return;
         }
         
         AutoCraftConfig craftConfig = config.getCraftConfig(craftType);
         if (craftConfig == null) {
             player.sendMessage("§c❌ Không tìm thấy autocraft: " + craftType);
-            player.sendMessage("§7Danh sách craft có sẵn:");
-            for (String type : config.getCraftTypes()) {
-                AutoCraftConfig c = config.getCraftConfig(type);
-                if (c != null) {
-                    // Chỉ hiển thị craft mà player có permission
-                    if (player.hasPermission("schoolminer.autocraft." + type)) {
-                        player.sendMessage("§e/autocraft " + type + " §7- §f" + c.getDisplayName());
-                    }
-                }
-            }
             return;
         }
         
+        // Nếu đang craft, tắt craft cũ
         if (tasks.containsKey(uuid)) {
-            player.sendMessage("§c⚠️ Bạn đang craft, hãy tắt craft hiện tại trước!");
-            return;
+            stopCraft(player);
         }
         
         CraftTask task = new CraftTask(player, craftConfig);
         int craftDelay = config.getCraftDelay();
         task.runTaskTimer(plugin, 0L, craftDelay);
         tasks.put(uuid, task);
+        playerCraftType.put(uuid, craftType);
         
         player.sendMessage("§a✅ Đã bật AutoCraft: " + craftConfig.getDisplayName() + "!");
     }
@@ -63,6 +53,7 @@ public class AutoCraftManager {
         CraftTask task = tasks.remove(uuid);
         if (task != null) {
             task.cancel();
+            playerCraftType.remove(uuid);
             player.sendMessage("§c⛔ Đã tắt AutoCraft!");
         }
     }
@@ -72,16 +63,20 @@ public class AutoCraftManager {
             task.cancel();
         }
         tasks.clear();
+        playerCraftType.clear();
     }
 
     public boolean isCrafting(Player player) {
         return tasks.containsKey(player.getUniqueId());
     }
 
+    public String getCurrentCraft(Player player) {
+        return playerCraftType.get(player.getUniqueId());
+    }
+
     public List<String> getAvailableCrafts(Player player) {
         List<String> available = new ArrayList<>();
         for (String craftType : config.getCraftTypes()) {
-            // CHỈ HIỂN THỊ CRAFT MÀ PLAYER CÓ PERMISSION
             if (player.hasPermission("schoolminer.autocraft." + craftType)) {
                 available.add(craftType);
             }
@@ -109,7 +104,6 @@ public class AutoCraftManager {
             PlayerInventory inventory = player.getInventory();
             
             int maxCrafts = Integer.MAX_VALUE;
-            Map<ItemStack, Integer> materialCounts = new HashMap<>();
             
             for (ItemStack material : craftConfig.getMaterials()) {
                 if (material == null || material.getType().isAir()) continue;
@@ -128,8 +122,6 @@ public class AutoCraftManager {
                 if (possibleCrafts < maxCrafts) {
                     maxCrafts = possibleCrafts;
                 }
-                
-                materialCounts.put(material, needed);
             }
             
             if (maxCrafts <= 0) {

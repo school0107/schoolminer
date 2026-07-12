@@ -231,9 +231,8 @@ public class AutoCraftManager {
             }
             
             if (addedCount > 0) {
+                // Chỉ play sound, không particle
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.3f, 1);
-                player.getWorld().spawnParticle(Particle.ENCHANT, 
-                    player.getLocation().add(0, 1, 0), Math.min(addedCount * 2, 20), 0.3, 0.3, 0.3);
                 
                 if (craftedCount % 10 == 0 && craftedCount > 0) {
                     player.sendMessage("§7Đã craft §a" + craftedCount + " §7" + craftConfig.getDisplayName());

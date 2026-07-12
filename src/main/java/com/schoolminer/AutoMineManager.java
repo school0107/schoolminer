@@ -86,8 +86,6 @@ public class AutoMineManager implements Listener {
         while (iterator.hasNext()) {
             Map.Entry<Location, UUID> entry = iterator.next();
             if (entry.getValue().equals(uuid)) {
-                Block block = entry.getKey().getBlock();
-                player.sendBlockDamage(entry.getKey(), 0.0f);
                 iterator.remove();
             }
         }
@@ -96,10 +94,6 @@ public class AutoMineManager implements Listener {
     private void unlockBlock(Location location, UUID uuid) {
         if (lockedBlocks.containsKey(location) && lockedBlocks.get(location).equals(uuid)) {
             lockedBlocks.remove(location);
-            Player player = Bukkit.getPlayer(uuid);
-            if (player != null && player.isOnline()) {
-                player.sendBlockDamage(location, 0.0f);
-            }
         }
     }
 
@@ -248,7 +242,7 @@ public class AutoMineManager implements Listener {
                     }
                     
                     boolean doubleDrop = config.isDoubleDrop();
-                    int multiBlockLevel = plugin.getConfigManager().getMultiBlockLevel(player);
+                    int multiBlockLevel = plugin.getConfigManager().getMultiBlockLevel(tool);
                     PlayerInventory inventory = player.getInventory();
                     
                     for (ItemStack drop : drops) {
@@ -276,19 +270,13 @@ public class AutoMineManager implements Listener {
                         }
                     }
                     
-                    if (multiBlockLevel > 1 && drops.size() > 0 && Math.random() < 0.1) {
-                        player.sendMessage("§6✦ MultiBlock x" + multiBlockLevel + " §ađã kích hoạt!");
-                    }
-                    
                     int exp = getBlockExp(target, tool);
                     if (exp > 0) {
                         player.giveExp(exp);
                     }
                     
+                    // Chỉ play sound, không particle
                     player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
-                    player.getWorld().spawnParticle(Particle.BLOCK,
-                        target.getLocation().add(0.5, 0.5, 0.5), 10,
-                        target.getBlockData());
                 }
                 
                 if (currentBlock != null) {

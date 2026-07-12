@@ -93,12 +93,10 @@ public class AutoKillManager {
         double radius = getExplosionRadius(player);
         double chance = getExplosionChance(player);
         
-        if (random.nextDouble() > chance) return;
+        if (random.nextDouble() > chance || radius <= 0) return;
         
+        // Tạo vụ nổ
         player.getWorld().createExplosion(location, (float) radius, false, false);
-        // Dùng Particle.EXPLOSION thay vì EXPLOSION_LARGE
-        player.getWorld().spawnParticle(Particle.EXPLOSION, location, 1);
-        player.getWorld().spawnParticle(Particle.FLAME, location, 50, radius, radius, radius);
         player.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
         
         player.sendMessage("§c§l💥 SÁT THƯƠNG NỔ! §7Bán kính: §e" + String.format("%.1f", radius) + " block");
@@ -188,10 +186,9 @@ public class AutoKillManager {
                 if (!damageEvent.isCancelled()) {
                     living.damage(damage, player);
                     
+                    // Chỉ play sound, không particle
                     player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, 
                         Material.REDSTONE_BLOCK);
-                    player.getWorld().spawnParticle(Particle.CRIT, 
-                        target.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3);
                     
                     triggerExplosion(player, target.getLocation());
                 }
@@ -224,9 +221,6 @@ public class AutoKillManager {
                             player.giveExp(xp);
                         }
                     }
-                    
-                    player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,
-                        living.getLocation(), 30, 0.5, 0.5, 0.5);
                     
                     try {
                         if (living.hasMetadata("MythicMobs")) {

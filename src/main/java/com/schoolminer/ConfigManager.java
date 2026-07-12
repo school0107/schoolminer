@@ -6,7 +6,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.ChatColor;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.entity.Player;
 import java.util.*;
 
 public class ConfigManager {
@@ -32,14 +31,13 @@ public class ConfigManager {
     private int maxCraftPerTick;
     private Map<String, AutoCraftConfig> craftConfigs;
     
-    // Explosion upgrade
     private int maxExplosionLevel;
     private Map<Integer, Double> explosionChances;
     private Map<Integer, Double> explosionRadii;
     private Map<Integer, Double> upgradeCosts;
     
-    // Multi block
-    private Map<UUID, Integer> multiBlockLevels = new HashMap<>();
+    // Multi block cho cúp
+    private Map<String, Integer> multiBlockLevels = new HashMap<>();
 
     public ConfigManager(Schoolminer plugin) {
         this.plugin = plugin;
@@ -93,7 +91,7 @@ public class ConfigManager {
         // Explosion upgrades
         loadExplosionUpgrades(config);
         
-        // Load multi block từ config
+        // Load multi block
         loadMultiBlock(config);
         
         plugin.getLogger().info("§a✅ Đã load " + whitelist.size() + " block vào whitelist");
@@ -103,27 +101,35 @@ public class ConfigManager {
 
     private void loadMultiBlock(FileConfiguration config) {
         multiBlockLevels.clear();
-        ConfigurationSection multiBlockSection = config.getConfigurationSection("multi-block");
+        ConfigurationSection multiBlockSection = config.getConfigurationSection("multi-block-tools");
         if (multiBlockSection == null) return;
         
-        for (String uuidStr : multiBlockSection.getKeys(false)) {
-            try {
-                UUID uuid = UUID.fromString(uuidStr);
-                int level = multiBlockSection.getInt(uuidStr, 1);
-                multiBlockLevels.put(uuid, level);
-            } catch (IllegalArgumentException ignored) {}
+        for (String toolKey : multiBlockSection.getKeys(false)) {
+            int level = multiBlockSection.getInt(toolKey, 1);
+            multiBlockLevels.put(toolKey, level);
         }
     }
 
-    public void saveMultiBlock() {
+    public void saveMultiBlock(String toolKey, int level) {
+        multiBlockLevels.put(toolKey, level);
         FileConfiguration config = plugin.getConfig();
-        ConfigurationSection multiBlockSection = config.createSection("multi-block");
-        
-        for (Map.Entry<UUID, Integer> entry : multiBlockLevels.entrySet()) {
-            multiBlockSection.set(entry.getKey().toString(), entry.getValue());
+        ConfigurationSection multiBlockSection = config.createSection("multi-block-tools");
+        for (Map.Entry<String, Integer> entry : multiBlockLevels.entrySet()) {
+            multiBlockSection.set(entry.getKey(), entry.getValue());
         }
-        
         plugin.saveConfig();
+    }
+
+    public int getMultiBlockLevel(ItemStack tool) {
+        if (tool == null || tool.getType().isAir()) return 1;
+        String toolKey = tool.getType().name();
+        return multiBlockLevels.getOrDefault(toolKey, 1);
+    }
+
+    public void setMultiBlockLevel(ItemStack tool, int level) {
+        if (tool == null || tool.getType().isAir()) return;
+        String toolKey = tool.getType().name();
+        saveMultiBlock(toolKey, level);
     }
 
     private void loadExplosionUpgrades(FileConfiguration config) {
@@ -241,118 +247,33 @@ public class ConfigManager {
         }
     }
 
-    public int getWhitelistCount() {
-        return whitelist.size();
-    }
-
-    public boolean isWhitelisted(Material material) {
-        return whitelist.contains(material);
-    }
-
-    public int getMineDelay() {
-        return mineDelay;
-    }
-
-    public int getAttackDelay() {
-        return attackDelay;
-    }
-
-    public int getMaxRange() {
-        return maxRange;
-    }
-
-    public int getKillRange() {
-        return killRange;
-    }
-
-    public double getBaseDamage() {
-        return baseDamage;
-    }
-
-    public boolean isKillMonster() {
-        return killMonster;
-    }
-
-    public boolean isKillAnimal() {
-        return killAnimal;
-    }
-
-    public boolean isKillMob() {
-        return killMob;
-    }
-
-    public boolean isDropItems() {
-        return dropItems;
-    }
-
-    public boolean isDropXp() {
-        return dropXp;
-    }
-
-    public int getXpMonster() {
-        return xpMonster;
-    }
-
-    public int getXpAnimal() {
-        return xpAnimal;
-    }
-
-    public int getXpMob() {
-        return xpMob;
-    }
-
-    public boolean isAutoPickup() {
-        return autoPickup;
-    }
-
-    public boolean isDoubleDrop() {
-        return doubleDrop;
-    }
-
-    public int getCraftDelay() {
-        return craftDelay;
-    }
-
-    public int getCraftCooldown() {
-        return craftCooldown;
-    }
-
-    public int getMaxCraftPerTick() {
-        return maxCraftPerTick;
-    }
-
-    public AutoCraftConfig getCraftConfig(String id) {
-        return craftConfigs.get(id);
-    }
-
-    public Set<String> getCraftTypes() {
-        return craftConfigs.keySet();
-    }
-
-    public int getMaxExplosionLevel() {
-        return maxExplosionLevel;
-    }
-
-    public double getExplosionChanceAtLevel(int level) {
-        return explosionChances.getOrDefault(level, 0.0);
-    }
-
-    public double getExplosionRadiusAtLevel(int level) {
-        return explosionRadii.getOrDefault(level, 0.0);
-    }
-
-    public double getUpgradeCost(int level) {
-        return upgradeCosts.getOrDefault(level, 0.0);
-    }
-
-    public void setMultiBlockLevel(Player player, int level) {
-        multiBlockLevels.put(player.getUniqueId(), level);
-        saveMultiBlock();
-    }
-
-    public int getMultiBlockLevel(Player player) {
-        return multiBlockLevels.getOrDefault(player.getUniqueId(), 1);
-    }
+    // Getters
+    public int getWhitelistCount() { return whitelist.size(); }
+    public boolean isWhitelisted(Material material) { return whitelist.contains(material); }
+    public int getMineDelay() { return mineDelay; }
+    public int getAttackDelay() { return attackDelay; }
+    public int getMaxRange() { return maxRange; }
+    public int getKillRange() { return killRange; }
+    public double getBaseDamage() { return baseDamage; }
+    public boolean isKillMonster() { return killMonster; }
+    public boolean isKillAnimal() { return killAnimal; }
+    public boolean isKillMob() { return killMob; }
+    public boolean isDropItems() { return dropItems; }
+    public boolean isDropXp() { return dropXp; }
+    public int getXpMonster() { return xpMonster; }
+    public int getXpAnimal() { return xpAnimal; }
+    public int getXpMob() { return xpMob; }
+    public boolean isAutoPickup() { return autoPickup; }
+    public boolean isDoubleDrop() { return doubleDrop; }
+    public int getCraftDelay() { return craftDelay; }
+    public int getCraftCooldown() { return craftCooldown; }
+    public int getMaxCraftPerTick() { return maxCraftPerTick; }
+    public AutoCraftConfig getCraftConfig(String id) { return craftConfigs.get(id); }
+    public Set<String> getCraftTypes() { return craftConfigs.keySet(); }
+    public int getMaxExplosionLevel() { return maxExplosionLevel; }
+    public double getExplosionChanceAtLevel(int level) { return explosionChances.getOrDefault(level, 0.0); }
+    public double getExplosionRadiusAtLevel(int level) { return explosionRadii.getOrDefault(level, 0.0); }
+    public double getUpgradeCost(int level) { return upgradeCosts.getOrDefault(level, 0.0); }
 
     public String getMessage(String key) {
         String msg = plugin.getConfig().getString("messages." + key, "&c⚠️ Không tìm thấy message: " + key);

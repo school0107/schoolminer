@@ -7,17 +7,33 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import net.milkbowl.vault.economy.Economy;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import java.util.*;
 
 public class AutoKillUpgradeMenu {
     private final Schoolminer plugin;
     private final AutoKillManager killManager;
     private final ConfigManager configManager;
+    private Economy economy;
 
     public AutoKillUpgradeMenu(Schoolminer plugin) {
         this.plugin = plugin;
         this.killManager = plugin.getAutoKillManager();
         this.configManager = plugin.getConfigManager();
+        setupEconomy();
+    }
+
+    private boolean setupEconomy() {
+        if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
+            return false;
+        }
+        RegisteredServiceProvider<Economy> rsp = Bukkit.getServicesManager().getRegistration(Economy.class);
+        if (rsp == null) {
+            return false;
+        }
+        economy = rsp.getProvider();
+        return economy != null;
     }
 
     public void openMenu(Player player) {
@@ -56,13 +72,25 @@ public class AutoKillUpgradeMenu {
         ItemStack upgrade = new ItemStack(Material.EXPERIENCE_BOTTLE);
         ItemMeta upgradeMeta = upgrade.getItemMeta();
         if (currentLevel < maxLevel) {
-            upgradeMeta.setDisplayName("§a§l🔼 NÂNG CẤP");
             double cost = configManager.getUpgradeCost(currentLevel + 1);
-            upgradeMeta.setLore(Arrays.asList(
-                "§7Giá: §6$" + String.format("%,.0f", cost),
-                "",
-                "§eClick để nâng cấp!"
-            ));
+            upgradeMeta.setDisplayName("§a§l🔼 NÂNG CẤP");
+            if (economy != null) {
+                double balance = economy.getBalance(player);
+                upgradeMeta.setLore(Arrays.asList(
+                    "§7Giá: §6$" + String.format("%,.0f", cost),
+                    "§7Số dư: §e$" + String.format("%,.0f", balance),
+                    "",
+                    (balance >= cost ? "§a✅ Đủ tiền!" : "§c❌ Không đủ tiền!"),
+                    "",
+                    "§eClick để nâng cấp!"
+                ));
+            } else {
+                upgradeMeta.setLore(Arrays.asList(
+                    "§7Giá: §6$" + String.format("%,.0f", cost),
+                    "",
+                    "§eClick để nâng cấp!"
+                ));
+            }
         } else {
             upgradeMeta.setDisplayName("§c§l✅ ĐÃ ĐẠT CẤP TỐI ĐA");
             upgradeMeta.setLore(Arrays.asList(
@@ -104,16 +132,28 @@ public class AutoKillUpgradeMenu {
 
             double cost = configManager.getUpgradeCost(currentLevel + 1);
             
-            // Fix: Sử dụng lệnh console để kiểm tra và trừ tiền
-            // Tạm thời bỏ qua kiểm tra tiền, chỉ cần có EssentialsX
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), 
-                "eco take " + player.getName() + " " + (int) cost);
+            if (economy == null) {
+                player.sendMessage("§c❌ Hệ thống kinh tế chưa được kích hoạt!");
+                return;
+            }
+
+            // KIỂM TRA ĐỦ TIỀN
+            if (!economy.has(player, cost)) {
+                player.sendMessage("§c❌ Bạn không đủ tiền! Cần §6$" + String.format("%,.0f", cost));
+                player.sendMessage("§7Số dư hiện tại: §e$" + String.format("%,.0f", economy.getBalance(player)));
+                openMenu(player);
+                return;
+            }
+
+            // TRỪ TIỀN
+            economy.withdrawPlayer(player, cost);
             
             killManager.setExplosionLevel(player, currentLevel + 1);
             
             player.sendMessage("§a✅ Nâng cấp thành công lên level §e" + (currentLevel + 1) + "§a!");
             player.sendMessage("§7Tỉ lệ nổ: §e" + String.format("%.1f", killManager.getExplosionChance(player) * 100) + "%");
             player.sendMessage("§7Bán kính: §e" + String.format("%.1f", killManager.getExplosionRadius(player)) + " block");
+            player.sendMessage("§7Số dư còn lại: §e$" + String.format("%,.0f", economy.getBalance(player)));
             
             openMenu(player);
         } else if (slot == 22) {

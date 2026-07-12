@@ -31,7 +31,6 @@ public class SchoolminerCommand implements CommandExecutor {
             return true;
         }
 
-        // Lệnh multi block: /smn add mutiblock <level>
         if (args.length >= 3 && args[0].equalsIgnoreCase("add") && args[1].equalsIgnoreCase("mutiblock")) {
             if (!sender.hasPermission("schoolminer.admin")) {
                 sender.sendMessage("§c❌ Bạn không có quyền sử dụng lệnh này!");
@@ -45,4 +44,54 @@ public class SchoolminerCommand implements CommandExecutor {
 
             try {
                 int level = Integer.parseInt(args[2]);
-                if (level
+                if (level < 1) {
+                    sender.sendMessage("§c⚠️ Cấp số nhân phải lớn hơn 0!");
+                    return true;
+                }
+                if (level > 100) {
+                    sender.sendMessage("§c⚠️ Cấp số nhân tối đa là 100!");
+                    return true;
+                }
+                
+                plugin.getConfigManager().setMultiBlockLevel(player, level);
+                sender.sendMessage("§a✅ Đã set MultiBlock level §e" + level + " §acho §6" + player.getName());
+                sender.sendMessage("§7Khi đào block sẽ nhân §ex" + level + " §7vật phẩm!");
+                return true;
+            } catch (NumberFormatException e) {
+                sender.sendMessage("§c⚠️ Vui lòng nhập số hợp lệ!");
+                return true;
+            }
+        }
+
+        if (args.length >= 1 && args[0].equalsIgnoreCase("mutiblock")) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage("§c❌ Chỉ player mới dùng được!");
+                return true;
+            }
+            
+            int level = plugin.getConfigManager().getMultiBlockLevel(player);
+            sender.sendMessage("§6✦ MultiBlock của bạn: §e" + level + "x");
+            sender.sendMessage("§7Sử dụng §e/smn add mutiblock <số> §7để thay đổi");
+            return true;
+        }
+
+        sendHelp(sender);
+        return true;
+    }
+
+    private void sendHelp(CommandSender sender) {
+        sender.sendMessage("§6===== §eSchoolminer Help §6=====");
+        sender.sendMessage("§7/automine §f- Bật/tắt Auto Mine");
+        sender.sendMessage("§7/autokill §f- Bật/tắt Auto Kill");
+        sender.sendMessage("§7/autokill upgrade §f- Mở menu nâng cấp AutoKill");
+        sender.sendMessage("§7/autocraft §f- Mở menu AutoCraft");
+        sender.sendMessage("§7/smn mutiblock §f- Xem cấp MultiBlock hiện tại");
+        sender.sendMessage("§7/smn add mutiblock <số> §f- Set MultiBlock (Admin)");
+        sender.sendMessage("§7/schoolminer reload §f- Reload config");
+        sender.sendMessage("§7/schoolminer help §f- Hiển thị trợ giúp");
+    }
+
+    private String colorize(String message) {
+        return ChatColor.translateAlternateColorCodes('&', message);
+    }
+}

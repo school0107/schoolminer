@@ -39,7 +39,6 @@ public class AutoCraftCommand implements CommandExecutor {
 
         String craftType = args[0].toLowerCase();
         
-        // Tắt craft
         if (args.length >= 2 && args[1].equalsIgnoreCase("off")) {
             if (craftManager.isCrafting(player, craftType)) {
                 craftManager.stopCraft(player, craftType);
@@ -49,7 +48,6 @@ public class AutoCraftCommand implements CommandExecutor {
             return true;
         }
 
-        // Bật craft
         craftManager.startCraft(player, craftType);
         return true;
     }

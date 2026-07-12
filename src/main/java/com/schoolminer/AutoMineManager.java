@@ -23,12 +23,11 @@ public class AutoMineManager implements Listener {
     private final ConfigManager config;
     private final Map<UUID, Location> lastLocations = new HashMap<>();
     private final Random random = new Random();
-    private final Map<Location, UUID> lockedBlocks = new HashMap<>(); // Lưu block đang bị khóa
+    private final Map<Location, UUID> lockedBlocks = new HashMap<>();
 
     public AutoMineManager(Schoolminer plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfigManager();
-        // Đăng ký listener
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
@@ -54,7 +53,6 @@ public class AutoMineManager implements Listener {
         MineTask task = tasks.remove(uuid);
         if (task != null) {
             task.cancel();
-            // Mở khóa tất cả block của player này
             unlockAllBlocks(player);
             try {
                 Block target = player.getTargetBlockExact(5);
@@ -75,21 +73,19 @@ public class AutoMineManager implements Listener {
         }
         tasks.clear();
         lastLocations.clear();
-        lockedBlocks.clear(); // Xóa tất cả block khóa
+        lockedBlocks.clear();
     }
 
     public boolean isMining(Player player) {
         return tasks.containsKey(player.getUniqueId());
     }
 
-    // Mở khóa tất cả block của player
     private void unlockAllBlocks(Player player) {
         UUID uuid = player.getUniqueId();
         Iterator<Map.Entry<Location, UUID>> iterator = lockedBlocks.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Location, UUID> entry = iterator.next();
             if (entry.getValue().equals(uuid)) {
-                // Gửi gói tin cập nhật block để client biết block đã được mở khóa
                 Block block = entry.getKey().getBlock();
                 player.sendBlockDamage(entry.getKey(), 0.0f);
                 iterator.remove();
@@ -97,11 +93,9 @@ public class AutoMineManager implements Listener {
         }
     }
 
-    // Mở khóa 1 block cụ thể
     private void unlockBlock(Location location, UUID uuid) {
         if (lockedBlocks.containsKey(location) && lockedBlocks.get(location).equals(uuid)) {
             lockedBlocks.remove(location);
-            // Gửi gói tin cập nhật để client biết block đã được mở khóa
             Player player = Bukkit.getPlayer(uuid);
             if (player != null && player.isOnline()) {
                 player.sendBlockDamage(location, 0.0f);
@@ -109,33 +103,27 @@ public class AutoMineManager implements Listener {
         }
     }
 
-    // Khóa block
     private void lockBlock(Location location, UUID uuid) {
         lockedBlocks.put(location, uuid);
     }
 
-    // Kiểm tra block có bị khóa không
     private boolean isBlockLocked(Location location, Player player) {
         if (lockedBlocks.containsKey(location)) {
             UUID owner = lockedBlocks.get(location);
-            // Nếu là chủ sở hữu thì cho phép
             if (owner.equals(player.getUniqueId())) {
                 return false;
             }
-            // Nếu không phải chủ sở hữu thì khóa
             return true;
         }
         return false;
     }
 
-    // Sự kiện ngăn người khác phá block đang bị khóa
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
         Block block = event.getBlock();
         Location loc = block.getLocation();
         
-        // Kiểm tra nếu block đang bị khóa bởi người khác
         if (isBlockLocked(loc, player)) {
             UUID owner = lockedBlocks.get(loc);
             Player ownerPlayer = Bukkit.getPlayer(owner);
@@ -146,14 +134,12 @@ public class AutoMineManager implements Listener {
         }
     }
 
-    // Sự kiện ngăn damage block khi bị khóa
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockDamage(BlockDamageEvent event) {
         Player player = event.getPlayer();
         Block block = event.getBlock();
         Location loc = block.getLocation();
         
-        // Kiểm tra nếu block đang bị khóa bởi người khác
         if (isBlockLocked(loc, player)) {
             event.setCancelled(true);
         }
@@ -214,21 +200,18 @@ public class AutoMineManager implements Listener {
                 return;
             }
 
-            // Kiểm tra nếu block đang bị khóa bởi người khác
             if (isBlockLocked(target.getLocation(), player)) {
                 resetBreak();
                 return;
             }
 
             if (currentBlock == null || !currentBlock.equals(target)) {
-                // Nếu block cũ khác, mở khóa block cũ
                 if (currentBlock != null) {
                     unlockBlock(currentBlock.getLocation(), playerUUID);
                 }
                 currentBlock = target;
                 breakTicks = 0;
                 isBreaking = false;
-                // Khóa block mới
                 lockBlock(target.getLocation(), playerUUID);
             }
 
@@ -265,6 +248,7 @@ public class AutoMineManager implements Listener {
                     }
                     
                     boolean doubleDrop = config.isDoubleDrop();
+                    int multiBlockLevel = plugin.getConfigManager().getMultiBlockLevel(player);
                     PlayerInventory inventory = player.getInventory();
                     
                     for (ItemStack drop : drops) {
@@ -273,6 +257,10 @@ public class AutoMineManager implements Listener {
                             
                             if (doubleDrop) {
                                 amount *= 2;
+                            }
+                            
+                            if (multiBlockLevel > 1) {
+                                amount *= multiBlockLevel;
                             }
                             
                             ItemStack finalDrop = drop.clone();
@@ -288,6 +276,10 @@ public class AutoMineManager implements Listener {
                         }
                     }
                     
+                    if (multiBlockLevel > 1 && drops.size() > 0 && Math.random() < 0.1) {
+                        player.sendMessage("§6✦ MultiBlock x" + multiBlockLevel + " §ađã kích hoạt!");
+                    }
+                    
                     int exp = getBlockExp(target, tool);
                     if (exp > 0) {
                         player.giveExp(exp);
@@ -299,7 +291,6 @@ public class AutoMineManager implements Listener {
                         target.getBlockData());
                 }
                 
-                // Mở khóa block sau khi đào xong
                 if (currentBlock != null) {
                     unlockBlock(currentBlock.getLocation(), playerUUID);
                     currentBlock = null;
@@ -372,7 +363,6 @@ public class AutoMineManager implements Listener {
                 try {
                     player.sendBlockDamage(currentBlock.getLocation(), 0.0f);
                 } catch (Exception ignored) {}
-                // Mở khóa block khi reset
                 unlockBlock(currentBlock.getLocation(), playerUUID);
             }
             currentBlock = null;

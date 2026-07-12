@@ -3,23 +3,53 @@ version: 1.0.0
 main: com.schoolminer.Schoolminer
 api-version: 1.21
 author: school0107
-description: Auto mine, auto kill and autocraft plugin
+description: Auto mine, auto kill and autocraft plugin with upgrades
+depend: [Vault]
+softdepend: [MythicMobs]
 commands:
   automine:
     description: Tự động đào block
     usage: /automine
   autokill:
     description: Tự động tấn công mob
-    usage: /autokill
+    usage: /autokill [upgrade]
   autocraft:
     description: Tự động chế tạo
     usage: /autocraft <type> [off]
   schoolminer:
     description: Quản lý plugin
-    usage: /schoolminer reload
+    usage: /schoolminer <reload|help|mutiblock|add>
 
 permissions:
-  # AutoCraft Permissions
+  schoolminer.automine:
+    description: Cho phép sử dụng /automine
+    default: true
+  schoolminer.autokill:
+    description: Cho phép sử dụng /autokill
+    default: true
+  schoolminer.autocraft:
+    description: Cho phép sử dụng /autocraft
+    default: true
+  schoolminer.admin:
+    description: Quyền admin
+    default: op
+  
+  schoolminer.range.1:
+    description: Phạm vi đào 1 block
+    default: true
+  schoolminer.range.2:
+    description: Phạm vi đào 2 block
+    default: true
+  schoolminer.range.3:
+    description: Phạm vi đào 3 block
+    default: true
+  schoolminer.range.4:
+    description: Phạm vi đào 4 block
+    default: true
+  schoolminer.range.5:
+    description: Phạm vi đào 5 block
+    default: true
+
   schoolminer.autocraft.go:
     description: Cho phép craft gỗ
     default: op
@@ -74,25 +104,3 @@ permissions:
   schoolminer.autocraft.gach_nether_do:
     description: Cho phép craft gạch nether đỏ
     default: op
-  schoolminer.autocraft.*:
-    description: Tất cả quyền craft
-    default: op
-    children:
-      schoolminer.autocraft.go: true
-      schoolminer.autocraft.da: true
-      schoolminer.autocraft.kimcuong: true
-      schoolminer.autocraft.sat: true
-      schoolminer.autocraft.vang: true
-      schoolminer.autocraft.da_cuoi: true
-      schoolminer.autocraft.than_cui: true
-      schoolminer.autocraft.ngoc_luc_bao: true
-      schoolminer.autocraft.da_nether: true
-      schoolminer.autocraft.manh_vo_co_dai: true
-      schoolminer.autocraft.da_bazan: true
-      schoolminer.autocraft.da_blackstone: true
-      schoolminer.autocraft.quang_nether_gold: true
-      schoolminer.autocraft.quang_nether_quartz: true
-      schoolminer.autocraft.soul_sand: true
-      schoolminer.autocraft.soul_soil: true
-      schoolminer.autocraft.gach_nether: true
-      schoolminer.autocraft.gach_nether_do: true

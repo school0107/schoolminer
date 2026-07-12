@@ -1,6 +1,5 @@
 package com.schoolminer;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -8,9 +7,13 @@ import org.bukkit.entity.Player;
 
 public class AutoKillCommand implements CommandExecutor {
     private final Schoolminer plugin;
+    private final VaultEconomy economy;
+    private AutoKillUpgradeMenu upgradeMenu;
 
-    public AutoKillCommand(Schoolminer plugin) {
+    public AutoKillCommand(Schoolminer plugin, VaultEconomy economy) {
         this.plugin = plugin;
+        this.economy = economy;
+        this.upgradeMenu = new AutoKillUpgradeMenu(plugin, economy);
     }
 
     @Override
@@ -20,32 +23,16 @@ public class AutoKillCommand implements CommandExecutor {
             return true;
         }
 
-        // Kiểm tra permission
-        if (!player.hasPermission("schoolminer.autokill")) {
-            player.sendMessage("§c❌ Bạn không có quyền sử dụng lệnh này!");
-            player.sendMessage("§7Yêu cầu permission: §eschoolminer.autokill");
-            return true;
-        }
-
         AutoKillManager manager = plugin.getAutoKillManager();
-        
-        // Kiểm tra nếu có argument "on" hoặc "off"
-        if (args.length > 0) {
-            if (args[0].equalsIgnoreCase("on")) {
-                if (manager.isKilling(player)) {
-                    player.sendMessage("§e⚠️ Auto Kill đã được bật rồi!");
-                } else {
-                    manager.startKilling(player);
-                }
-                return true;
-            } else if (args[0].equalsIgnoreCase("off")) {
-                if (!manager.isKilling(player)) {
-                    player.sendMessage("§e⚠️ Auto Kill đã được tắt rồi!");
-                } else {
-                    manager.stopKilling(player);
-                }
+
+        // Mở menu nâng cấp
+        if (args.length > 0 && args[0].equalsIgnoreCase("upgrade")) {
+            if (!economy.isEnabled()) {
+                player.sendMessage("§c❌ Hệ thống kinh tế chưa được kích hoạt! Cần Vault plugin.");
                 return true;
             }
+            upgradeMenu.openMenu(player);
+            return true;
         }
 
         // Toggle

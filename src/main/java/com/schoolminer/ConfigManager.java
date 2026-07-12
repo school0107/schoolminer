@@ -6,6 +6,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.ChatColor;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.entity.Player;
 import java.util.*;
 
 public class ConfigManager {
@@ -92,9 +93,37 @@ public class ConfigManager {
         // Explosion upgrades
         loadExplosionUpgrades(config);
         
+        // Load multi block từ config
+        loadMultiBlock(config);
+        
         plugin.getLogger().info("§a✅ Đã load " + whitelist.size() + " block vào whitelist");
         plugin.getLogger().info("§a✅ Đã load " + craftConfigs.size() + " công thức craft");
         plugin.getLogger().info("§a✅ Đã load " + maxExplosionLevel + " cấp nâng cấp AutoKill");
+    }
+
+    private void loadMultiBlock(FileConfiguration config) {
+        multiBlockLevels.clear();
+        ConfigurationSection multiBlockSection = config.getConfigurationSection("multi-block");
+        if (multiBlockSection == null) return;
+        
+        for (String uuidStr : multiBlockSection.getKeys(false)) {
+            try {
+                UUID uuid = UUID.fromString(uuidStr);
+                int level = multiBlockSection.getInt(uuidStr, 1);
+                multiBlockLevels.put(uuid, level);
+            } catch (IllegalArgumentException ignored) {}
+        }
+    }
+
+    public void saveMultiBlock() {
+        FileConfiguration config = plugin.getConfig();
+        ConfigurationSection multiBlockSection = config.createSection("multi-block");
+        
+        for (Map.Entry<UUID, Integer> entry : multiBlockLevels.entrySet()) {
+            multiBlockSection.set(entry.getKey().toString(), entry.getValue());
+        }
+        
+        plugin.saveConfig();
     }
 
     private void loadExplosionUpgrades(FileConfiguration config) {
@@ -104,7 +133,6 @@ public class ConfigManager {
         
         ConfigurationSection upgrades = config.getConfigurationSection("autokill.upgrades");
         if (upgrades == null) {
-            // Default values
             maxExplosionLevel = 10;
             for (int i = 0; i <= maxExplosionLevel; i++) {
                 explosionChances.put(i, 0.0 + (i * 0.05));
@@ -119,17 +147,18 @@ public class ConfigManager {
         ConfigurationSection levels = upgrades.getConfigurationSection("levels");
         if (levels != null) {
             for (String key : levels.getKeys(false)) {
-                int level = Integer.parseInt(key);
-                ConfigurationSection levelData = levels.getConfigurationSection(key);
-                if (levelData != null) {
-                    explosionChances.put(level, levelData.getDouble("chance", 0.0));
-                    explosionRadii.put(level, levelData.getDouble("radius", 0.0));
-                    upgradeCosts.put(level, levelData.getDouble("cost", 0.0));
-                }
+                try {
+                    int level = Integer.parseInt(key);
+                    ConfigurationSection levelData = levels.getConfigurationSection(key);
+                    if (levelData != null) {
+                        explosionChances.put(level, levelData.getDouble("chance", 0.0));
+                        explosionRadii.put(level, levelData.getDouble("radius", 0.0));
+                        upgradeCosts.put(level, levelData.getDouble("cost", 0.0));
+                    }
+                } catch (NumberFormatException ignored) {}
             }
         }
         
-        // Đảm bảo có đủ level
         for (int i = 0; i <= maxExplosionLevel; i++) {
             if (!explosionChances.containsKey(i)) {
                 explosionChances.put(i, 0.0 + (i * 0.05));
@@ -300,7 +329,6 @@ public class ConfigManager {
         return craftConfigs.keySet();
     }
 
-    // Explosion methods
     public int getMaxExplosionLevel() {
         return maxExplosionLevel;
     }
@@ -317,9 +345,9 @@ public class ConfigManager {
         return upgradeCosts.getOrDefault(level, 0.0);
     }
 
-    // Multi block methods
     public void setMultiBlockLevel(Player player, int level) {
         multiBlockLevels.put(player.getUniqueId(), level);
+        saveMultiBlock();
     }
 
     public int getMultiBlockLevel(Player player) {

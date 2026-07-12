@@ -11,10 +11,12 @@ import org.bukkit.inventory.InventoryView;
 public class PlayerListener implements Listener {
     private final Schoolminer plugin;
     private AutoCraftMenu menu;
+    private AutoKillUpgradeMenu upgradeMenu;
 
     public PlayerListener(Schoolminer plugin) {
         this.plugin = plugin;
         this.menu = new AutoCraftMenu(plugin);
+        this.upgradeMenu = new AutoKillUpgradeMenu(plugin, plugin.getEconomy());
     }
 
     @EventHandler
@@ -45,11 +47,14 @@ public class PlayerListener implements Listener {
         
         if (title.equals("§6§l⚒️ AutoCraft Menu")) {
             event.setCancelled(true);
-            
             int slot = event.getRawSlot();
             if (slot < 0 || slot >= event.getInventory().getSize()) return;
-            
             menu.handleMenuClick(player, event.getInventory(), slot);
+        } else if (title.equals("§6§l⚔️ Nâng Cấp AutoKill")) {
+            event.setCancelled(true);
+            int slot = event.getRawSlot();
+            if (slot < 0 || slot >= event.getInventory().getSize()) return;
+            upgradeMenu.handleClick(player, slot);
         }
     }
 }

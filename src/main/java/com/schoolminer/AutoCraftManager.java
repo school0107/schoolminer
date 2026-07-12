@@ -140,7 +140,6 @@ public class AutoCraftManager {
 
             PlayerInventory inventory = player.getInventory();
             
-            // Tính số lần craft có thể
             int maxCrafts = Integer.MAX_VALUE;
             
             for (ItemStack material : craftConfig.getMaterials()) {
@@ -162,7 +161,6 @@ public class AutoCraftManager {
                 }
             }
             
-            // Hết nguyên liệu - KHÔNG TẮT, chỉ thông báo 1 lần
             if (maxCrafts <= 0) {
                 if (!hasNotifiedEmpty && craftedCount > 0) {
                     player.sendMessage("§e⚠️ Đã hết nguyên liệu cho §f" + craftConfig.getDisplayName());
@@ -174,7 +172,6 @@ public class AutoCraftManager {
             
             hasNotifiedEmpty = false;
             
-            // Kiểm tra chỗ trống trong túi
             int emptySlots = 0;
             for (int i = 0; i < inventory.getSize(); i++) {
                 if (inventory.getItem(i) == null || inventory.getItem(i).getType().isAir()) {
@@ -190,11 +187,9 @@ public class AutoCraftManager {
                 return;
             }
             
-            // GIỚI HẠN SỐ LƯỢNG CRAFT MỖI LẦN ĐỂ TRÁNH LAG
             int maxCraftPerTick = config.getMaxCraftPerTick();
             int actualCrafts = Math.min(Math.min(maxCrafts, emptySlots), maxCraftPerTick);
             
-            // Xóa nguyên liệu
             for (ItemStack material : craftConfig.getMaterials()) {
                 if (material == null || material.getType().isAir()) continue;
                 
@@ -215,7 +210,6 @@ public class AutoCraftManager {
                 }
             }
             
-            // Tạo sản phẩm
             ItemStack result = craftConfig.getResult().clone();
             
             if (craftConfig.isGlow()) {
@@ -236,13 +230,11 @@ public class AutoCraftManager {
                 }
             }
             
-            // Hiệu ứng
             if (addedCount > 0) {
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.3f, 1);
                 player.getWorld().spawnParticle(Particle.ENCHANT, 
                     player.getLocation().add(0, 1, 0), Math.min(addedCount * 2, 20), 0.3, 0.3, 0.3);
                 
-                // Thông báo mỗi 10 lần craft
                 if (craftedCount % 10 == 0 && craftedCount > 0) {
                     player.sendMessage("§7Đã craft §a" + craftedCount + " §7" + craftConfig.getDisplayName());
                 }

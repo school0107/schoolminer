@@ -37,7 +37,6 @@ public class AutoKillManager {
         task.runTaskTimer(plugin, 0L, attackDelay);
         tasks.put(uuid, task);
         
-        // Load explosion level
         if (!explosionLevels.containsKey(uuid)) {
             explosionLevels.put(uuid, 0);
         }
@@ -72,7 +71,6 @@ public class AutoKillManager {
         return tasks.containsKey(player.getUniqueId());
     }
 
-    // Explosion methods
     public int getExplosionLevel(Player player) {
         return explosionLevels.getOrDefault(player.getUniqueId(), 0);
     }
@@ -97,17 +95,13 @@ public class AutoKillManager {
         
         if (random.nextDouble() > chance) return;
         
-        // Tạo vụ nổ
         player.getWorld().createExplosion(location, (float) radius, false, false);
-        
-        // Hiệu ứng
         player.getWorld().spawnParticle(Particle.EXPLOSION_HUGE, location, 1);
         player.getWorld().spawnParticle(Particle.FLAME, location, 50, radius, radius, radius);
         player.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
         
         player.sendMessage("§c§l💥 SÁT THƯƠNG NỔ! §7Bán kính: §e" + String.format("%.1f", radius) + " block");
         
-        // Gây sát thương cho mob trong bán kính
         for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
             if (entity instanceof LivingEntity living && !(entity instanceof Player)) {
                 if (entity.isValid() && !entity.isDead()) {
@@ -198,7 +192,6 @@ public class AutoKillManager {
                     player.getWorld().spawnParticle(Particle.CRIT, 
                         target.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3);
                     
-                    // Trigger explosion on kill
                     triggerExplosion(player, target.getLocation());
                 }
                 

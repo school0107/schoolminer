@@ -25,13 +25,11 @@ public class AutoKillUpgradeMenu {
     public void openMenu(Player player) {
         Inventory menu = Bukkit.createInventory(null, 27, "§6§l⚔️ Nâng Cấp AutoKill");
 
-        // Level hiện tại
         int currentLevel = killManager.getExplosionLevel(player);
         double currentChance = killManager.getExplosionChance(player);
         double currentRadius = killManager.getExplosionRadius(player);
         int maxLevel = configManager.getMaxExplosionLevel();
 
-        // Thông tin level
         ItemStack info = new ItemStack(Material.NETHER_STAR);
         ItemMeta infoMeta = info.getItemMeta();
         infoMeta.setDisplayName("§6§l⚔️ Nâng Cấp AutoKill");
@@ -57,7 +55,6 @@ public class AutoKillUpgradeMenu {
         info.setItemMeta(infoMeta);
         menu.setItem(4, info);
 
-        // Nút nâng cấp
         ItemStack upgrade = new ItemStack(Material.EXPERIENCE_BOTTLE);
         ItemMeta upgradeMeta = upgrade.getItemMeta();
         if (currentLevel < maxLevel) {
@@ -77,7 +74,6 @@ public class AutoKillUpgradeMenu {
         upgrade.setItemMeta(upgradeMeta);
         menu.setItem(13, upgrade);
 
-        // Nút quay lại
         ItemStack back = new ItemStack(Material.ARROW);
         ItemMeta backMeta = back.getItemMeta();
         backMeta.setDisplayName("§c§l◀ QUAY LẠI");
@@ -85,7 +81,6 @@ public class AutoKillUpgradeMenu {
         back.setItemMeta(backMeta);
         menu.setItem(22, back);
 
-        // Trang trí
         ItemStack glass = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
         ItemMeta glassMeta = glass.getItemMeta();
         glassMeta.setDisplayName(" ");
@@ -101,7 +96,6 @@ public class AutoKillUpgradeMenu {
 
     public void handleClick(Player player, int slot) {
         if (slot == 13) {
-            // Nâng cấp
             int currentLevel = killManager.getExplosionLevel(player);
             int maxLevel = configManager.getMaxExplosionLevel();
             
@@ -126,7 +120,6 @@ public class AutoKillUpgradeMenu {
             
             openMenu(player);
         } else if (slot == 22) {
-            // Quay lại - mở menu chính
             player.performCommand("autokill");
         }
     }

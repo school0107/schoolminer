@@ -1,6 +1,5 @@
 package com.schoolminer;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -20,10 +19,8 @@ public class AutoMineCommand implements CommandExecutor {
             return true;
         }
 
-        // KHÔNG KIỂM TRA PERMISSION - TẤT CẢ ĐỀU DÙNG ĐƯỢC
         AutoMineManager manager = plugin.getAutoMineManager();
         
-        // Toggle
         if (manager.isMining(player)) {
             manager.stopMining(player);
         } else {

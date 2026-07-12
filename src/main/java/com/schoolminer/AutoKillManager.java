@@ -12,12 +12,15 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.Bukkit;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AutoKillManager {
     private final Schoolminer plugin;
     private final Map<UUID, KillTask> tasks = new HashMap<>();
     private final ConfigManager config;
     private final Map<UUID, Location> lastLocations = new HashMap<>();
+    private final Map<UUID, Integer> explosionLevels = new ConcurrentHashMap<>();
+    private final Random random = new Random();
 
     public AutoKillManager(Schoolminer plugin) {
         this.plugin = plugin;
@@ -34,7 +37,17 @@ public class AutoKillManager {
         task.runTaskTimer(plugin, 0L, attackDelay);
         tasks.put(uuid, task);
         
+        // Load explosion level
+        if (!explosionLevels.containsKey(uuid)) {
+            explosionLevels.put(uuid, 0);
+        }
+        
         player.sendMessage(config.getMessage("kill-enabled"));
+        int level = getExplosionLevel(player);
+        if (level > 0) {
+            player.sendMessage("§6✦ Sát thương nổ level §e" + level + " §6- Tỉ lệ: §e" + 
+                String.format("%.1f", getExplosionChance(player) * 100) + "%");
+        }
     }
 
     public void stopKilling(Player player) {
@@ -57,6 +70,52 @@ public class AutoKillManager {
 
     public boolean isKilling(Player player) {
         return tasks.containsKey(player.getUniqueId());
+    }
+
+    // Explosion methods
+    public int getExplosionLevel(Player player) {
+        return explosionLevels.getOrDefault(player.getUniqueId(), 0);
+    }
+
+    public void setExplosionLevel(Player player, int level) {
+        explosionLevels.put(player.getUniqueId(), level);
+    }
+
+    public double getExplosionChance(Player player) {
+        int level = getExplosionLevel(player);
+        return config.getExplosionChanceAtLevel(level);
+    }
+
+    public double getExplosionRadius(Player player) {
+        int level = getExplosionLevel(player);
+        return config.getExplosionRadiusAtLevel(level);
+    }
+
+    private void triggerExplosion(Player player, Location location) {
+        double radius = getExplosionRadius(player);
+        double chance = getExplosionChance(player);
+        
+        if (random.nextDouble() > chance) return;
+        
+        // Tạo vụ nổ
+        player.getWorld().createExplosion(location, (float) radius, false, false);
+        
+        // Hiệu ứng
+        player.getWorld().spawnParticle(Particle.EXPLOSION_HUGE, location, 1);
+        player.getWorld().spawnParticle(Particle.FLAME, location, 50, radius, radius, radius);
+        player.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
+        
+        player.sendMessage("§c§l💥 SÁT THƯƠNG NỔ! §7Bán kính: §e" + String.format("%.1f", radius) + " block");
+        
+        // Gây sát thương cho mob trong bán kính
+        for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
+            if (entity instanceof LivingEntity living && !(entity instanceof Player)) {
+                if (entity.isValid() && !entity.isDead()) {
+                    double damage = config.getBaseDamage() * 2.5;
+                    living.damage(damage, player);
+                }
+            }
+        }
     }
 
     private class KillTask extends BukkitRunnable {
@@ -138,6 +197,9 @@ public class AutoKillManager {
                         Material.REDSTONE_BLOCK);
                     player.getWorld().spawnParticle(Particle.CRIT, 
                         target.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3);
+                    
+                    // Trigger explosion on kill
+                    triggerExplosion(player, target.getLocation());
                 }
                 
                 if (living.isDead() || living.getHealth() <= 0) {
@@ -182,9 +244,8 @@ public class AutoKillManager {
         }
 
         private double calculateDamage(Player player, ItemStack weapon) {
-            double base = config.getBaseDamage(); // Lấy từ config
+            double base = config.getBaseDamage();
             
-            // Sát thương từ vũ khí
             if (weapon != null && !weapon.getType().isAir()) {
                 String name = weapon.getType().name();
                 
@@ -203,7 +264,6 @@ public class AutoKillManager {
                 else if (name.contains("TRIDENT")) base = 9.0;
                 else if (name.contains("MACE")) base = 12.0;
                 
-                // Enchantments
                 int sharpness = weapon.getEnchantmentLevel(Enchantment.SHARPNESS);
                 if (sharpness > 0) base += (sharpness * 1.5);
                 
@@ -217,12 +277,10 @@ public class AutoKillManager {
                 if (fireAspect > 0) base += 1.0;
             }
             
-            // Lấy sát thương từ armor (chỉ qua display name và lore)
             double armorAttack = 0.0;
             for (ItemStack armor : player.getInventory().getArmorContents()) {
                 if (armor == null || armor.getType().isAir()) continue;
                 
-                // Kiểm tra tên item (display name)
                 if (armor.hasItemMeta() && armor.getItemMeta().hasDisplayName()) {
                     String displayName = armor.getItemMeta().getDisplayName();
                     String cleanName = ChatColor.stripColor(displayName);
@@ -253,7 +311,6 @@ public class AutoKillManager {
                     }
                 }
                 
-                // Kiểm tra lore
                 if (armor.hasItemMeta() && armor.getItemMeta().hasLore()) {
                     List<String> lore = armor.getItemMeta().getLore();
                     for (String line : lore) {
@@ -284,13 +341,11 @@ public class AutoKillManager {
             
             base += armorAttack;
             
-            // Strength potion
             if (player.hasPotionEffect(PotionEffectType.STRENGTH)) {
                 int level = player.getPotionEffect(PotionEffectType.STRENGTH).getAmplifier() + 1;
                 base *= (1 + (0.3 * level));
             }
             
-            // Critical hit (20% chance)
             if (Math.random() < 0.2) {
                 base *= 1.5;
             }

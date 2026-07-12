@@ -30,10 +30,22 @@ public class ConfigManager {
     private int craftCooldown;
     private int maxCraftPerTick;
     private Map<String, AutoCraftConfig> craftConfigs;
+    
+    // Explosion upgrade
+    private int maxExplosionLevel;
+    private Map<Integer, Double> explosionChances;
+    private Map<Integer, Double> explosionRadii;
+    private Map<Integer, Double> upgradeCosts;
+    
+    // Multi block
+    private Map<UUID, Integer> multiBlockLevels = new HashMap<>();
 
     public ConfigManager(Schoolminer plugin) {
         this.plugin = plugin;
         this.craftConfigs = new HashMap<>();
+        this.explosionChances = new HashMap<>();
+        this.explosionRadii = new HashMap<>();
+        this.upgradeCosts = new HashMap<>();
         reload();
     }
 
@@ -73,12 +85,62 @@ public class ConfigManager {
         
         // Auto Craft
         craftDelay = config.getInt("autocraft.craft-delay", 20);
-        craftCooldown = config.getInt("autocraft.cooldown", 2000); // 2 giây
-        maxCraftPerTick = config.getInt("autocraft.max-craft-per-tick", 16); // Tối đa 16 craft mỗi tick
+        craftCooldown = config.getInt("autocraft.cooldown", 2000);
+        maxCraftPerTick = config.getInt("autocraft.max-craft-per-tick", 16);
         loadCrafts(config);
+        
+        // Explosion upgrades
+        loadExplosionUpgrades(config);
         
         plugin.getLogger().info("§a✅ Đã load " + whitelist.size() + " block vào whitelist");
         plugin.getLogger().info("§a✅ Đã load " + craftConfigs.size() + " công thức craft");
+        plugin.getLogger().info("§a✅ Đã load " + maxExplosionLevel + " cấp nâng cấp AutoKill");
+    }
+
+    private void loadExplosionUpgrades(FileConfiguration config) {
+        explosionChances.clear();
+        explosionRadii.clear();
+        upgradeCosts.clear();
+        
+        ConfigurationSection upgrades = config.getConfigurationSection("autokill.upgrades");
+        if (upgrades == null) {
+            // Default values
+            maxExplosionLevel = 10;
+            for (int i = 0; i <= maxExplosionLevel; i++) {
+                explosionChances.put(i, 0.0 + (i * 0.05));
+                explosionRadii.put(i, 0.0 + (i * 0.5));
+                upgradeCosts.put(i, i * 1000.0);
+            }
+            return;
+        }
+        
+        maxExplosionLevel = upgrades.getInt("max-level", 10);
+        
+        ConfigurationSection levels = upgrades.getConfigurationSection("levels");
+        if (levels != null) {
+            for (String key : levels.getKeys(false)) {
+                int level = Integer.parseInt(key);
+                ConfigurationSection levelData = levels.getConfigurationSection(key);
+                if (levelData != null) {
+                    explosionChances.put(level, levelData.getDouble("chance", 0.0));
+                    explosionRadii.put(level, levelData.getDouble("radius", 0.0));
+                    upgradeCosts.put(level, levelData.getDouble("cost", 0.0));
+                }
+            }
+        }
+        
+        // Đảm bảo có đủ level
+        for (int i = 0; i <= maxExplosionLevel; i++) {
+            if (!explosionChances.containsKey(i)) {
+                explosionChances.put(i, 0.0 + (i * 0.05));
+            }
+            if (!explosionRadii.containsKey(i)) {
+                explosionRadii.put(i, 0.0 + (i * 0.5));
+            }
+            if (!upgradeCosts.containsKey(i)) {
+                upgradeCosts.put(i, i * 1000.0);
+            }
+        }
     }
 
     private void loadCrafts(FileConfiguration config) {
@@ -236,6 +298,32 @@ public class ConfigManager {
 
     public Set<String> getCraftTypes() {
         return craftConfigs.keySet();
+    }
+
+    // Explosion methods
+    public int getMaxExplosionLevel() {
+        return maxExplosionLevel;
+    }
+
+    public double getExplosionChanceAtLevel(int level) {
+        return explosionChances.getOrDefault(level, 0.0);
+    }
+
+    public double getExplosionRadiusAtLevel(int level) {
+        return explosionRadii.getOrDefault(level, 0.0);
+    }
+
+    public double getUpgradeCost(int level) {
+        return upgradeCosts.getOrDefault(level, 0.0);
+    }
+
+    // Multi block methods
+    public void setMultiBlockLevel(Player player, int level) {
+        multiBlockLevels.put(player.getUniqueId(), level);
+    }
+
+    public int getMultiBlockLevel(Player player) {
+        return multiBlockLevels.getOrDefault(player.getUniqueId(), 1);
     }
 
     public String getMessage(String key) {

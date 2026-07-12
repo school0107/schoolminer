@@ -20,6 +20,9 @@ public class Schoolminer extends JavaPlugin {
         autoKillManager = new AutoKillManager(this);
         autoCraftManager = new AutoCraftManager(this);
         
+        // Đăng ký listener cho AutoMineManager
+        getServer().getPluginManager().registerEvents(autoMineManager, this);
+        
         // Command Executors
         getCommand("automine").setExecutor(new AutoMineCommand(this));
         getCommand("autokill").setExecutor(new AutoKillCommand(this));

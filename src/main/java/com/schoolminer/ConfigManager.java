@@ -247,33 +247,109 @@ public class ConfigManager {
         }
     }
 
-    // Getters
-    public int getWhitelistCount() { return whitelist.size(); }
-    public boolean isWhitelisted(Material material) { return whitelist.contains(material); }
-    public int getMineDelay() { return mineDelay; }
-    public int getAttackDelay() { return attackDelay; }
-    public int getMaxRange() { return maxRange; }
-    public int getKillRange() { return killRange; }
-    public double getBaseDamage() { return baseDamage; }
-    public boolean isKillMonster() { return killMonster; }
-    public boolean isKillAnimal() { return killAnimal; }
-    public boolean isKillMob() { return killMob; }
-    public boolean isDropItems() { return dropItems; }
-    public boolean isDropXp() { return dropXp; }
-    public int getXpMonster() { return xpMonster; }
-    public int getXpAnimal() { return xpAnimal; }
-    public int getXpMob() { return xpMob; }
-    public boolean isAutoPickup() { return autoPickup; }
-    public boolean isDoubleDrop() { return doubleDrop; }
-    public int getCraftDelay() { return craftDelay; }
-    public int getCraftCooldown() { return craftCooldown; }
-    public int getMaxCraftPerTick() { return maxCraftPerTick; }
-    public AutoCraftConfig getCraftConfig(String id) { return craftConfigs.get(id); }
-    public Set<String> getCraftTypes() { return craftConfigs.keySet(); }
-    public int getMaxExplosionLevel() { return maxExplosionLevel; }
-    public double getExplosionChanceAtLevel(int level) { return explosionChances.getOrDefault(level, 0.0); }
-    public double getExplosionRadiusAtLevel(int level) { return explosionRadii.getOrDefault(level, 0.0); }
-    public double getUpgradeCost(int level) { return upgradeCosts.getOrDefault(level, 0.0); }
+    public int getWhitelistCount() {
+        return whitelist.size();
+    }
+
+    public boolean isWhitelisted(Material material) {
+        return whitelist.contains(material);
+    }
+
+    public int getMineDelay() {
+        return mineDelay;
+    }
+
+    public int getAttackDelay() {
+        return attackDelay;
+    }
+
+    public int getMaxRange() {
+        return maxRange;
+    }
+
+    public int getKillRange() {
+        return killRange;
+    }
+
+    public double getBaseDamage() {
+        return baseDamage;
+    }
+
+    public boolean isKillMonster() {
+        return killMonster;
+    }
+
+    public boolean isKillAnimal() {
+        return killAnimal;
+    }
+
+    public boolean isKillMob() {
+        return killMob;
+    }
+
+    public boolean isDropItems() {
+        return dropItems;
+    }
+
+    public boolean isDropXp() {
+        return dropXp;
+    }
+
+    public int getXpMonster() {
+        return xpMonster;
+    }
+
+    public int getXpAnimal() {
+        return xpAnimal;
+    }
+
+    public int getXpMob() {
+        return xpMob;
+    }
+
+    public boolean isAutoPickup() {
+        return autoPickup;
+    }
+
+    public boolean isDoubleDrop() {
+        return doubleDrop;
+    }
+
+    public int getCraftDelay() {
+        return craftDelay;
+    }
+
+    public int getCraftCooldown() {
+        return craftCooldown;
+    }
+
+    public int getMaxCraftPerTick() {
+        return maxCraftPerTick;
+    }
+
+    public AutoCraftConfig getCraftConfig(String id) {
+        return craftConfigs.get(id);
+    }
+
+    public Set<String> getCraftTypes() {
+        return craftConfigs.keySet();
+    }
+
+    public int getMaxExplosionLevel() {
+        return maxExplosionLevel;
+    }
+
+    public double getExplosionChanceAtLevel(int level) {
+        return explosionChances.getOrDefault(level, 0.0);
+    }
+
+    public double getExplosionRadiusAtLevel(int level) {
+        return explosionRadii.getOrDefault(level, 0.0);
+    }
+
+    public double getUpgradeCost(int level) {
+        return upgradeCosts.getOrDefault(level, 0.0);
+    }
 
     public String getMessage(String key) {
         String msg = plugin.getConfig().getString("messages." + key, "&c⚠️ Không tìm thấy message: " + key);

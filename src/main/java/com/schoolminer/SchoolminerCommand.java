@@ -5,6 +5,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 public class SchoolminerCommand implements CommandExecutor {
     private final Schoolminer plugin;
@@ -25,12 +26,12 @@ public class SchoolminerCommand implements CommandExecutor {
                 sender.sendMessage(colorize(plugin.getConfigManager().getMessage("no-permission")));
                 return true;
             }
-
             plugin.getConfigManager().reload();
             sender.sendMessage(colorize(plugin.getConfigManager().getMessage("reloaded")));
             return true;
         }
 
+        // Lệnh multi block cho cúp: /smn add mutiblock <level>
         if (args.length >= 3 && args[0].equalsIgnoreCase("add") && args[1].equalsIgnoreCase("mutiblock")) {
             if (!sender.hasPermission("schoolminer.admin")) {
                 sender.sendMessage("§c❌ Bạn không có quyền sử dụng lệnh này!");
@@ -39,6 +40,20 @@ public class SchoolminerCommand implements CommandExecutor {
 
             if (!(sender instanceof Player player)) {
                 sender.sendMessage("§c❌ Chỉ player mới dùng được!");
+                return true;
+            }
+
+            // Kiểm tra cầm cúp
+            ItemStack tool = player.getInventory().getItemInMainHand();
+            if (tool.getType().isAir()) {
+                sender.sendMessage("§c❌ Hãy cầm cúp trên tay!");
+                return true;
+            }
+            
+            String toolName = tool.getType().name();
+            if (!toolName.contains("PICKAXE") && !toolName.contains("AXE") && 
+                !toolName.contains("SHOVEL") && !toolName.contains("HOE")) {
+                sender.sendMessage("§c❌ Vui lòng cầm cúp, rìu, thuổng hoặc cuốc!");
                 return true;
             }
 
@@ -53,8 +68,11 @@ public class SchoolminerCommand implements CommandExecutor {
                     return true;
                 }
                 
-                plugin.getConfigManager().setMultiBlockLevel(player, level);
-                sender.sendMessage("§a✅ Đã set MultiBlock level §e" + level + " §acho §6" + player.getName());
+                // Set MultiBlock cho cúp (truyền ItemStack)
+                plugin.getConfigManager().setMultiBlockLevel(tool, level);
+                
+                String toolDisplay = tool.getType().name().replace("_", " ").toLowerCase();
+                sender.sendMessage("§a✅ Đã set MultiBlock level §e" + level + " §acho §6" + toolDisplay);
                 sender.sendMessage("§7Khi đào block sẽ nhân §ex" + level + " §7vật phẩm!");
                 return true;
             } catch (NumberFormatException e) {
@@ -63,14 +81,22 @@ public class SchoolminerCommand implements CommandExecutor {
             }
         }
 
+        // Xem multi block của cúp hiện tại
         if (args.length >= 1 && args[0].equalsIgnoreCase("mutiblock")) {
             if (!(sender instanceof Player player)) {
                 sender.sendMessage("§c❌ Chỉ player mới dùng được!");
                 return true;
             }
             
-            int level = plugin.getConfigManager().getMultiBlockLevel(player);
-            sender.sendMessage("§6✦ MultiBlock của bạn: §e" + level + "x");
+            ItemStack tool = player.getInventory().getItemInMainHand();
+            if (tool.getType().isAir()) {
+                sender.sendMessage("§c❌ Hãy cầm cúp trên tay!");
+                return true;
+            }
+            
+            int level = plugin.getConfigManager().getMultiBlockLevel(tool);
+            String toolDisplay = tool.getType().name().replace("_", " ").toLowerCase();
+            sender.sendMessage("§6✦ MultiBlock của §e" + toolDisplay + "§6: §e" + level + "x");
             sender.sendMessage("§7Sử dụng §e/smn add mutiblock <số> §7để thay đổi");
             return true;
         }
@@ -85,8 +111,8 @@ public class SchoolminerCommand implements CommandExecutor {
         sender.sendMessage("§7/autokill §f- Bật/tắt Auto Kill");
         sender.sendMessage("§7/autokill upgrade §f- Mở menu nâng cấp AutoKill");
         sender.sendMessage("§7/autocraft §f- Mở menu AutoCraft");
-        sender.sendMessage("§7/smn mutiblock §f- Xem cấp MultiBlock hiện tại");
-        sender.sendMessage("§7/smn add mutiblock <số> §f- Set MultiBlock (Admin)");
+        sender.sendMessage("§7/smn mutiblock §f- Xem MultiBlock của cúp hiện tại");
+        sender.sendMessage("§7/smn add mutiblock <số> §f- Set MultiBlock cho cúp (Admin)");
         sender.sendMessage("§7/schoolminer reload §f- Reload config");
         sender.sendMessage("§7/schoolminer help §f- Hiển thị trợ giúp");
     }

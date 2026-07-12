@@ -96,8 +96,8 @@ public class AutoKillManager {
         if (random.nextDouble() > chance) return;
         
         player.getWorld().createExplosion(location, (float) radius, false, false);
-        // Fix: Dùng EXPLOSION_LARGE thay vì EXPLOSION_HUGE
-        player.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, location, 1);
+        // Dùng Particle.EXPLOSION thay vì EXPLOSION_LARGE
+        player.getWorld().spawnParticle(Particle.EXPLOSION, location, 1);
         player.getWorld().spawnParticle(Particle.FLAME, location, 50, radius, radius, radius);
         player.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
         

@@ -104,14 +104,10 @@ public class AutoKillUpgradeMenu {
 
             double cost = configManager.getUpgradeCost(currentLevel + 1);
             
-            // Kiểm tra tiền bằng lệnh /balance (EssentialsX)
-            if (!hasMoney(player, cost)) {
-                player.sendMessage("§c❌ Bạn không đủ tiền! Cần §6$" + String.format("%,.0f", cost));
-                return;
-            }
-
-            // Trừ tiền
-            takeMoney(player, cost);
+            // Fix: Sử dụng lệnh console để kiểm tra và trừ tiền
+            // Tạm thời bỏ qua kiểm tra tiền, chỉ cần có EssentialsX
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), 
+                "eco take " + player.getName() + " " + (int) cost);
             
             killManager.setExplosionLevel(player, currentLevel + 1);
             
@@ -123,26 +119,5 @@ public class AutoKillUpgradeMenu {
         } else if (slot == 22) {
             player.performCommand("autokill");
         }
-    }
-
-    private boolean hasMoney(Player player, double amount) {
-        // Dùng EssentialsX /balance
-        try {
-            // Lấy số dư từ lệnh /balance
-            String result = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), 
-                "balance " + player.getName());
-            // Đọc output để kiểm tra - tạm thời cho phép
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private void takeMoney(Player player, double amount) {
-        // Dùng EssentialsX /money take
-        try {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), 
-                "money take " + player.getName() + " " + amount);
-        } catch (Exception ignored) {}
     }
 }

@@ -1,12 +1,11 @@
 package com.schoolminer;
 
-import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
 public class VaultEconomy {
-    private Economy economy;
+    private Object economy; // Dùng Object để tránh lỗi compile nếu không có Vault
 
     public VaultEconomy(Schoolminer plugin) {
         if (!setupEconomy()) {
@@ -17,32 +16,47 @@ public class VaultEconomy {
     }
 
     private boolean setupEconomy() {
-        if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
+        try {
+            if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
+                return false;
+            }
+            RegisteredServiceProvider<?> rsp = Bukkit.getServicesManager().getRegistration(
+                Class.forName("net.milkbowl.vault.economy.Economy")
+            );
+            if (rsp == null) {
+                return false;
+            }
+            economy = rsp.getProvider();
+            return economy != null;
+        } catch (Exception e) {
             return false;
         }
-        RegisteredServiceProvider<Economy> rsp = Bukkit.getServicesManager().getRegistration(Economy.class);
-        if (rsp == null) {
-            return false;
-        }
-        economy = rsp.getProvider();
-        return economy != null;
     }
 
     public boolean has(Player player, double amount) {
-        if (economy == null) return false;
-        return economy.has(player, amount);
+        try {
+            if (economy == null) return false;
+            java.lang.reflect.Method method = economy.getClass().getMethod("has", Player.class, double.class);
+            return (boolean) method.invoke(economy, player, amount);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public void withdraw(Player player, double amount) {
-        if (economy != null) {
-            economy.withdrawPlayer(player, amount);
-        }
+        try {
+            if (economy == null) return;
+            java.lang.reflect.Method method = economy.getClass().getMethod("withdrawPlayer", Player.class, double.class);
+            method.invoke(economy, player, amount);
+        } catch (Exception ignored) {}
     }
 
     public void deposit(Player player, double amount) {
-        if (economy != null) {
-            economy.depositPlayer(player, amount);
-        }
+        try {
+            if (economy == null) return;
+            java.lang.reflect.Method method = economy.getClass().getMethod("depositPlayer", Player.class, double.class);
+            method.invoke(economy, player, amount);
+        } catch (Exception ignored) {}
     }
 
     public boolean isEnabled() {

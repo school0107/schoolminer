@@ -11,6 +11,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.damage.DamageSource;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.concurrent.ConcurrentHashMap;
@@ -104,7 +105,6 @@ public class AutoKillManager {
         
         // Gây sát thương cho mob trong bán kính - KHÔNG ẢNH HƯỞNG NGƯỜI CHƠI
         for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
-            // BỎ QUA NGƯỜI CHƠI - Chỉ tấn công mob
             if (entity instanceof Player) continue;
             
             if (entity instanceof LivingEntity living) {
@@ -120,12 +120,6 @@ public class AutoKillManager {
                     
                     if (!damageEvent.isCancelled()) {
                         living.damage(damage, player);
-                        
-                        // Nếu mob chết, tạo EntityDeathEvent để plugin khác nhận diện
-                        if (living.isDead() || living.getHealth() <= 0) {
-                            EntityDeathEvent deathEvent = new EntityDeathEvent(living, new ArrayList<>(), 0);
-                            Bukkit.getPluginManager().callEvent(deathEvent);
-                        }
                     }
                 }
             }
@@ -216,11 +210,8 @@ public class AutoKillManager {
                     triggerExplosion(player, target.getLocation(), damage);
                 }
                 
-                // Nếu mob chết, tạo EntityDeathEvent để plugin khác nhận diện
+                // Nếu mob chết, plugin khác sẽ tự nhận diện qua EntityDamageByEntityEvent
                 if (living.isDead() || living.getHealth() <= 0) {
-                    EntityDeathEvent deathEvent = new EntityDeathEvent(living, new ArrayList<>(), 0);
-                    Bukkit.getPluginManager().callEvent(deathEvent);
-                    
                     if (config.isDropItems() && living instanceof Monster monster) {
                         ItemStack handItem = monster.getEquipment().getItemInMainHand();
                         if (handItem != null && !handItem.getType().isAir()) {

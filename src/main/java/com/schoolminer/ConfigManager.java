@@ -130,6 +130,31 @@ public class ConfigManager {
         if (tool == null || tool.getType().isAir()) return;
         String toolKey = tool.getType().name();
         saveMultiBlock(toolKey, level);
+        // Cập nhật lore cho cúp
+        updateToolLore(tool, level);
+    }
+
+    private void updateToolLore(ItemStack tool, int level) {
+        if (tool == null || tool.getType().isAir()) return;
+        ItemMeta meta = tool.getItemMeta();
+        if (meta == null) return;
+        
+        List<String> lore = meta.getLore();
+        if (lore == null) {
+            lore = new ArrayList<>();
+        }
+        
+        // Xóa lore MultiBlock cũ
+        lore.removeIf(line -> line.contains("MultiBlock"));
+        
+        // Thêm lore mới
+        if (level > 1) {
+            lore.add(0, "§6✦ MultiBlock: §e" + level + "x");
+            lore.add(0, "§7");
+        }
+        
+        meta.setLore(lore);
+        tool.setItemMeta(meta);
     }
 
     private void loadExplosionUpgrades(FileConfiguration config) {

@@ -46,6 +46,12 @@ public class AutoMineManager implements Listener {
         player.sendMessage("§a✅ Đã bật Auto Mine!");
         player.sendMessage("§7Đứng yên và cầm công cụ để đào tự động.");
         player.sendMessage("§7Block đang đào sẽ được §ckhóa §7cho riêng bạn!");
+        
+        ItemStack tool = player.getInventory().getItemInMainHand();
+        int mbLevel = plugin.getConfigManager().getMultiBlockLevel(tool);
+        if (mbLevel > 1) {
+            player.sendMessage("§6✦ MultiBlock: §e" + mbLevel + "x §7đang kích hoạt!");
+        }
     }
 
     public void stopMining(Player player) {
@@ -112,12 +118,14 @@ public class AutoMineManager implements Listener {
         return false;
     }
 
+    // ===== SỰ KIỆN CHO ĐÀO THƯỜNG (ÁP DỤNG MULTIBLOCK) =====
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
         Block block = event.getBlock();
         Location loc = block.getLocation();
         
+        // Kiểm tra block bị khóa
         if (isBlockLocked(loc, player)) {
             UUID owner = lockedBlocks.get(loc);
             Player ownerPlayer = Bukkit.getPlayer(owner);
@@ -125,6 +133,52 @@ public class AutoMineManager implements Listener {
             event.setCancelled(true);
             player.sendMessage("§c⚠️ Block này đang được §e" + ownerName + " §cauto mine!");
             player.sendMessage("§7Vui lòng đợi họ đào xong!");
+            return;
+        }
+        
+        // ÁP DỤNG MULTIBLOCK CHO ĐÀO THƯỜNG
+        ItemStack tool = player.getInventory().getItemInMainHand();
+        if (tool.getType().isAir()) return;
+        
+        int multiBlockLevel = plugin.getConfigManager().getMultiBlockLevel(tool);
+        if (multiBlockLevel <= 1) return;
+        
+        // Lấy drops từ block
+        Collection<ItemStack> drops = event.getBlock().getDrops(tool);
+        if (drops.isEmpty()) return;
+        
+        // Hủy drops mặc định
+        event.setDropItems(false);
+        event.setExpToDrop(0);
+        
+        // Tạo drops mới với MultiBlock
+        PlayerInventory inventory = player.getInventory();
+        for (ItemStack drop : drops) {
+            if (drop != null && !drop.getType().isAir()) {
+                int amount = drop.getAmount() * multiBlockLevel;
+                ItemStack finalDrop = drop.clone();
+                finalDrop.setAmount(amount);
+                
+                // Thêm vào túi
+                if (inventory.firstEmpty() != -1) {
+                    inventory.addItem(finalDrop);
+                } else {
+                    Location dropLoc = block.getLocation().add(0.5, 0.5, 0.5);
+                    org.bukkit.entity.Item item = player.getWorld().dropItem(dropLoc, finalDrop);
+                    item.setPickupDelay(0);
+                }
+            }
+        }
+        
+        // EXP từ block (nhân với MultiBlock)
+        int exp = getBlockExp(block, tool);
+        if (exp > 0) {
+            player.giveExp(exp * multiBlockLevel);
+        }
+        
+        // Thông báo
+        if (Math.random() < 0.05) {
+            player.sendMessage("§6✦ MultiBlock x" + multiBlockLevel + " §ađã kích hoạt!");
         }
     }
 
@@ -137,6 +191,44 @@ public class AutoMineManager implements Listener {
         if (isBlockLocked(loc, player)) {
             event.setCancelled(true);
         }
+    }
+
+    private int getBlockExp(Block block, ItemStack tool) {
+        Material type = block.getType();
+        String name = type.name();
+        
+        if (name.contains("COAL_ORE") || name.contains("DEEPSLATE_COAL_ORE")) {
+            return 0 + new Random().nextInt(2);
+        }
+        if (name.contains("IRON_ORE") || name.contains("DEEPSLATE_IRON_ORE")) {
+            return 1 + new Random().nextInt(2);
+        }
+        if (name.contains("GOLD_ORE") || name.contains("DEEPSLATE_GOLD_ORE") || name.contains("NETHER_GOLD_ORE")) {
+            return 2 + new Random().nextInt(3);
+        }
+        if (name.contains("DIAMOND_ORE") || name.contains("DEEPSLATE_DIAMOND_ORE")) {
+            return 3 + new Random().nextInt(4);
+        }
+        if (name.contains("EMERALD_ORE") || name.contains("DEEPSLATE_EMERALD_ORE")) {
+            return 3 + new Random().nextInt(4);
+        }
+        if (name.contains("LAPIS_ORE") || name.contains("DEEPSLATE_LAPIS_ORE")) {
+            return 2 + new Random().nextInt(3);
+        }
+        if (name.contains("REDSTONE_ORE") || name.contains("DEEPSLATE_REDSTONE_ORE")) {
+            return 1 + new Random().nextInt(3);
+        }
+        if (name.contains("NETHER_QUARTZ_ORE")) {
+            return 2 + new Random().nextInt(3);
+        }
+        if (name.contains("ANCIENT_DEBRIS")) {
+            return 4 + new Random().nextInt(5);
+        }
+        if (name.contains("COPPER_ORE") || name.contains("DEEPSLATE_COPPER_ORE")) {
+            return 1 + new Random().nextInt(2);
+        }
+        
+        return 0;
     }
 
     private class MineTask extends BukkitRunnable {
@@ -270,12 +362,15 @@ public class AutoMineManager implements Listener {
                         }
                     }
                     
+                    if (multiBlockLevel > 1 && drops.size() > 0 && Math.random() < 0.05) {
+                        player.sendMessage("§6✦ MultiBlock x" + multiBlockLevel + " §ađã kích hoạt!");
+                    }
+                    
                     int exp = getBlockExp(target, tool);
                     if (exp > 0) {
                         player.giveExp(exp);
                     }
                     
-                    // Chỉ play sound, không particle
                     player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
                 }
                 
@@ -287,44 +382,6 @@ public class AutoMineManager implements Listener {
                 breakTicks = 0;
                 isBreaking = false;
             }
-        }
-
-        private int getBlockExp(Block block, ItemStack tool) {
-            Material type = block.getType();
-            String name = type.name();
-            
-            if (name.contains("COAL_ORE") || name.contains("DEEPSLATE_COAL_ORE")) {
-                return 0 + new Random().nextInt(2);
-            }
-            if (name.contains("IRON_ORE") || name.contains("DEEPSLATE_IRON_ORE")) {
-                return 1 + new Random().nextInt(2);
-            }
-            if (name.contains("GOLD_ORE") || name.contains("DEEPSLATE_GOLD_ORE") || name.contains("NETHER_GOLD_ORE")) {
-                return 2 + new Random().nextInt(3);
-            }
-            if (name.contains("DIAMOND_ORE") || name.contains("DEEPSLATE_DIAMOND_ORE")) {
-                return 3 + new Random().nextInt(4);
-            }
-            if (name.contains("EMERALD_ORE") || name.contains("DEEPSLATE_EMERALD_ORE")) {
-                return 3 + new Random().nextInt(4);
-            }
-            if (name.contains("LAPIS_ORE") || name.contains("DEEPSLATE_LAPIS_ORE")) {
-                return 2 + new Random().nextInt(3);
-            }
-            if (name.contains("REDSTONE_ORE") || name.contains("DEEPSLATE_REDSTONE_ORE")) {
-                return 1 + new Random().nextInt(3);
-            }
-            if (name.contains("NETHER_QUARTZ_ORE")) {
-                return 2 + new Random().nextInt(3);
-            }
-            if (name.contains("ANCIENT_DEBRIS")) {
-                return 4 + new Random().nextInt(5);
-            }
-            if (name.contains("COPPER_ORE") || name.contains("DEEPSLATE_COPPER_ORE")) {
-                return 1 + new Random().nextInt(2);
-            }
-            
-            return 0;
         }
 
         private boolean isFortuneable(Material material) {

@@ -10,6 +10,7 @@ import org.bukkit.Location;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.Bukkit;
+import org.bukkit.event.entity.EntityDeathEvent;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.concurrent.ConcurrentHashMap;
@@ -89,23 +90,43 @@ public class AutoKillManager {
         return config.getExplosionRadiusAtLevel(level);
     }
 
-    private void triggerExplosion(Player player, Location location) {
+    private void triggerExplosion(Player player, Location location, double damage) {
         double radius = getExplosionRadius(player);
         double chance = getExplosionChance(player);
         
         if (random.nextDouble() > chance || radius <= 0) return;
         
-        // Tạo vụ nổ
+        // Tạo vụ nổ (không gây sát thương từ explosion)
         player.getWorld().createExplosion(location, (float) radius, false, false);
         player.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
         
         player.sendMessage("§c§l💥 SÁT THƯƠNG NỔ! §7Bán kính: §e" + String.format("%.1f", radius) + " block");
         
+        // Gây sát thương cho mob trong bán kính - KHÔNG ẢNH HƯỞNG NGƯỜI CHƠI
         for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
-            if (entity instanceof LivingEntity living && !(entity instanceof Player)) {
+            // BỎ QUA NGƯỜI CHƠI - Chỉ tấn công mob
+            if (entity instanceof Player) continue;
+            
+            if (entity instanceof LivingEntity living) {
                 if (entity.isValid() && !entity.isDead()) {
-                    double damage = config.getBaseDamage() * 2.5;
-                    living.damage(damage, player);
+                    // Tạo sự kiện damage như player đánh
+                    EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(
+                        player, 
+                        living, 
+                        EntityDamageEvent.DamageCause.ENTITY_ATTACK, 
+                        damage
+                    );
+                    Bukkit.getPluginManager().callEvent(damageEvent);
+                    
+                    if (!damageEvent.isCancelled()) {
+                        living.damage(damage, player);
+                        
+                        // Nếu mob chết, tạo EntityDeathEvent để plugin khác nhận diện
+                        if (living.isDead() || living.getHealth() <= 0) {
+                            EntityDeathEvent deathEvent = new EntityDeathEvent(living, new ArrayList<>(), 0);
+                            Bukkit.getPluginManager().callEvent(deathEvent);
+                        }
+                    }
                 }
             }
         }
@@ -174,6 +195,7 @@ public class AutoKillManager {
             double damage = calculateDamage(player, weapon);
             
             if (target instanceof LivingEntity living) {
+                // Tạo sự kiện damage như player đánh
                 EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(
                     player, 
                     living, 
@@ -186,14 +208,19 @@ public class AutoKillManager {
                 if (!damageEvent.isCancelled()) {
                     living.damage(damage, player);
                     
-                    // Chỉ play sound, không particle
+                    // Hiệu ứng
                     player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, 
                         Material.REDSTONE_BLOCK);
                     
-                    triggerExplosion(player, target.getLocation());
+                    // Kích hoạt sát thương nổ (KHÔNG ẢNH HƯỞNG NGƯỜI CHƠI)
+                    triggerExplosion(player, target.getLocation(), damage);
                 }
                 
+                // Nếu mob chết, tạo EntityDeathEvent để plugin khác nhận diện
                 if (living.isDead() || living.getHealth() <= 0) {
+                    EntityDeathEvent deathEvent = new EntityDeathEvent(living, new ArrayList<>(), 0);
+                    Bukkit.getPluginManager().callEvent(deathEvent);
+                    
                     if (config.isDropItems() && living instanceof Monster monster) {
                         ItemStack handItem = monster.getEquipment().getItemInMainHand();
                         if (handItem != null && !handItem.getType().isAir()) {

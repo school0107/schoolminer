@@ -6,6 +6,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import java.util.*;
 
 public class SchoolminerCommand implements CommandExecutor {
     private final Schoolminer plugin;
@@ -43,7 +45,6 @@ public class SchoolminerCommand implements CommandExecutor {
                 return true;
             }
 
-            // Kiểm tra cầm cúp
             ItemStack tool = player.getInventory().getItemInMainHand();
             if (tool.getType().isAir()) {
                 sender.sendMessage("§c❌ Hãy cầm cúp trên tay!");
@@ -68,12 +69,13 @@ public class SchoolminerCommand implements CommandExecutor {
                     return true;
                 }
                 
-                // Set MultiBlock cho cúp (truyền ItemStack)
+                // Set MultiBlock cho cúp và update lore
                 plugin.getConfigManager().setMultiBlockLevel(tool, level);
                 
                 String toolDisplay = tool.getType().name().replace("_", " ").toLowerCase();
                 sender.sendMessage("§a✅ Đã set MultiBlock level §e" + level + " §acho §6" + toolDisplay);
                 sender.sendMessage("§7Khi đào block sẽ nhân §ex" + level + " §7vật phẩm!");
+                sender.sendMessage("§7Đã thêm lore vào cúp của bạn!");
                 return true;
             } catch (NumberFormatException e) {
                 sender.sendMessage("§c⚠️ Vui lòng nhập số hợp lệ!");

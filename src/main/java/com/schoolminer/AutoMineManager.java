@@ -10,33 +10,26 @@ import org.bukkit.Location;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.Bukkit;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockDamageEvent;
 import java.util.*;
 
-public class AutoMineManager {
+public class AutoMineManager implements Listener {
     private final Schoolminer plugin;
     private final Map<UUID, MineTask> tasks = new HashMap<>();
     private final ConfigManager config;
     private final Map<UUID, Location> lastLocations = new HashMap<>();
     private final Random random = new Random();
-
-    // MAP NUNG QUẶNG
-    private static final Map<Material, Material> SMELT_MAP = new HashMap<>();
-    static {
-        SMELT_MAP.put(Material.IRON_ORE, Material.IRON_INGOT);
-        SMELT_MAP.put(Material.DEEPSLATE_IRON_ORE, Material.IRON_INGOT);
-        SMELT_MAP.put(Material.GOLD_ORE, Material.GOLD_INGOT);
-        SMELT_MAP.put(Material.DEEPSLATE_GOLD_ORE, Material.GOLD_INGOT);
-        SMELT_MAP.put(Material.NETHER_GOLD_ORE, Material.GOLD_INGOT);
-        SMELT_MAP.put(Material.COPPER_ORE, Material.COPPER_INGOT);
-        SMELT_MAP.put(Material.DEEPSLATE_COPPER_ORE, Material.COPPER_INGOT);
-        SMELT_MAP.put(Material.RAW_IRON, Material.IRON_INGOT);
-        SMELT_MAP.put(Material.RAW_GOLD, Material.GOLD_INGOT);
-        SMELT_MAP.put(Material.RAW_COPPER, Material.COPPER_INGOT);
-    }
+    private final Map<Location, UUID> lockedBlocks = new HashMap<>(); // Lưu block đang bị khóa
 
     public AutoMineManager(Schoolminer plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfigManager();
+        // Đăng ký listener
+        Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
     public void startMining(Player player) {
@@ -53,7 +46,7 @@ public class AutoMineManager {
         
         player.sendMessage("§a✅ Đã bật Auto Mine!");
         player.sendMessage("§7Đứng yên và cầm công cụ để đào tự động.");
-        player.sendMessage("§7Quặng sẽ tự động được nung chảy!");
+        player.sendMessage("§7Block đang đào sẽ được §ckhóa §7cho riêng bạn!");
     }
 
     public void stopMining(Player player) {
@@ -61,6 +54,8 @@ public class AutoMineManager {
         MineTask task = tasks.remove(uuid);
         if (task != null) {
             task.cancel();
+            // Mở khóa tất cả block của player này
+            unlockAllBlocks(player);
             try {
                 Block target = player.getTargetBlockExact(5);
                 if (target != null && target.getLocation() != null) {
@@ -80,10 +75,88 @@ public class AutoMineManager {
         }
         tasks.clear();
         lastLocations.clear();
+        lockedBlocks.clear(); // Xóa tất cả block khóa
     }
 
     public boolean isMining(Player player) {
         return tasks.containsKey(player.getUniqueId());
+    }
+
+    // Mở khóa tất cả block của player
+    private void unlockAllBlocks(Player player) {
+        UUID uuid = player.getUniqueId();
+        Iterator<Map.Entry<Location, UUID>> iterator = lockedBlocks.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Location, UUID> entry = iterator.next();
+            if (entry.getValue().equals(uuid)) {
+                // Gửi gói tin cập nhật block để client biết block đã được mở khóa
+                Block block = entry.getKey().getBlock();
+                player.sendBlockDamage(entry.getKey(), 0.0f);
+                iterator.remove();
+            }
+        }
+    }
+
+    // Mở khóa 1 block cụ thể
+    private void unlockBlock(Location location, UUID uuid) {
+        if (lockedBlocks.containsKey(location) && lockedBlocks.get(location).equals(uuid)) {
+            lockedBlocks.remove(location);
+            // Gửi gói tin cập nhật để client biết block đã được mở khóa
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null && player.isOnline()) {
+                player.sendBlockDamage(location, 0.0f);
+            }
+        }
+    }
+
+    // Khóa block
+    private void lockBlock(Location location, UUID uuid) {
+        lockedBlocks.put(location, uuid);
+    }
+
+    // Kiểm tra block có bị khóa không
+    private boolean isBlockLocked(Location location, Player player) {
+        if (lockedBlocks.containsKey(location)) {
+            UUID owner = lockedBlocks.get(location);
+            // Nếu là chủ sở hữu thì cho phép
+            if (owner.equals(player.getUniqueId())) {
+                return false;
+            }
+            // Nếu không phải chủ sở hữu thì khóa
+            return true;
+        }
+        return false;
+    }
+
+    // Sự kiện ngăn người khác phá block đang bị khóa
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        Block block = event.getBlock();
+        Location loc = block.getLocation();
+        
+        // Kiểm tra nếu block đang bị khóa bởi người khác
+        if (isBlockLocked(loc, player)) {
+            UUID owner = lockedBlocks.get(loc);
+            Player ownerPlayer = Bukkit.getPlayer(owner);
+            String ownerName = ownerPlayer != null ? ownerPlayer.getName() : "Unknown";
+            event.setCancelled(true);
+            player.sendMessage("§c⚠️ Block này đang được §e" + ownerName + " §cauto mine!");
+            player.sendMessage("§7Vui lòng đợi họ đào xong!");
+        }
+    }
+
+    // Sự kiện ngăn damage block khi bị khóa
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBlockDamage(BlockDamageEvent event) {
+        Player player = event.getPlayer();
+        Block block = event.getBlock();
+        Location loc = block.getLocation();
+        
+        // Kiểm tra nếu block đang bị khóa bởi người khác
+        if (isBlockLocked(loc, player)) {
+            event.setCancelled(true);
+        }
     }
 
     private class MineTask extends BukkitRunnable {
@@ -141,10 +214,22 @@ public class AutoMineManager {
                 return;
             }
 
+            // Kiểm tra nếu block đang bị khóa bởi người khác
+            if (isBlockLocked(target.getLocation(), player)) {
+                resetBreak();
+                return;
+            }
+
             if (currentBlock == null || !currentBlock.equals(target)) {
+                // Nếu block cũ khác, mở khóa block cũ
+                if (currentBlock != null) {
+                    unlockBlock(currentBlock.getLocation(), playerUUID);
+                }
                 currentBlock = target;
                 breakTicks = 0;
                 isBreaking = false;
+                // Khóa block mới
+                lockBlock(target.getLocation(), playerUUID);
             }
 
             if (!isBreaking) {
@@ -170,65 +255,58 @@ public class AutoMineManager {
                 
                 if (!breakEvent.isCancelled()) {
                     Collection<ItemStack> drops = target.getDrops(tool);
-                    PlayerInventory inventory = player.getInventory();
-                    boolean doubleDrop = config.isDoubleDrop();
                     
-                    for (ItemStack drop : drops) {
-                        if (drop == null || drop.getType().isAir()) continue;
-                        
-                        Material dropType = drop.getType();
-                        int amount = drop.getAmount();
-                        
-                        // FORTUNE
-                        int fortune = tool.getEnchantmentLevel(Enchantment.FORTUNE);
-                        if (fortune > 0 && isFortuneable(target.getType())) {
+                    int fortune = tool.getEnchantmentLevel(Enchantment.FORTUNE);
+                    if (fortune > 0 && isFortuneable(target.getType())) {
+                        for (ItemStack drop : drops) {
                             int bonus = getFortuneBonus(fortune);
-                            amount *= (1 + bonus);
-                        }
-                        
-                        // DOUBLE DROP
-                        if (doubleDrop) {
-                            amount *= 2;
-                        }
-                        
-                        // KIỂM TRA NUNG QUẶNG
-                        Material resultType = SMELT_MAP.get(dropType);
-                        if (resultType != null) {
-                            // Nếu là quặng, chuyển thành ingot
-                            dropType = resultType;
-                            player.sendMessage("§e🔥 Đã nung " + dropType.name().replace("_", " ").toLowerCase() + "!");
-                        }
-                        
-                        ItemStack finalDrop = new ItemStack(dropType, amount);
-                        
-                        if (inventory.firstEmpty() != -1) {
-                            inventory.addItem(finalDrop);
-                        } else {
-                            Location loc = target.getLocation().add(0.5, 0.5, 0.5);
-                            org.bukkit.entity.Item item = player.getWorld().dropItem(loc, finalDrop);
-                            item.setPickupDelay(0);
+                            drop.setAmount(drop.getAmount() * (1 + bonus));
                         }
                     }
                     
-                    // EXP
+                    boolean doubleDrop = config.isDoubleDrop();
+                    PlayerInventory inventory = player.getInventory();
+                    
+                    for (ItemStack drop : drops) {
+                        if (drop != null && !drop.getType().isAir()) {
+                            int amount = drop.getAmount();
+                            
+                            if (doubleDrop) {
+                                amount *= 2;
+                            }
+                            
+                            ItemStack finalDrop = drop.clone();
+                            finalDrop.setAmount(amount);
+                            
+                            if (inventory.firstEmpty() != -1) {
+                                inventory.addItem(finalDrop);
+                            } else {
+                                Location loc = target.getLocation().add(0.5, 0.5, 0.5);
+                                org.bukkit.entity.Item item = player.getWorld().dropItem(loc, finalDrop);
+                                item.setPickupDelay(0);
+                            }
+                        }
+                    }
+                    
                     int exp = getBlockExp(target, tool);
                     if (exp > 0) {
                         player.giveExp(exp);
                     }
                     
-                    // HIỆU ỨNG
                     player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
                     player.getWorld().spawnParticle(Particle.BLOCK,
                         target.getLocation().add(0.5, 0.5, 0.5), 10,
                         target.getBlockData());
                 }
                 
+                // Mở khóa block sau khi đào xong
+                if (currentBlock != null) {
+                    unlockBlock(currentBlock.getLocation(), playerUUID);
+                    currentBlock = null;
+                }
+                
                 breakTicks = 0;
                 isBreaking = false;
-                
-                try {
-                    player.sendBlockDamage(target.getLocation(), 1.0f);
-                } catch (Exception ignored) {}
             }
         }
 
@@ -294,6 +372,8 @@ public class AutoMineManager {
                 try {
                     player.sendBlockDamage(currentBlock.getLocation(), 0.0f);
                 } catch (Exception ignored) {}
+                // Mở khóa block khi reset
+                unlockBlock(currentBlock.getLocation(), playerUUID);
             }
             currentBlock = null;
             breakTicks = 0;

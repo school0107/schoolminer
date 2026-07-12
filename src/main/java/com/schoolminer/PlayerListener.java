@@ -16,7 +16,7 @@ public class PlayerListener implements Listener {
     public PlayerListener(Schoolminer plugin) {
         this.plugin = plugin;
         this.menu = new AutoCraftMenu(plugin);
-        this.upgradeMenu = new AutoKillUpgradeMenu(plugin, plugin.getEconomy());
+        this.upgradeMenu = new AutoKillUpgradeMenu(plugin);
     }
 
     @EventHandler

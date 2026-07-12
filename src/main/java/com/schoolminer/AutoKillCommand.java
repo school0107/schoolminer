@@ -7,13 +7,11 @@ import org.bukkit.entity.Player;
 
 public class AutoKillCommand implements CommandExecutor {
     private final Schoolminer plugin;
-    private final VaultEconomy economy;
     private AutoKillUpgradeMenu upgradeMenu;
 
-    public AutoKillCommand(Schoolminer plugin, VaultEconomy economy) {
+    public AutoKillCommand(Schoolminer plugin) {
         this.plugin = plugin;
-        this.economy = economy;
-        this.upgradeMenu = new AutoKillUpgradeMenu(plugin, economy);
+        this.upgradeMenu = new AutoKillUpgradeMenu(plugin);
     }
 
     @Override
@@ -25,17 +23,11 @@ public class AutoKillCommand implements CommandExecutor {
 
         AutoKillManager manager = plugin.getAutoKillManager();
 
-        // Mở menu nâng cấp
         if (args.length > 0 && args[0].equalsIgnoreCase("upgrade")) {
-            if (!economy.isEnabled()) {
-                player.sendMessage("§c❌ Hệ thống kinh tế chưa được kích hoạt! Cần Vault plugin.");
-                return true;
-            }
             upgradeMenu.openMenu(player);
             return true;
         }
 
-        // Toggle
         if (manager.isKilling(player)) {
             manager.stopKilling(player);
         } else {

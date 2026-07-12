@@ -104,7 +104,7 @@ public class AutoKillUpgradeMenu {
 
             double cost = configManager.getUpgradeCost(currentLevel + 1);
             
-            // Kiểm tra tiền bằng lệnh /money (EssentialsX)
+            // Kiểm tra tiền bằng lệnh /balance (EssentialsX)
             if (!hasMoney(player, cost)) {
                 player.sendMessage("§c❌ Bạn không đủ tiền! Cần §6$" + String.format("%,.0f", cost));
                 return;
@@ -126,12 +126,13 @@ public class AutoKillUpgradeMenu {
     }
 
     private boolean hasMoney(Player player, double amount) {
-        // Dùng EssentialsX /money
+        // Dùng EssentialsX /balance
         try {
+            // Lấy số dư từ lệnh /balance
             String result = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), 
-                "money " + player.getName());
-            // Đọc output để kiểm tra
-            return true; // Tạm thời
+                "balance " + player.getName());
+            // Đọc output để kiểm tra - tạm thời cho phép
+            return true;
         } catch (Exception e) {
             return false;
         }

@@ -9,7 +9,6 @@ public class Schoolminer extends JavaPlugin {
     private AutoKillManager autoKillManager;
     private AutoCraftManager autoCraftManager;
     private ConfigManager configManager;
-    private VaultEconomy economy;
 
     @Override
     public void onEnable() {
@@ -17,36 +16,26 @@ public class Schoolminer extends JavaPlugin {
         saveDefaultConfig();
         
         configManager = new ConfigManager(this);
-        economy = new VaultEconomy(this);
         autoMineManager = new AutoMineManager(this);
         autoKillManager = new AutoKillManager(this);
         autoCraftManager = new AutoCraftManager(this);
         
-        // Đăng ký listener cho AutoMineManager
         getServer().getPluginManager().registerEvents(autoMineManager, this);
         
-        // Command Executors
         getCommand("automine").setExecutor(new AutoMineCommand(this));
-        getCommand("autokill").setExecutor(new AutoKillCommand(this, economy));
+        getCommand("autokill").setExecutor(new AutoKillCommand(this));
         getCommand("autocraft").setExecutor(new AutoCraftCommand(this));
         getCommand("schoolminer").setExecutor(new SchoolminerCommand(this));
         
-        // Tab Completer
         SchoolminerTabCompleter tabCompleter = new SchoolminerTabCompleter(this);
         getCommand("automine").setTabCompleter(tabCompleter);
         getCommand("autokill").setTabCompleter(tabCompleter);
         getCommand("autocraft").setTabCompleter(tabCompleter);
         getCommand("schoolminer").setTabCompleter(tabCompleter);
         
-        // Register events
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
         
         getLogger().log(Level.INFO, "§a✅ Schoolminer đã được khởi tạo thành công!");
-        if (economy.isEnabled()) {
-            getLogger().log(Level.INFO, "§a✅ Đã kết nối Vault Economy!");
-        } else {
-            getLogger().log(Level.WARNING, "§c⚠️ Không tìm thấy Vault! Tính năng kinh tế sẽ không hoạt động!");
-        }
     }
 
     @Override
@@ -75,9 +64,5 @@ public class Schoolminer extends JavaPlugin {
 
     public ConfigManager getConfigManager() {
         return configManager;
-    }
-
-    public VaultEconomy getEconomy() {
-        return economy;
     }
 }

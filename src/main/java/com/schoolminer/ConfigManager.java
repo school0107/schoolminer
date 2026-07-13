@@ -53,7 +53,6 @@ public class ConfigManager {
         plugin.reloadConfig();
         FileConfiguration config = plugin.getConfig();
         
-        // Auto Mine
         whitelist = new HashSet<>();
         List<String> blockNames = config.getStringList("whitelist");
         for (String name : blockNames) {
@@ -70,7 +69,6 @@ public class ConfigManager {
         autoPickup = config.getBoolean("automine.auto-pickup", true);
         doubleDrop = config.getBoolean("automine.double-drop", true);
         
-        // Auto Kill
         attackDelay = config.getInt("autokill.attack-delay", 40);
         killRange = config.getInt("autokill.range", 3);
         baseDamage = config.getDouble("autokill.base-damage", 4.0);
@@ -83,22 +81,14 @@ public class ConfigManager {
         xpAnimal = config.getInt("autokill.xp-animal", 1);
         xpMob = config.getInt("autokill.xp-mob", 3);
         
-        // Auto Craft
         craftDelay = config.getInt("autocraft.craft-delay", 20);
         craftCooldown = config.getInt("autocraft.cooldown", 2000);
         maxCraftPerTick = config.getInt("autocraft.max-craft-per-tick", 16);
         loadCrafts(config);
         
-        // Explosion upgrades
         loadExplosionUpgrades(config);
-        
-        // Load multi block
         loadMultiBlock(config);
-        
-        // Load hard blocks
         loadHardBlocks(config);
-        
-        // Load custom hardness
         loadCustomHardness(config);
         
         plugin.getLogger().info("§a✅ Đã load " + whitelist.size() + " block vào whitelist");
@@ -112,9 +102,7 @@ public class ConfigManager {
     private void loadMultiBlock(FileConfiguration config) {
         multiBlockLevels.clear();
         ConfigurationSection multiBlockSection = config.getConfigurationSection("multi-block-tools");
-        if (multiBlockSection == null) {
-            return;
-        }
+        if (multiBlockSection == null) return;
         
         for (String toolKey : multiBlockSection.getKeys(false)) {
             int level = multiBlockSection.getInt(toolKey, 1);
@@ -125,35 +113,25 @@ public class ConfigManager {
     private void loadHardBlocks(FileConfiguration config) {
         hardBlocks.clear();
         List<String> hardBlockNames = config.getStringList("hard-blocks");
-        if (hardBlockNames.isEmpty()) {
-            return;
-        }
-        
         for (String name : hardBlockNames) {
             try {
                 Material mat = Material.valueOf(name.toUpperCase());
                 hardBlocks.add(mat);
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("§c⚠️ Hard block không hợp lệ: " + name);
-            }
+            } catch (IllegalArgumentException ignored) {}
         }
     }
 
     private void loadCustomHardness(FileConfiguration config) {
         customHardness.clear();
         ConfigurationSection hardnessSection = config.getConfigurationSection("custom-hardness");
-        if (hardnessSection == null) {
-            return;
-        }
+        if (hardnessSection == null) return;
         
         for (String key : hardnessSection.getKeys(false)) {
             try {
                 Material mat = Material.valueOf(key.toUpperCase());
                 double hardness = hardnessSection.getDouble(key, 1.0);
                 customHardness.put(mat, hardness);
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("§c⚠️ Custom hardness không hợp lệ: " + key);
-            }
+            } catch (IllegalArgumentException ignored) {}
         }
     }
 
@@ -179,14 +157,12 @@ public class ConfigManager {
 
     public int getMultiBlockLevel(ItemStack tool) {
         if (tool == null || tool.getType().isAir()) return 1;
-        
         String toolKey = getItemKey(tool);
         return multiBlockLevels.getOrDefault(toolKey, 1);
     }
 
     public void setMultiBlockLevel(ItemStack tool, int level) {
         if (tool == null || tool.getType().isAir()) return;
-        
         String toolKey = getItemKey(tool);
         saveMultiBlock(toolKey, level);
         updateToolLore(tool, level);
@@ -194,7 +170,6 @@ public class ConfigManager {
 
     public void removeMultiBlockLevel(ItemStack tool) {
         if (tool == null || tool.getType().isAir()) return;
-        
         String toolKey = getItemKey(tool);
         removeMultiBlock(toolKey);
         removeToolLore(tool);
@@ -202,9 +177,7 @@ public class ConfigManager {
 
     public String getItemKey(ItemStack tool) {
         if (tool == null || tool.getType().isAir()) return "";
-        
         String baseKey = tool.getType().name();
-        
         if (tool.hasItemMeta()) {
             ItemMeta meta = tool.getItemMeta();
             if (meta.hasDisplayName()) {
@@ -214,11 +187,9 @@ public class ConfigManager {
                 baseKey += "_" + meta.getLore().hashCode();
             }
         }
-        
         if (!multiBlockLevels.containsKey(baseKey)) {
             baseKey += "_" + System.currentTimeMillis();
         }
-        
         return baseKey;
     }
 
@@ -228,20 +199,14 @@ public class ConfigManager {
         if (meta == null) return;
         
         List<String> lore = meta.getLore();
-        if (lore == null) {
-            lore = new ArrayList<>();
-        }
+        if (lore == null) lore = new ArrayList<>();
         
-        // Xóa lore MultiBlock cũ
         Iterator<String> iterator = lore.iterator();
         while (iterator.hasNext()) {
             String line = iterator.next();
-            if (line.contains("MultiBlock")) {
-                iterator.remove();
-            }
+            if (line.contains("MultiBlock")) iterator.remove();
         }
         
-        // Thêm lore mới
         if (level > 1) {
             if (!lore.isEmpty() && !lore.get(lore.size() - 1).trim().isEmpty()) {
                 lore.add("");
@@ -265,9 +230,7 @@ public class ConfigManager {
         Iterator<String> iterator = lore.iterator();
         while (iterator.hasNext()) {
             String line = iterator.next();
-            if (line.contains("MultiBlock")) {
-                iterator.remove();
-            }
+            if (line.contains("MultiBlock")) iterator.remove();
         }
         
         meta.setLore(lore);
@@ -302,7 +265,6 @@ public class ConfigManager {
         }
         
         maxExplosionLevel = upgrades.getInt("max-level", 10);
-        
         ConfigurationSection levels = upgrades.getConfigurationSection("levels");
         if (levels != null) {
             for (String key : levels.getKeys(false)) {
@@ -334,9 +296,7 @@ public class ConfigManager {
     private void loadCrafts(FileConfiguration config) {
         craftConfigs.clear();
         ConfigurationSection crafts = config.getConfigurationSection("autocraft.crafts");
-        if (crafts == null) {
-            return;
-        }
+        if (crafts == null) return;
         
         for (String craftId : crafts.getKeys(false)) {
             ConfigurationSection craft = crafts.getConfigurationSection(craftId);
@@ -351,12 +311,11 @@ public class ConfigManager {
                 for (String key : materialsSection.getKeys(false)) {
                     String matName = materialsSection.getString(key + ".material");
                     int amount = materialsSection.getInt(key + ".amount", 1);
-                    
                     try {
                         Material mat = Material.valueOf(matName.toUpperCase());
                         materials.add(new ItemStack(mat, amount));
                     } catch (IllegalArgumentException e) {
-                        plugin.getLogger().warning("§c⚠️ Material không hợp lệ trong autocraft." + craftId + ": " + matName);
+                        plugin.getLogger().warning("§c⚠️ Material không hợp lệ: " + matName);
                     }
                 }
             }
@@ -372,7 +331,6 @@ public class ConfigManager {
                 try {
                     Material mat = Material.valueOf(matName.toUpperCase());
                     result = new ItemStack(mat, amount);
-                    
                     if (displayNameResult != null || !lore.isEmpty()) {
                         ItemMeta meta = result.getItemMeta();
                         if (displayNameResult != null) {
@@ -388,7 +346,7 @@ public class ConfigManager {
                         result.setItemMeta(meta);
                     }
                 } catch (IllegalArgumentException e) {
-                    plugin.getLogger().warning("§c⚠️ Material không hợp lệ trong autocraft." + craftId + ".result: " + matName);
+                    plugin.getLogger().warning("§c⚠️ Material không hợp lệ trong result: " + matName);
                 }
             }
             
@@ -401,109 +359,28 @@ public class ConfigManager {
         }
     }
 
-    public int getWhitelistCount() {
-        return whitelist.size();
-    }
-
-    public boolean isWhitelisted(Material material) {
-        return whitelist.contains(material);
-    }
-
-    public int getMineDelay() {
-        return mineDelay;
-    }
-
-    public int getAttackDelay() {
-        return attackDelay;
-    }
-
-    public int getMaxRange() {
-        return maxRange;
-    }
-
-    public int getKillRange() {
-        return killRange;
-    }
-
-    public double getBaseDamage() {
-        return baseDamage;
-    }
-
-    public boolean isKillMonster() {
-        return killMonster;
-    }
-
-    public boolean isKillAnimal() {
-        return killAnimal;
-    }
-
-    public boolean isKillMob() {
-        return killMob;
-    }
-
-    public boolean isDropItems() {
-        return dropItems;
-    }
-
-    public boolean isDropXp() {
-        return dropXp;
-    }
-
-    public int getXpMonster() {
-        return xpMonster;
-    }
-
-    public int getXpAnimal() {
-        return xpAnimal;
-    }
-
-    public int getXpMob() {
-        return xpMob;
-    }
-
-    public boolean isAutoPickup() {
-        return autoPickup;
-    }
-
-    public boolean isDoubleDrop() {
-        return doubleDrop;
-    }
-
-    public int getCraftDelay() {
-        return craftDelay;
-    }
-
-    public int getCraftCooldown() {
-        return craftCooldown;
-    }
-
-    public int getMaxCraftPerTick() {
-        return maxCraftPerTick;
-    }
-
-    public AutoCraftConfig getCraftConfig(String id) {
-        return craftConfigs.get(id);
-    }
-
-    public Set<String> getCraftTypes() {
-        return craftConfigs.keySet();
-    }
-
-    public int getMaxExplosionLevel() {
-        return maxExplosionLevel;
-    }
-
-    public double getExplosionChanceAtLevel(int level) {
-        return explosionChances.getOrDefault(level, 0.0);
-    }
-
-    public double getExplosionRadiusAtLevel(int level) {
-        return explosionRadii.getOrDefault(level, 0.0);
-    }
-
-    public double getUpgradeCost(int level) {
-        return upgradeCosts.getOrDefault(level, 0.0);
-    }
+    public boolean isWhitelisted(Material material) { return whitelist.contains(material); }
+    public int getMineDelay() { return mineDelay; }
+    public int getAttackDelay() { return attackDelay; }
+    public int getKillRange() { return killRange; }
+    public double getBaseDamage() { return baseDamage; }
+    public boolean isKillMonster() { return killMonster; }
+    public boolean isKillAnimal() { return killAnimal; }
+    public boolean isKillMob() { return killMob; }
+    public boolean isDropItems() { return dropItems; }
+    public boolean isDropXp() { return dropXp; }
+    public int getXpMonster() { return xpMonster; }
+    public int getXpAnimal() { return xpAnimal; }
+    public int getXpMob() { return xpMob; }
+    public boolean isDoubleDrop() { return doubleDrop; }
+    public int getCraftDelay() { return craftDelay; }
+    public int getMaxCraftPerTick() { return maxCraftPerTick; }
+    public AutoCraftConfig getCraftConfig(String id) { return craftConfigs.get(id); }
+    public Set<String> getCraftTypes() { return craftConfigs.keySet(); }
+    public int getMaxExplosionLevel() { return maxExplosionLevel; }
+    public double getExplosionChanceAtLevel(int level) { return explosionChances.getOrDefault(level, 0.0); }
+    public double getExplosionRadiusAtLevel(int level) { return explosionRadii.getOrDefault(level, 0.0); }
+    public double getUpgradeCost(int level) { return upgradeCosts.getOrDefault(level, 0.0); }
 
     public String getMessage(String key) {
         String msg = plugin.getConfig().getString("messages." + key, "&c⚠️ Không tìm thấy message: " + key);

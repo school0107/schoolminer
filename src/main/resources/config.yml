@@ -7,226 +7,173 @@
 
 # ===== AUTO MINE =====
 automine:
-  # Thời gian đào 1 lần (ticks, 20 ticks = 1 giây)
   delay: 20
-  
-  # Phạm vi đào tối đa (block)
   max-range: 5
-  
-  # Tự động nhặt item vào túi (true/false)
   auto-pickup: true
-  
-  # X2 số lượng item đào được (true/false)
   double-drop: true
 
-# ===== WHITELIST BLOCK ĐƯỢC PHÉP ĐÀO =====
+# ===== WHITELIST =====
 whitelist:
-  # Đá và các loại đá
-  - STONE
-  - DEEPSLATE
-  - GRANITE
-  - DIORITE
-  - ANDESITE
-  - CALCITE
-  - TUFF
-  - DRIPSTONE_BLOCK
-  
-  # Quặng
-  - COAL_ORE
-  - DEEPSLATE_COAL_ORE
-  - IRON_ORE
-  - DEEPSLATE_IRON_ORE
-  - GOLD_ORE
-  - DEEPSLATE_GOLD_ORE
-  - DIAMOND_ORE
-  - DEEPSLATE_DIAMOND_ORE
-  - EMERALD_ORE
-  - DEEPSLATE_EMERALD_ORE
-  - REDSTONE_ORE
-  - DEEPSLATE_REDSTONE_ORE
-  - LAPIS_ORE
-  - DEEPSLATE_LAPIS_ORE
-  - NETHER_QUARTZ_ORE
-  - NETHER_GOLD_ORE
-  - ANCIENT_DEBRIS
-  - COPPER_ORE
-  - DEEPSLATE_COPPER_ORE
-  
-  # Đá Nether và End
-  - NETHERRACK
-  - BASALT
-  - BLACKSTONE
-  - END_STONE
-  - SOUL_SAND
-  - SOUL_SOIL
-  - NETHER_BRICKS
-  - RED_NETHER_BRICKS
-  
-  # Các loại đá xây dựng
-  - SANDSTONE
-  - RED_SANDSTONE
-  - BRICK
-  - QUARTZ_BLOCK
-  - SMOOTH_QUARTZ
-  - SMOOTH_STONE
-  - SMOOTH_SANDSTONE
-  - SMOOTH_RED_SANDSTONE
-  
-  # Đất và các loại đất
-  - DIRT
-  - GRASS_BLOCK
-  - PODZOL
-  - MYCELIUM
-  - COARSE_DIRT
-  - ROOTED_DIRT
-  - FARMLAND
-  - DIRT_PATH
-  
-  # Cát
-  - SAND
-  - RED_SAND
-  - GRAVEL
-  
-  # Gỗ (Log)
-  - OAK_LOG
-  - SPRUCE_LOG
-  - BIRCH_LOG
-  - JUNGLE_LOG
-  - ACACIA_LOG
-  - DARK_OAK_LOG
-  - MANGROVE_LOG
-  - CHERRY_LOG
-  
-  # Gỗ (Striped)
-  - STRIPPED_OAK_LOG
-  - STRIPPED_SPRUCE_LOG
-  - STRIPPED_BIRCH_LOG
-  - STRIPPED_JUNGLE_LOG
-  - STRIPPED_ACACIA_LOG
-  - STRIPPED_DARK_OAK_LOG
-  - STRIPPED_MANGROVE_LOG
-  - STRIPPED_CHERRY_LOG
-  
-  # Ván gỗ
-  - OAK_PLANKS
-  - SPRUCE_PLANKS
-  - BIRCH_PLANKS
-  - JUNGLE_PLANKS
-  - ACACIA_PLANKS
-  - DARK_OAK_PLANKS
-  - MANGROVE_PLANKS
-  - CHERRY_PLANKS
-  
-  # Đá quý và vật liệu đặc biệt
-  - OBSIDIAN
-  - CRYING_OBSIDIAN
-  - GLOWSTONE
-  - SEA_LANTERN
-  - PRISMARINE
-  - DARK_PRISMARINE
-  - PRISMARINE_BRICKS
-  
-  # Băng và tuyết
-  - ICE
-  - PACKED_ICE
-  - BLUE_ICE
-  - SNOW_BLOCK
-  - SNOW
-  
-  # Các block khác
-  - CLAY
-  - BONE_BLOCK
-  - COAL_BLOCK
-  - IRON_BLOCK
-  - GOLD_BLOCK
-  - DIAMOND_BLOCK
-  - EMERALD_BLOCK
-  - REDSTONE_BLOCK
-  - LAPIS_BLOCK
-  - NETHERITE_BLOCK
-  - AMETHYST_BLOCK
-  - BUDDING_AMETHYST
-  - AMETHYST_CLUSTER
-  - LARGE_AMETHYST_BUD
-  - MEDIUM_AMETHYST_BUD
-  - SMALL_AMETHYST_BUD
-  
-  # Các loại đá cuội
-  - COBBLESTONE
-  - MOSSY_COBBLESTONE
-  - DEEPSLATE_COBBLESTONE
-  
-  # Gạch đá
-  - STONE_BRICKS
-  - MOSSY_STONE_BRICKS
-  - CRACKED_STONE_BRICKS
-  - CHISELED_STONE_BRICKS
-  - DEEPSLATE_BRICKS
-  - CRACKED_DEEPSLATE_BRICKS
-  - DEEPSLATE_TILES
-  - CRACKED_DEEPSLATE_TILES
-  - CHISELED_DEEPSLATE
+- STONE
+- DEEPSLATE
+- COAL_ORE
+- IRON_ORE
+- GOLD_ORE
+- DIAMOND_ORE
+- EMERALD_ORE
+- REDSTONE_ORE
+- LAPIS_ORE
+- NETHER_QUARTZ_ORE
+- NETHER_GOLD_ORE
+- ANCIENT_DEBRIS
+- DEEPSLATE_COAL_ORE
+- DEEPSLATE_IRON_ORE
+- DEEPSLATE_GOLD_ORE
+- DEEPSLATE_DIAMOND_ORE
+- DEEPSLATE_EMERALD_ORE
+- DEEPSLATE_REDSTONE_ORE
+- DEEPSLATE_LAPIS_ORE
+- GRANITE
+- DIORITE
+- ANDESITE
+- CALCITE
+- TUFF
+- OBSIDIAN
+- CRYING_OBSIDIAN
+- END_STONE
+- NETHERRACK
+- BASALT
+- BLACKSTONE
+- SOUL_SAND
+- SOUL_SOIL
+- NETHER_BRICKS
+- RED_NETHER_BRICKS
+- SANDSTONE
+- RED_SANDSTONE
+- DIRT
+- GRASS_BLOCK
+- SAND
+- GRAVEL
+- OAK_LOG
+- SPRUCE_LOG
+- BIRCH_LOG
+- JUNGLE_LOG
+- ACACIA_LOG
+- DARK_OAK_LOG
+- MANGROVE_LOG
+- CHERRY_LOG
+- COBBLESTONE
+- STONE_BRICKS
+- DEEPSLATE_BRICKS
 
+# ===== CUSTOM HARDNESS =====
+custom-hardness:
+  STONE: 1.5
+  DEEPSLATE: 3.0
+  COBBLESTONE: 2.0
+  IRON_ORE: 3.0
+  GOLD_ORE: 3.0
+  DIAMOND_ORE: 3.0
+  EMERALD_ORE: 3.0
+  NETHER_QUARTZ_ORE: 3.0
+  ANCIENT_DEBRIS: 30.0
+  OBSIDIAN: 50.0
+  CRYING_OBSIDIAN: 50.0
+  NETHERITE_BLOCK: 50.0
+  SANDSTONE: 10.0
+
+# ===== HARD BLOCKS =====
+hard-blocks:
+- SANDSTONE
+
+# ===== AUTO KILL =====
 autokill:
-  # Thời gian hồi đòn (ticks, 20 ticks = 1 giây)
-  attack-delay: 40
-  
-  # Khoảng cách tấn công (block)
+  attack-delay: 25
   range: 3
-  
-  # Sát thương cơ bản
   base-damage: 4.0
-  
-  # Loại mob được tấn công
   kill-monster: true
   kill-animal: false
   kill-mob: true
-  
-  # Drop items khi kill
   drop-items: true
-  
-  # Drop XP khi kill
   drop-xp: true
-  
-  # XP nhận được khi kill
   xp-monster: 5
   xp-animal: 1
   xp-mob: 3
+  upgrades:
+    max-level: 10
+    levels:
+      '0':
+        chance: 0.0
+        radius: 0.0
+        cost: 0.0
+      '1':
+        chance: 0.05
+        radius: 1.0
+        cost: 1000.0
+      '2':
+        chance: 0.1
+        radius: 1.5
+        cost: 2000.0
+      '3':
+        chance: 0.15
+        radius: 2.0
+        cost: 4000.0
+      '4':
+        chance: 0.2
+        radius: 2.5
+        cost: 6000.0
+      '5':
+        chance: 0.25
+        radius: 3.0
+        cost: 10000.0
+      '6':
+        chance: 0.3
+        radius: 3.5
+        cost: 15000.0
+      '7':
+        chance: 0.35
+        radius: 4.0
+        cost: 20000.0
+      '8':
+        chance: 0.4
+        radius: 4.5
+        cost: 30000.0
+      '9':
+        chance: 0.45
+        radius: 5.0
+        cost: 40000.0
+      '10':
+        chance: 0.5
+        radius: 6.0
+        cost: 50000.0
 
 # ===== AUTO CRAFT =====
 autocraft:
-  # Thời gian craft mỗi lần (ticks, 20 ticks = 1 giây)
-  craft-delay: 20
-  
-  # Thời gian chờ giữa các lần bật craft (milliseconds)
-  # Mặc định: 2000 = 2 giây
+  craft-delay: 35
   cooldown: 2000
-  
-  # Số lượng craft tối đa mỗi tick (tránh lag server)
-  # Mặc định: 16
-  max-craft-per-tick: 16
-  
-  # Danh sách các công thức craft
+  max-craft-per-tick: 32
   crafts:
-    # ===== CRAFT GỖ (1 stack = 64) =====
     go:
-      display-name: "&6Gỗ Sồi &7→ &eGỗ Cao Cấp"
+      display-name: '&6Gỗ Sồi &7→ &eGỗ Cao Cấp'
+      permission: 'schoolminer.autocraft.go'
       glow: true
+      slot: 0
       materials:
         oak_wood:
           material: OAK_LOG
           amount: 64
       result:
-        material: OAK_LOG
+        material: OAK_PLANKS
         amount: 1
-        display-name: "&e✨ Gỗ Cao Cấp"
+        display-name: '&e✨ Gỗ Cao Cấp'
         lore:
-          - "&7Vật liệu chế tạo trang bị cao cấp"
+        - '&7Vật liệu chế tạo trang bị cao cấp'
     
-    # ===== CRAFT ĐÁ (1 stack = 64) =====
     da:
-      display-name: "&7Đá &7→ &fĐá Tinh Khiết"
+      display-name: '&7Đá &7→ &fĐá Tinh Khiết'
+      permission: 'schoolminer.autocraft.da'
       glow: true
+      slot: 1
       materials:
         stone:
           material: STONE
@@ -234,14 +181,15 @@ autocraft:
       result:
         material: STONE
         amount: 1
-        display-name: "&f💎 Đá Tinh Khiết"
+        display-name: '&f💎 Đá Tinh Khiết'
         lore:
-          - "&7Vật liệu chế tạo trang bị cao cấp"
+        - '&7Vật liệu chế tạo trang bị cao cấp'
     
-    # ===== CRAFT ĐÁ CUỘI (1 stack = 64) =====
     da_cuoi:
-      display-name: "&7Đá Cuội &7→ &fĐá"
+      display-name: '&7Đá Cuội &7→ &fĐá'
+      permission: 'schoolminer.autocraft.da_cuoi'
       glow: false
+      slot: 2
       materials:
         cobblestone:
           material: COBBLESTONE
@@ -249,14 +197,15 @@ autocraft:
       result:
         material: STONE
         amount: 1
-        display-name: "&fĐá Nguyên Khối"
+        display-name: '&fĐá Nguyên Khối'
         lore:
-          - "&7Vật liệu chế tạo trang bị"
+        - '&7Vật liệu chế tạo trang bị'
     
-    # ===== CRAFT THAN CỦI (1 stack = 64) =====
     than_cui:
-      display-name: "&7Gỗ &7→ &8Than củi"
+      display-name: '&7Gỗ &7→ &8Than củi'
+      permission: 'schoolminer.autocraft.than_cui'
       glow: false
+      slot: 3
       materials:
         oak_log:
           material: OAK_LOG
@@ -264,74 +213,79 @@ autocraft:
       result:
         material: CHARCOAL
         amount: 1
-        display-name: "&8Than củi Chất Lượng Cao"
+        display-name: '&8Than củi Chất Lượng Cao'
         lore:
-          - "&7Vật liệu chế tạo trang bị"
+        - '&7Vật liệu chế tạo trang bị'
     
-    # ===== CRAFT SẮT (1 stack = 64) =====
     sat:
-      display-name: "&fSắt &7→ &f🔩 Sắt Tinh Luyện"
+      display-name: '&fSắt &7→ &f🔩 Sắt Tinh Luyện'
+      permission: 'schoolminer.autocraft.sat'
       glow: true
+      slot: 4
       materials:
         iron_ingot:
           material: IRON_INGOT
           amount: 64
       result:
-        material: IRON_INGOT
+        material: RAW_IRON
         amount: 1
-        display-name: "&f🔩 Sắt Tinh Luyện"
+        display-name: '&f🔩 Sắt Tinh Luyện'
         lore:
-          - "&7Vật liệu chế tạo trang bị cao cấp"
+        - '&7Vật liệu chế tạo trang bị cao cấp'
     
-    # ===== CRAFT VÀNG (2 stack = 128) =====
     vang:
-      display-name: "&eVàng &7→ &e⭐ Vàng Nguyên Chất"
+      display-name: '&eVàng &7→ &e⭐ Vàng Nguyên Chất'
+      permission: 'schoolminer.autocraft.vang'
       glow: true
+      slot: 5
       materials:
         gold_ingot:
           material: GOLD_INGOT
           amount: 128
       result:
-        material: GOLD_INGOT
+        material: RAW_GOLD
         amount: 1
-        display-name: "&e⭐ Vàng Nguyên Chất"
+        display-name: '&e⭐ Vàng Nguyên Chất'
         lore:
-          - "&7Vật liệu chế tạo trang bị cao cấp"
+        - '&7Vật liệu chế tạo trang bị cao cấp'
     
-    # ===== CRAFT KIM CƯƠNG (2 stack = 128) =====
     kimcuong:
-      display-name: "&bKim Cương &7→ &b💎 Kim Cương Hoàn Hảo"
+      display-name: '&bKim Cương &7→ &b💎 Kim Cương Hoàn Hảo'
+      permission: 'schoolminer.autocraft.kimcuong'
       glow: true
+      slot: 6
       materials:
         diamond:
           material: DIAMOND
           amount: 128
       result:
-        material: DIAMOND
+        material: LIGHT_BLUE_DYE
         amount: 1
-        display-name: "&b💎 Kim Cương Hoàn Hảo"
+        display-name: '&b💎 Kim Cương Hoàn Hảo'
         lore:
-          - "&7Vật liệu chế tạo trang bị thượng hạng"
+        - '&7Vật liệu chế tạo trang bị thượng hạng'
     
-    # ===== CRAFT NGỌC LỤC BẢO (2 stack = 128) =====
     ngoc_luc_bao:
-      display-name: "&aNgọc Lục Bảo &7→ &a💚 Ngọc Lục Bảo Hoàn Hảo"
+      display-name: '&aNgọc Lục Bảo &7→ &a💚 Ngọc Lục Bảo Hoàn Hảo'
+      permission: 'schoolminer.autocraft.ngoc_luc_bao'
       glow: true
+      slot: 7
       materials:
         emerald:
           material: EMERALD
           amount: 128
       result:
-        material: EMERALD
+        material: LIME_DYE
         amount: 1
-        display-name: "&a💚 Ngọc Lục Bảo Hoàn Hảo"
+        display-name: '&a💚 Ngọc Lục Bảo Hoàn Hảo'
         lore:
-          - "&7Vật liệu chế tạo trang bị thượng hạng"
+        - '&7Vật liệu chế tạo trang bị thượng hạng'
     
-    # ===== CRAFT ĐÁ NETHER (2 stack = 128) =====
     da_nether:
-      display-name: "&cĐá Nether &7→ &c🔥 Đá Nether Tinh Khiết"
+      display-name: '&cĐá Nether &7→ &c🔥 Đá Nether Tinh Khiết'
+      permission: 'schoolminer.autocraft.da_nether'
       glow: true
+      slot: 8
       materials:
         netherrack:
           material: NETHERRACK
@@ -339,14 +293,15 @@ autocraft:
       result:
         material: NETHERRACK
         amount: 1
-        display-name: "&c🔥 Đá Nether Tinh Khiết"
+        display-name: '&c🔥 Đá Nether Tinh Khiết'
         lore:
-          - "&7Vật liệu chế tạo trang bị cao cấp"
+        - '&7Vật liệu chế tạo trang bị cao cấp'
     
-    # ===== CRAFT MẢNH VỠ CỔ ĐẠI (2 stack = 128) =====
     manh_vo_co_dai:
-      display-name: "&5Mảnh Vỡ Cổ Đại &7→ &5💀 Mảnh Vỡ Cổ Đại Hoàn Hảo"
+      display-name: '&5Mảnh Vỡ Cổ Đại &7→ &5💀 Mảnh Vỡ Cổ Đại Hoàn Hảo'
+      permission: 'schoolminer.autocraft.manh_vo_co_dai'
       glow: true
+      slot: 9
       materials:
         ancient_debris:
           material: ANCIENT_DEBRIS
@@ -354,14 +309,15 @@ autocraft:
       result:
         material: ANCIENT_DEBRIS
         amount: 1
-        display-name: "&5💀 Mảnh Vỡ Cổ Đại Hoàn Hảo"
+        display-name: '&5💀 Mảnh Vỡ Cổ Đại Hoàn Hảo'
         lore:
-          - "&7Vật liệu chế tạo trang bị thượng hạng"
+        - '&7Vật liệu chế tạo trang bị thượng hạng'
     
-    # ===== CRAFT ĐÁ BAZAN (2 stack = 128) =====
     da_bazan:
-      display-name: "&8Đá Bazan &7→ &8🪨 Đá Bazan Tinh Khiết"
+      display-name: '&8Đá Bazan &7→ &8🪨 Đá Bazan Tinh Khiết'
+      permission: 'schoolminer.autocraft.da_bazan'
       glow: true
+      slot: 10
       materials:
         basalt:
           material: BASALT
@@ -369,14 +325,15 @@ autocraft:
       result:
         material: BASALT
         amount: 1
-        display-name: "&8🪨 Đá Bazan Tinh Khiết"
+        display-name: '&8🪨 Đá Bazan Tinh Khiết'
         lore:
-          - "&7Vật liệu chế tạo trang bị"
+        - '&7Vật liệu chế tạo trang bị'
     
-    # ===== CRAFT BLACKSTONE (2 stack = 128) =====
     da_blackstone:
-      display-name: "&0Blackstone &7→ &0🪨 Blackstone Tinh Khiết"
+      display-name: '&0Blackstone &7→ &0🪨 Blackstone Tinh Khiết'
+      permission: 'schoolminer.autocraft.da_blackstone'
       glow: true
+      slot: 11
       materials:
         blackstone:
           material: BLACKSTONE
@@ -384,14 +341,15 @@ autocraft:
       result:
         material: BLACKSTONE
         amount: 1
-        display-name: "&0🪨 Blackstone Tinh Khiết"
+        display-name: '&0🪨 Blackstone Tinh Khiết'
         lore:
-          - "&7Vật liệu chế tạo trang bị"
+        - '&7Vật liệu chế tạo trang bị'
     
-    # ===== CRAFT QUẶNG NETHER GOLD (2 stack = 128) =====
     quang_nether_gold:
-      display-name: "&eQuặng Nether Vàng &7→ &e✨ Vàng Nether Tinh Khiết"
+      display-name: '&eQuặng Nether Vàng &7→ &e✨ Vàng Nether Tinh Khiết'
+      permission: 'schoolminer.autocraft.quang_nether_gold'
       glow: true
+      slot: 12
       materials:
         nether_gold_ore:
           material: NETHER_GOLD_ORE
@@ -399,14 +357,15 @@ autocraft:
       result:
         material: GOLD_INGOT
         amount: 1
-        display-name: "&e✨ Vàng Nether Tinh Khiết"
+        display-name: '&e✨ Vàng Nether Tinh Khiết'
         lore:
-          - "&7Vật liệu chế tạo trang bị cao cấp"
+        - '&7Vật liệu chế tạo trang bị cao cấp'
     
-    # ===== CRAFT QUẶNG NETHER QUARTZ (2 stack = 128) =====
     quang_nether_quartz:
-      display-name: "&fQuặng Nether Quartz &7→ &f💎 Quartz Tinh Khiết"
+      display-name: '&fQuặng Nether Quartz &7→ &f💎 Quartz Tinh Khiết'
+      permission: 'schoolminer.autocraft.quang_nether_quartz'
       glow: true
+      slot: 13
       materials:
         nether_quartz_ore:
           material: NETHER_QUARTZ_ORE
@@ -414,44 +373,47 @@ autocraft:
       result:
         material: QUARTZ
         amount: 1
-        display-name: "&f💎 Quartz Tinh Khiết"
+        display-name: '&f💎 Quartz Tinh Khiết'
         lore:
-          - "&7Vật liệu chế tạo trang bị"
+        - '&7Vật liệu chế tạo trang bị'
     
-    # ===== CRAFT SOUL SAND (2 stack = 128) =====
     soul_sand:
-      display-name: "&6Soul Sand &7→ &6💀 Soul Sand Tinh Khiết"
+      display-name: '&6SandStone &7→ &6💀 SandStone Tinh Khiết'
+      permission: 'schoolminer.autocraft.soul_sand'
       glow: true
+      slot: 14
       materials:
         soul_sand:
-          material: SOUL_SAND
-          amount: 128
+          material: SANDSTONE
+          amount: 96
       result:
-        material: SOUL_SAND
+        material: GLOWSTONE_DUST
         amount: 1
-        display-name: "&6💀 Soul Sand Tinh Khiết"
+        display-name: '&6💀 Bụi cát Tinh Khiết'
         lore:
-          - "&7Vật liệu chế tạo trang bị"
+        - '&7Vật liệu chế tạo trang bị'
     
-    # ===== CRAFT SOUL SOIL (2 stack = 128) =====
     soul_soil:
-      display-name: "&6Soul Soil &7→ &6💀 Soul Soil Tinh Khiết"
+      display-name: '&6Red SandStone &7→ &6💀 Red SandStone Tinh Khiết'
+      permission: 'schoolminer.autocraft.soul_soil'
       glow: true
+      slot: 15
       materials:
         soul_soil:
-          material: SOUL_SOIL
+          material: RED_SANDSTONE
           amount: 128
       result:
-        material: SOUL_SOIL
+        material: REDSTONE
         amount: 1
-        display-name: "&6💀 Soul Soil Tinh Khiết"
+        display-name: '&c💀 Bụi cát Tinh Khiết'
         lore:
-          - "&7Vật liệu chế tạo trang bị"
+        - '&7Vật liệu chế tạo trang bị'
     
-    # ===== CRAFT GẠCH NETHER (2 stack = 128) =====
     gach_nether:
-      display-name: "&cGạch Nether &7→ &c🧱 Gạch Nether Tinh Khiết"
+      display-name: '&cGạch Nether &7→ &c🧱 Gạch Nether Tinh Khiết'
+      permission: 'schoolminer.autocraft.gach_nether'
       glow: true
+      slot: 16
       materials:
         nether_brick:
           material: NETHER_BRICK
@@ -459,14 +421,15 @@ autocraft:
       result:
         material: NETHER_BRICK
         amount: 1
-        display-name: "&c🧱 Gạch Nether Tinh Khiết"
+        display-name: '&c🧱 Gạch Nether Tinh Khiết'
         lore:
-          - "&7Vật liệu chế tạo trang bị"
+        - '&7Vật liệu chế tạo trang bị'
     
-    # ===== CRAFT GẠCH NETHER ĐỎ (2 stack = 128) =====
     gach_nether_do:
-      display-name: "&cGạch Nether Đỏ &7→ &c🧱 Gạch Nether Đỏ Tinh Khiết"
+      display-name: '&cGạch Nether Đỏ &7→ &c🧱 Gạch Nether Đỏ Tinh Khiết'
+      permission: 'schoolminer.autocraft.gach_nether_do'
       glow: true
+      slot: 17
       materials:
         red_nether_brick:
           material: RED_NETHER_BRICKS
@@ -474,16 +437,16 @@ autocraft:
       result:
         material: RED_NETHER_BRICKS
         amount: 1
-        display-name: "&c🧱 Gạch Nether Đỏ Tinh Khiết"
+        display-name: '&c🧱 Gạch Nether Đỏ Tinh Khiết'
         lore:
-          - "&7Vật liệu chế tạo trang bị"
+        - '&7Vật liệu chế tạo trang bị'
 
 # ===== MESSAGES =====
 messages:
-  enabled: "&a✅ Đã bật Auto Mine! (Đứng yên để đào)"
-  disabled: "&c⛔ Đã tắt Auto Mine!"
-  kill-enabled: "&a⚔️ Đã bật Auto Kill!"
-  kill-disabled: "&c⛔ Đã tắt Auto Kill!"
-  no-permission: "&c❌ Bạn không có quyền sử dụng lệnh này!"
-  reloaded: "&a🔄 Đã reload config thành công!"
-  wrong-usage: "&c⚠️ Sai cú pháp! /schoolminer reload"
+  enabled: '&a✅ Đã bật Auto Mine! (Đứng yên để đào)'
+  disabled: '&c⛔ Đã tắt Auto Mine!'
+  kill-enabled: '&a⚔️ Đã bật Auto Kill! (Ngồi xuống để farm)'
+  kill-disabled: '&c⛔ Đã tắt Auto Kill!'
+  no-permission: '&c❌ Bạn không có quyền sử dụng lệnh này!'
+  reloaded: '&a🔄 Đã reload config thành công!'
+  wrong-usage: '&c⚠️ Sai cú pháp! /schoolminer reload'

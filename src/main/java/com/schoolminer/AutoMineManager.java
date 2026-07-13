@@ -159,7 +159,6 @@ public class AutoMineManager implements Listener {
                 ItemStack finalDrop = drop.clone();
                 finalDrop.setAmount(amount);
                 
-                // Thêm vào túi
                 if (inventory.firstEmpty() != -1) {
                     inventory.addItem(finalDrop);
                 } else {
@@ -176,7 +175,6 @@ public class AutoMineManager implements Listener {
             player.giveExp(exp * multiBlockLevel);
         }
         
-        // Thông báo
         if (Math.random() < 0.05) {
             player.sendMessage("§6✦ MultiBlock x" + multiBlockLevel + " §ađã kích hoạt!");
         }

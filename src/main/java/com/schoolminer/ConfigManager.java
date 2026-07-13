@@ -232,9 +232,25 @@ public class ConfigManager {
             lore = new ArrayList<>();
         }
         
-        lore.removeIf(line -> line.contains("MultiBlock"));
-        lore.removeIf(line -> line.trim().isEmpty() && !lore.isEmpty() && lore.get(lore.size() - 1).trim().isEmpty());
+        // Xóa lore MultiBlock cũ - KHÔNG DÙNG LAMBDA
+        Iterator<String> iterator = lore.iterator();
+        while (iterator.hasNext()) {
+            String line = iterator.next();
+            if (line.contains("MultiBlock")) {
+                iterator.remove();
+            }
+        }
         
+        // Xóa dòng trống thừa
+        iterator = lore.iterator();
+        while (iterator.hasNext()) {
+            String line = iterator.next();
+            if (line.trim().isEmpty() && !lore.isEmpty() && lore.get(lore.size() - 1).trim().isEmpty()) {
+                iterator.remove();
+            }
+        }
+        
+        // Thêm lore mới
         if (level > 1) {
             if (!lore.isEmpty() && !lore.get(lore.size() - 1).trim().isEmpty()) {
                 lore.add("");
@@ -253,11 +269,9 @@ public class ConfigManager {
     }
 
     public double getBlockHardness(Material material) {
-        // Kiểm tra custom hardness trước
         if (customHardness.containsKey(material)) {
             return customHardness.get(material);
         }
-        // Nếu không có, lấy hardness mặc định của block
         return material.getHardness();
     }
 

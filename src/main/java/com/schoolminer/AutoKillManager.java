@@ -11,11 +11,19 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerKickEvent;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class AutoKillManager {
+public class AutoKillManager implements Listener {
     private final Schoolminer plugin;
     private final Map<UUID, KillTask> tasks = new HashMap<>();
     private final ConfigManager config;
@@ -27,21 +35,18 @@ public class AutoKillManager {
         this.plugin = plugin;
         this.config = plugin.getConfigManager();
         loadExplosionLevels();
+        Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
-    // Lưu level vào config
     private void saveExplosionLevels() {
         FileConfiguration config = plugin.getConfig();
-        // Xóa section cũ
         config.set("autokill.levels", null);
-        // Lưu mới
         for (Map.Entry<UUID, Integer> entry : explosionLevels.entrySet()) {
             config.set("autokill.levels." + entry.getKey().toString(), entry.getValue());
         }
         plugin.saveConfig();
     }
 
-    // Load level từ config
     private void loadExplosionLevels() {
         explosionLevels.clear();
         FileConfiguration config = plugin.getConfig();
@@ -56,9 +61,87 @@ public class AutoKillManager {
         }
     }
 
+    // Chặn di chuyển khi bật AutoKill
+    @EventHandler
+    public void onPlayerMove(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
+        
+        if (!tasks.containsKey(uuid)) return;
+        
+        Location from = event.getFrom();
+        Location to = event.getTo();
+        if (from.getBlockX() != to.getBlockX() || from.getBlockZ() != to.getBlockZ()) {
+            event.setCancelled(true);
+            player.sendMessage("§c⚠️ Bạn đang Auto Kill, không thể di chuyển!");
+        }
+        
+        // Kiểm tra block dưới chân
+        Location below = player.getLocation().subtract(0, 1, 0);
+        if (below.getBlock().getType() == Material.AIR) {
+            player.sendMessage("§c⚠️ Không có block dưới chân! Đã tắt Auto Kill!");
+            stopKilling(player);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerTeleport(PlayerTeleportEvent event) {
+        Player player = event.getPlayer();
+        if (tasks.containsKey(player.getUniqueId())) {
+            player.sendMessage("§c⚠️ Bạn đã bị dịch chuyển! Đã tắt Auto Kill!");
+            stopKilling(player);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerDamage(EntityDamageEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            UUID uuid = player.getUniqueId();
+            if (tasks.containsKey(uuid)) {
+                player.sendMessage("§c⚠️ Bạn đã bị tấn công! Đã tắt Auto Kill!");
+                stopKilling(player);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        Player player = event.getEntity();
+        if (tasks.containsKey(player.getUniqueId())) {
+            stopKilling(player);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        if (tasks.containsKey(player.getUniqueId())) {
+            stopKilling(player);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerKick(PlayerKickEvent event) {
+        Player player = event.getPlayer();
+        if (tasks.containsKey(player.getUniqueId())) {
+            stopKilling(player);
+        }
+    }
+
     public void startKilling(Player player) {
         UUID uuid = player.getUniqueId();
-        if (tasks.containsKey(uuid)) return;
+        if (tasks.containsKey(uuid)) {
+            player.sendMessage("§e⚠️ Auto Kill đã được bật rồi!");
+            return;
+        }
+        
+        // Kiểm tra block dưới chân
+        Location below = player.getLocation().subtract(0, 1, 0);
+        if (below.getBlock().getType() == Material.AIR) {
+            player.sendMessage("§c❌ Không có block dưới chân! Không thể bật Auto Kill!");
+            player.sendMessage("§7Hãy đứng trên block rắn!");
+            return;
+        }
         
         lastLocations.put(uuid, player.getLocation().clone());
         KillTask task = new KillTask(player);
@@ -66,7 +149,6 @@ public class AutoKillManager {
         task.runTaskTimer(plugin, 0L, attackDelay);
         tasks.put(uuid, task);
         
-        // Load level từ config nếu chưa có
         if (!explosionLevels.containsKey(uuid)) {
             explosionLevels.put(uuid, 0);
             saveExplosionLevels();
@@ -78,6 +160,7 @@ public class AutoKillManager {
             player.sendMessage("§6✦ Sát thương nổ level §e" + level + " §6- Tỉ lệ: §e" + 
                 String.format("%.1f", getExplosionChance(player) * 100) + "%");
         }
+        player.sendMessage("§7⚠️ Không di chuyển để duy trì Auto Kill!");
     }
 
     public void stopKilling(Player player) {
@@ -92,68 +175,50 @@ public class AutoKillManager {
 
     public void stopAll() {
         for (KillTask task : tasks.values()) {
-            task.cancel();
+            if (task != null) task.cancel();
         }
         tasks.clear();
         lastLocations.clear();
     }
 
-    public boolean isKilling(Player player) {
-        return tasks.containsKey(player.getUniqueId());
+    public boolean isKilling(Player player) { 
+        return tasks.containsKey(player.getUniqueId()); 
     }
-
-    public int getExplosionLevel(Player player) {
-        UUID uuid = player.getUniqueId();
-        if (!explosionLevels.containsKey(uuid)) {
-            explosionLevels.put(uuid, 0);
-            saveExplosionLevels();
-        }
-        return explosionLevels.getOrDefault(uuid, 0);
+    
+    public int getExplosionLevel(Player player) { 
+        return explosionLevels.getOrDefault(player.getUniqueId(), 0); 
     }
-
-    public void setExplosionLevel(Player player, int level) {
-        UUID uuid = player.getUniqueId();
-        explosionLevels.put(uuid, level);
-        saveExplosionLevels(); // Lưu ngay khi thay đổi
+    
+    public void setExplosionLevel(Player player, int level) { 
+        explosionLevels.put(player.getUniqueId(), level); 
+        saveExplosionLevels(); 
     }
-
-    public double getExplosionChance(Player player) {
-        int level = getExplosionLevel(player);
-        return config.getExplosionChanceAtLevel(level);
+    
+    public double getExplosionChance(Player player) { 
+        return config.getExplosionChanceAtLevel(getExplosionLevel(player)); 
     }
-
-    public double getExplosionRadius(Player player) {
-        int level = getExplosionLevel(player);
-        return config.getExplosionRadiusAtLevel(level);
+    
+    public double getExplosionRadius(Player player) { 
+        return config.getExplosionRadiusAtLevel(getExplosionLevel(player)); 
     }
 
     private void triggerExplosion(Player player, Location location, double damage) {
         double radius = getExplosionRadius(player);
         double chance = getExplosionChance(player);
-        
         if (random.nextDouble() > chance || radius <= 0) return;
         
         player.getWorld().createExplosion(location, (float) radius, false, false);
         player.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
-        
         player.sendMessage("§c§l💥 SÁT THƯƠNG NỔ! §7Bán kính: §e" + String.format("%.1f", radius) + " block");
         
         for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
             if (entity instanceof Player) continue;
-            
-            if (entity instanceof LivingEntity living) {
-                if (entity.isValid() && !entity.isDead()) {
-                    EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(
-                        player, 
-                        living, 
-                        EntityDamageEvent.DamageCause.ENTITY_ATTACK, 
-                        damage
-                    );
-                    Bukkit.getPluginManager().callEvent(damageEvent);
-                    
-                    if (!damageEvent.isCancelled()) {
-                        living.damage(damage, player);
-                    }
+            if (entity instanceof LivingEntity living && entity.isValid() && !entity.isDead()) {
+                EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(
+                    player, living, EntityDamageEvent.DamageCause.ENTITY_ATTACK, damage);
+                Bukkit.getPluginManager().callEvent(damageEvent);
+                if (!damageEvent.isCancelled()) {
+                    living.damage(damage, player);
                 }
             }
         }
@@ -172,42 +237,32 @@ public class AutoKillManager {
 
         @Override
         public void run() {
-            if (!player.isOnline() || player.isDead()) {
+            if (!player.isOnline() || player.isDead()) { 
+                stopKilling(player); 
+                return; 
+            }
+            
+            // Kiểm tra block dưới chân
+            Location below = player.getLocation().subtract(0, 1, 0);
+            if (below.getBlock().getType() == Material.AIR && tasks.containsKey(playerUUID)) {
+                player.sendMessage("§c⚠️ Không có block dưới chân! Đã tắt Auto Kill!");
                 stopKilling(player);
                 return;
             }
 
             Location lastLoc = lastLocations.get(playerUUID);
-            if (lastLoc != null) {
-                Location currentLoc = player.getLocation();
-                boolean isSitting = false;
-                
-                try {
-                    if (player.hasMetadata("GSit")) isSitting = true;
-                } catch (Exception ignored) {}
-                
-                try {
-                    if (player.hasMetadata("CMISit")) isSitting = true;
-                } catch (Exception ignored) {}
-                
-                try {
-                    if (player.hasMetadata("Sit")) isSitting = true;
-                } catch (Exception ignored) {}
-                
-                if (!isSitting && lastLoc.distance(currentLoc) > 0.1) {
-                    player.sendMessage("§c⚠️ Bạn đã di chuyển, Auto Kill đã tắt!");
+            if (lastLoc != null && lastLoc.distance(player.getLocation()) > 0.1) {
+                if (tasks.containsKey(playerUUID)) {
+                    player.sendMessage("§c⚠️ Bạn đã di chuyển! Đã tắt Auto Kill!");
                     stopKilling(player);
-                    return;
                 }
+                return;
             }
 
             Entity target = player.getNearbyEntities(range, range, range).stream()
-                .filter(e -> {
-                    if (e instanceof Monster) return config.isKillMonster();
-                    if (e instanceof Animals) return config.isKillAnimal();
-                    if (e instanceof Mob) return config.isKillMob();
-                    return false;
-                })
+                .filter(e -> (e instanceof Monster && config.isKillMonster()) ||
+                             (e instanceof Animals && config.isKillAnimal()) ||
+                             (e instanceof Mob && config.isKillMob()))
                 .filter(e -> e.isValid() && !e.isDead())
                 .min((e1, e2) -> Double.compare(
                     e1.getLocation().distanceSquared(player.getLocation()),
@@ -215,7 +270,6 @@ public class AutoKillManager {
                 .orElse(null);
 
             if (target == null) return;
-
             if (target.getLocation().distance(player.getLocation()) > range) return;
 
             ItemStack weapon = player.getInventory().getItemInMainHand();
@@ -223,20 +277,12 @@ public class AutoKillManager {
             
             if (target instanceof LivingEntity living) {
                 EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(
-                    player, 
-                    living, 
-                    EntityDamageEvent.DamageCause.ENTITY_ATTACK, 
-                    damage
-                );
-                
+                    player, living, EntityDamageEvent.DamageCause.ENTITY_ATTACK, damage);
                 Bukkit.getPluginManager().callEvent(damageEvent);
                 
                 if (!damageEvent.isCancelled()) {
                     living.damage(damage, player);
-                    
-                    player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, 
-                        Material.REDSTONE_BLOCK);
-                    
+                    player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, Material.REDSTONE_BLOCK);
                     triggerExplosion(player, target.getLocation(), damage);
                 }
                 
@@ -246,7 +292,6 @@ public class AutoKillManager {
                         if (handItem != null && !handItem.getType().isAir()) {
                             player.getInventory().addItem(handItem);
                         }
-                        
                         for (ItemStack armor : monster.getEquipment().getArmorContents()) {
                             if (armor != null && !armor.getType().isAir()) {
                                 player.getInventory().addItem(armor);
@@ -256,23 +301,14 @@ public class AutoKillManager {
                     
                     if (config.isDropXp()) {
                         int xp = 0;
-                        if (living instanceof Monster) {
-                            xp = config.getXpMonster() + new Random().nextInt(3);
-                        } else if (living instanceof Animals) {
-                            xp = config.getXpAnimal() + new Random().nextInt(3);
-                        } else if (living instanceof Mob) {
-                            xp = config.getXpMob() + new Random().nextInt(5);
-                        }
-                        
-                        if (xp > 0) {
-                            player.giveExp(xp);
-                        }
+                        if (living instanceof Monster) xp = config.getXpMonster() + new Random().nextInt(3);
+                        else if (living instanceof Animals) xp = config.getXpAnimal() + new Random().nextInt(3);
+                        else if (living instanceof Mob) xp = config.getXpMob() + new Random().nextInt(5);
+                        if (xp > 0) player.giveExp(xp);
                     }
                     
                     try {
-                        if (living.hasMetadata("MythicMobs")) {
-                            // MythicMobs sẽ tự xử lý
-                        }
+                        if (living.hasMetadata("MythicMobs")) {}
                     } catch (Exception ignored) {}
                 }
             }
@@ -280,10 +316,8 @@ public class AutoKillManager {
 
         private double calculateDamage(Player player, ItemStack weapon) {
             double base = config.getBaseDamage();
-            
             if (weapon != null && !weapon.getType().isAir()) {
                 String name = weapon.getType().name();
-                
                 if (name.contains("NETHERITE_SWORD")) base = 8.0;
                 else if (name.contains("DIAMOND_SWORD")) base = 7.0;
                 else if (name.contains("IRON_SWORD")) base = 6.0;
@@ -301,13 +335,10 @@ public class AutoKillManager {
                 
                 int sharpness = weapon.getEnchantmentLevel(Enchantment.SHARPNESS);
                 if (sharpness > 0) base += (sharpness * 1.5);
-                
                 int smite = weapon.getEnchantmentLevel(Enchantment.SMITE);
                 if (smite > 0) base += (smite * 2.5);
-                
                 int bane = weapon.getEnchantmentLevel(Enchantment.BANE_OF_ARTHROPODS);
                 if (bane > 0) base += (bane * 2.5);
-                
                 int fireAspect = weapon.getEnchantmentLevel(Enchantment.FIRE_ASPECT);
                 if (fireAspect > 0) base += 1.0;
             }
@@ -315,48 +346,32 @@ public class AutoKillManager {
             double armorAttack = 0.0;
             for (ItemStack armor : player.getInventory().getArmorContents()) {
                 if (armor == null || armor.getType().isAir()) continue;
-                
                 if (armor.hasItemMeta() && armor.getItemMeta().hasDisplayName()) {
-                    String displayName = armor.getItemMeta().getDisplayName();
-                    String cleanName = ChatColor.stripColor(displayName);
-                    
-                    if (cleanName.toLowerCase().contains("lục bảo") ||
-                        cleanName.toLowerCase().contains("bảo vệ") ||
-                        cleanName.toLowerCase().contains("tấn công") ||
-                        cleanName.toLowerCase().contains("sức mạnh") ||
-                        cleanName.toLowerCase().contains("strength") ||
-                        cleanName.toLowerCase().contains("attack") ||
-                        cleanName.toLowerCase().contains("damage") ||
+                    String cleanName = ChatColor.stripColor(armor.getItemMeta().getDisplayName());
+                    if (cleanName.toLowerCase().contains("lục bảo") || cleanName.toLowerCase().contains("bảo vệ") ||
+                        cleanName.toLowerCase().contains("tấn công") || cleanName.toLowerCase().contains("sức mạnh") ||
+                        cleanName.toLowerCase().contains("attack") || cleanName.toLowerCase().contains("damage") ||
                         cleanName.toLowerCase().contains("sát thương")) {
                         armorAttack += 2.0;
                     }
-                    
                     Pattern pattern = Pattern.compile("\\+([0-9.]+)");
                     java.util.regex.Matcher matcher = pattern.matcher(cleanName);
                     while (matcher.find()) {
                         try {
                             double value = Double.parseDouble(matcher.group(1));
-                            if (cleanName.toLowerCase().contains("tấn công") ||
-                                cleanName.toLowerCase().contains("sức mạnh") ||
-                                cleanName.toLowerCase().contains("attack") ||
-                                cleanName.toLowerCase().contains("damage")) {
+                            if (cleanName.toLowerCase().contains("tấn công") || cleanName.toLowerCase().contains("sức mạnh") ||
+                                cleanName.toLowerCase().contains("attack") || cleanName.toLowerCase().contains("damage")) {
                                 armorAttack += value;
                             }
                         } catch (Exception ignored) {}
                     }
                 }
-                
                 if (armor.hasItemMeta() && armor.getItemMeta().hasLore()) {
-                    List<String> lore = armor.getItemMeta().getLore();
-                    for (String line : lore) {
+                    for (String line : armor.getItemMeta().getLore()) {
                         String cleanLine = ChatColor.stripColor(line);
-                        
-                        if (cleanLine.contains("Sức tấn công") || 
-                            cleanLine.contains("Sức tận công") ||
-                            cleanLine.contains("Attack") || 
-                            cleanLine.contains("Damage") ||
+                        if (cleanLine.contains("Sức tấn công") || cleanLine.contains("Sức tận công") ||
+                            cleanLine.contains("Attack") || cleanLine.contains("Damage") ||
                             cleanLine.contains("sát thương")) {
-                            
                             Pattern pattern = Pattern.compile("\\+([0-9.]+)");
                             java.util.regex.Matcher matcher = pattern.matcher(cleanLine);
                             while (matcher.find()) {
@@ -373,18 +388,12 @@ public class AutoKillManager {
                     }
                 }
             }
-            
             base += armorAttack;
-            
             if (player.hasPotionEffect(PotionEffectType.STRENGTH)) {
                 int level = player.getPotionEffect(PotionEffectType.STRENGTH).getAmplifier() + 1;
                 base *= (1 + (0.3 * level));
             }
-            
-            if (Math.random() < 0.2) {
-                base *= 1.5;
-            }
-            
+            if (Math.random() < 0.2) base *= 1.5;
             return Math.max(base, 1.0);
         }
     }

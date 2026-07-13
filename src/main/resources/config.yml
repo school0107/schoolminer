@@ -167,35 +167,6 @@ whitelist:
   - CRACKED_DEEPSLATE_TILES
   - CHISELED_DEEPSLATE
 
-# ===== CUSTOM HARDNESS (Tùy chỉnh độ bền của block) =====
-# Độ bền càng cao, đào càng lâu
-custom-hardness:
-  STONE: 1.5
-  DEEPSLATE: 3.0
-  COBBLESTONE: 2.0
-  IRON_ORE: 3.0
-  GOLD_ORE: 3.0
-  DIAMOND_ORE: 3.0
-  EMERALD_ORE: 3.0
-  NETHER_QUARTZ_ORE: 3.0
-  ANCIENT_DEBRIS: 30.0
-  OBSIDIAN: 50.0
-  CRYING_OBSIDIAN: 50.0
-  NETHERITE_BLOCK: 50.0
-  # Thêm block khác nếu muốn
-  # OAK_LOG: 2.0
-  # DIRT: 0.5
-
-# ===== HARD BLOCKS (Block cứng, không thể đào nhanh hơn) =====
-# Dù cúp có hiệu suất bao nhiêu cũng không thể đào nhanh hơn
-# Độ cứng sẽ được set = 50.0
-hard-blocks:
-  - OBSIDIAN
-  - CRYING_OBSIDIAN
-  - ANCIENT_DEBRIS
-  - NETHERITE_BLOCK
-  # - BEDROCK  # Không nên thêm bedrock vì không thể đào
-# ===== AUTO KILL =====
 autokill:
   # Thời gian hồi đòn (ticks, 20 ticks = 1 giây)
   attack-delay: 40

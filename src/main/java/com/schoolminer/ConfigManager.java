@@ -179,15 +179,24 @@ public class ConfigManager {
         plugin.getLogger().info("§a✅ Đã lưu MultiBlock: " + toolKey + " = " + level + "x");
     }
 
+    public void removeMultiBlock(String toolKey) {
+        multiBlockLevels.remove(toolKey);
+        FileConfiguration config = plugin.getConfig();
+        ConfigurationSection multiBlockSection = config.createSection("multi-block-tools");
+        for (Map.Entry<String, Integer> entry : multiBlockLevels.entrySet()) {
+            multiBlockSection.set(entry.getKey(), entry.getValue());
+        }
+        plugin.saveConfig();
+        plugin.getLogger().info("§a✅ Đã xóa MultiBlock: " + toolKey);
+    }
+
     public int getMultiBlockLevel(ItemStack tool) {
         if (tool == null || tool.getType().isAir()) return 1;
         
         String toolKey = getItemKey(tool);
         int level = multiBlockLevels.getOrDefault(toolKey, 1);
         
-        if (level > 1) {
-            plugin.getLogger().info("§a[MultiBlock] " + tool.getType().name() + " [" + toolKey + "] = " + level + "x");
-        }
+        plugin.getLogger().info("§a[MultiBlock] " + tool.getType().name() + " = " + level + "x");
         
         return level;
     }
@@ -198,6 +207,14 @@ public class ConfigManager {
         String toolKey = getItemKey(tool);
         saveMultiBlock(toolKey, level);
         updateToolLore(tool, level);
+    }
+
+    public void removeMultiBlockLevel(ItemStack tool) {
+        if (tool == null || tool.getType().isAir()) return;
+        
+        String toolKey = getItemKey(tool);
+        removeMultiBlock(toolKey);
+        removeToolLore(tool);
     }
 
     public String getItemKey(ItemStack tool) {
@@ -215,6 +232,7 @@ public class ConfigManager {
             }
         }
         
+        // Nếu chưa có key, tạo key mới dựa trên thời gian
         if (!multiBlockLevels.containsKey(baseKey)) {
             baseKey += "_" + System.currentTimeMillis();
         }
@@ -232,20 +250,11 @@ public class ConfigManager {
             lore = new ArrayList<>();
         }
         
-        // Xóa lore MultiBlock cũ - KHÔNG DÙNG LAMBDA
+        // Xóa lore MultiBlock cũ
         Iterator<String> iterator = lore.iterator();
         while (iterator.hasNext()) {
             String line = iterator.next();
             if (line.contains("MultiBlock")) {
-                iterator.remove();
-            }
-        }
-        
-        // Xóa dòng trống thừa
-        iterator = lore.iterator();
-        while (iterator.hasNext()) {
-            String line = iterator.next();
-            if (line.trim().isEmpty() && !lore.isEmpty() && lore.get(lore.size() - 1).trim().isEmpty()) {
                 iterator.remove();
             }
         }
@@ -262,6 +271,27 @@ public class ConfigManager {
         meta.setLore(lore);
         tool.setItemMeta(meta);
         plugin.getLogger().info("§a✅ Đã cập nhật lore cho " + tool.getType().name());
+    }
+
+    private void removeToolLore(ItemStack tool) {
+        if (tool == null || tool.getType().isAir()) return;
+        ItemMeta meta = tool.getItemMeta();
+        if (meta == null) return;
+        
+        List<String> lore = meta.getLore();
+        if (lore == null) return;
+        
+        Iterator<String> iterator = lore.iterator();
+        while (iterator.hasNext()) {
+            String line = iterator.next();
+            if (line.contains("MultiBlock")) {
+                iterator.remove();
+            }
+        }
+        
+        meta.setLore(lore);
+        tool.setItemMeta(meta);
+        plugin.getLogger().info("§a✅ Đã xóa lore MultiBlock cho " + tool.getType().name());
     }
 
     public boolean isHardBlock(Material material) {

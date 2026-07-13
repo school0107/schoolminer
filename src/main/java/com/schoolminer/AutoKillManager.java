@@ -10,8 +10,7 @@ import org.bukkit.Location;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.damage.DamageSource;
+import org.bukkit.configuration.file.FileConfiguration;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,6 +26,34 @@ public class AutoKillManager {
     public AutoKillManager(Schoolminer plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfigManager();
+        loadExplosionLevels();
+    }
+
+    // Lưu level vào config
+    private void saveExplosionLevels() {
+        FileConfiguration config = plugin.getConfig();
+        // Xóa section cũ
+        config.set("autokill.levels", null);
+        // Lưu mới
+        for (Map.Entry<UUID, Integer> entry : explosionLevels.entrySet()) {
+            config.set("autokill.levels." + entry.getKey().toString(), entry.getValue());
+        }
+        plugin.saveConfig();
+    }
+
+    // Load level từ config
+    private void loadExplosionLevels() {
+        explosionLevels.clear();
+        FileConfiguration config = plugin.getConfig();
+        if (config.contains("autokill.levels")) {
+            for (String key : config.getConfigurationSection("autokill.levels").getKeys(false)) {
+                try {
+                    UUID uuid = UUID.fromString(key);
+                    int level = config.getInt("autokill.levels." + key, 0);
+                    explosionLevels.put(uuid, level);
+                } catch (IllegalArgumentException ignored) {}
+            }
+        }
     }
 
     public void startKilling(Player player) {
@@ -39,8 +66,10 @@ public class AutoKillManager {
         task.runTaskTimer(plugin, 0L, attackDelay);
         tasks.put(uuid, task);
         
+        // Load level từ config nếu chưa có
         if (!explosionLevels.containsKey(uuid)) {
             explosionLevels.put(uuid, 0);
+            saveExplosionLevels();
         }
         
         player.sendMessage(config.getMessage("kill-enabled"));
@@ -74,11 +103,18 @@ public class AutoKillManager {
     }
 
     public int getExplosionLevel(Player player) {
-        return explosionLevels.getOrDefault(player.getUniqueId(), 0);
+        UUID uuid = player.getUniqueId();
+        if (!explosionLevels.containsKey(uuid)) {
+            explosionLevels.put(uuid, 0);
+            saveExplosionLevels();
+        }
+        return explosionLevels.getOrDefault(uuid, 0);
     }
 
     public void setExplosionLevel(Player player, int level) {
-        explosionLevels.put(player.getUniqueId(), level);
+        UUID uuid = player.getUniqueId();
+        explosionLevels.put(uuid, level);
+        saveExplosionLevels(); // Lưu ngay khi thay đổi
     }
 
     public double getExplosionChance(Player player) {
@@ -97,19 +133,16 @@ public class AutoKillManager {
         
         if (random.nextDouble() > chance || radius <= 0) return;
         
-        // Tạo vụ nổ (không gây sát thương từ explosion)
         player.getWorld().createExplosion(location, (float) radius, false, false);
         player.getWorld().playSound(location, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
         
         player.sendMessage("§c§l💥 SÁT THƯƠNG NỔ! §7Bán kính: §e" + String.format("%.1f", radius) + " block");
         
-        // Gây sát thương cho mob trong bán kính - KHÔNG ẢNH HƯỞNG NGƯỜI CHƠI
         for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
             if (entity instanceof Player) continue;
             
             if (entity instanceof LivingEntity living) {
                 if (entity.isValid() && !entity.isDead()) {
-                    // Tạo sự kiện damage như player đánh
                     EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(
                         player, 
                         living, 
@@ -189,7 +222,6 @@ public class AutoKillManager {
             double damage = calculateDamage(player, weapon);
             
             if (target instanceof LivingEntity living) {
-                // Tạo sự kiện damage như player đánh
                 EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(
                     player, 
                     living, 
@@ -202,15 +234,12 @@ public class AutoKillManager {
                 if (!damageEvent.isCancelled()) {
                     living.damage(damage, player);
                     
-                    // Hiệu ứng
                     player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, 
                         Material.REDSTONE_BLOCK);
                     
-                    // Kích hoạt sát thương nổ (KHÔNG ẢNH HƯỞNG NGƯỜI CHƠI)
                     triggerExplosion(player, target.getLocation(), damage);
                 }
                 
-                // Nếu mob chết, plugin khác sẽ tự nhận diện qua EntityDamageByEntityEvent
                 if (living.isDead() || living.getHealth() <= 0) {
                     if (config.isDropItems() && living instanceof Monster monster) {
                         ItemStack handItem = monster.getEquipment().getItemInMainHand();

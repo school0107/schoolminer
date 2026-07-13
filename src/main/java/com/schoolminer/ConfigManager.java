@@ -36,13 +36,8 @@ public class ConfigManager {
     private Map<Integer, Double> explosionRadii;
     private Map<Integer, Double> upgradeCosts;
     
-    // Multi block cho cúp (lưu theo UUID của item)
     private Map<String, Integer> multiBlockLevels = new HashMap<>();
-    
-    // Block cứng (không thể đào nhanh hơn)
     private Set<Material> hardBlocks = new HashSet<>();
-    
-    // Custom hardness cho từng block
     private Map<Material, Double> customHardness = new HashMap<>();
 
     public ConfigManager(Schoolminer plugin) {
@@ -118,14 +113,12 @@ public class ConfigManager {
         multiBlockLevels.clear();
         ConfigurationSection multiBlockSection = config.getConfigurationSection("multi-block-tools");
         if (multiBlockSection == null) {
-            plugin.getLogger().info("§e⚠️ Không tìm thấy multi-block-tools trong config!");
             return;
         }
         
         for (String toolKey : multiBlockSection.getKeys(false)) {
             int level = multiBlockSection.getInt(toolKey, 1);
             multiBlockLevels.put(toolKey, level);
-            plugin.getLogger().info("§a✅ Load MultiBlock: " + toolKey + " = " + level + "x");
         }
     }
 
@@ -133,7 +126,6 @@ public class ConfigManager {
         hardBlocks.clear();
         List<String> hardBlockNames = config.getStringList("hard-blocks");
         if (hardBlockNames.isEmpty()) {
-            plugin.getLogger().info("§e⚠️ Không tìm thấy hard-blocks trong config!");
             return;
         }
         
@@ -141,7 +133,6 @@ public class ConfigManager {
             try {
                 Material mat = Material.valueOf(name.toUpperCase());
                 hardBlocks.add(mat);
-                plugin.getLogger().info("§a✅ Load hard block: " + name);
             } catch (IllegalArgumentException e) {
                 plugin.getLogger().warning("§c⚠️ Hard block không hợp lệ: " + name);
             }
@@ -152,7 +143,6 @@ public class ConfigManager {
         customHardness.clear();
         ConfigurationSection hardnessSection = config.getConfigurationSection("custom-hardness");
         if (hardnessSection == null) {
-            plugin.getLogger().info("§e⚠️ Không tìm thấy custom-hardness trong config!");
             return;
         }
         
@@ -161,7 +151,6 @@ public class ConfigManager {
                 Material mat = Material.valueOf(key.toUpperCase());
                 double hardness = hardnessSection.getDouble(key, 1.0);
                 customHardness.put(mat, hardness);
-                plugin.getLogger().info("§a✅ Load custom hardness: " + key + " = " + hardness);
             } catch (IllegalArgumentException e) {
                 plugin.getLogger().warning("§c⚠️ Custom hardness không hợp lệ: " + key);
             }
@@ -176,7 +165,6 @@ public class ConfigManager {
             multiBlockSection.set(entry.getKey(), entry.getValue());
         }
         plugin.saveConfig();
-        plugin.getLogger().info("§a✅ Đã lưu MultiBlock: " + toolKey + " = " + level + "x");
     }
 
     public void removeMultiBlock(String toolKey) {
@@ -187,18 +175,13 @@ public class ConfigManager {
             multiBlockSection.set(entry.getKey(), entry.getValue());
         }
         plugin.saveConfig();
-        plugin.getLogger().info("§a✅ Đã xóa MultiBlock: " + toolKey);
     }
 
     public int getMultiBlockLevel(ItemStack tool) {
         if (tool == null || tool.getType().isAir()) return 1;
         
         String toolKey = getItemKey(tool);
-        int level = multiBlockLevels.getOrDefault(toolKey, 1);
-        
-        plugin.getLogger().info("§a[MultiBlock] " + tool.getType().name() + " = " + level + "x");
-        
-        return level;
+        return multiBlockLevels.getOrDefault(toolKey, 1);
     }
 
     public void setMultiBlockLevel(ItemStack tool, int level) {
@@ -232,7 +215,6 @@ public class ConfigManager {
             }
         }
         
-        // Nếu chưa có key, tạo key mới dựa trên thời gian
         if (!multiBlockLevels.containsKey(baseKey)) {
             baseKey += "_" + System.currentTimeMillis();
         }
@@ -270,7 +252,6 @@ public class ConfigManager {
         
         meta.setLore(lore);
         tool.setItemMeta(meta);
-        plugin.getLogger().info("§a✅ Đã cập nhật lore cho " + tool.getType().name());
     }
 
     private void removeToolLore(ItemStack tool) {
@@ -291,7 +272,6 @@ public class ConfigManager {
         
         meta.setLore(lore);
         tool.setItemMeta(meta);
-        plugin.getLogger().info("§a✅ Đã xóa lore MultiBlock cho " + tool.getType().name());
     }
 
     public boolean isHardBlock(Material material) {
@@ -318,7 +298,6 @@ public class ConfigManager {
                 explosionRadii.put(i, 0.0 + (i * 0.5));
                 upgradeCosts.put(i, i * 1000.0);
             }
-            plugin.getLogger().info("§e⚠️ Không tìm thấy autokill.upgrades, dùng giá trị mặc định!");
             return;
         }
         
@@ -350,15 +329,12 @@ public class ConfigManager {
                 upgradeCosts.put(i, i * 1000.0);
             }
         }
-        
-        plugin.getLogger().info("§a✅ Đã load " + maxExplosionLevel + " cấp nâng cấp AutoKill");
     }
 
     private void loadCrafts(FileConfiguration config) {
         craftConfigs.clear();
         ConfigurationSection crafts = config.getConfigurationSection("autocraft.crafts");
         if (crafts == null) {
-            plugin.getLogger().info("§e⚠️ Không tìm thấy autocraft.crafts trong config!");
             return;
         }
         
@@ -422,7 +398,6 @@ public class ConfigManager {
             }
             
             craftConfigs.put(craftId, new AutoCraftConfig(craftId, displayName, materials, result, glow));
-            plugin.getLogger().info("§a✅ Đã load AutoCraft: " + craftId);
         }
     }
 

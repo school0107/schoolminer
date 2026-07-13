@@ -148,6 +148,7 @@ public class AutoKillUpgradeMenu {
             // TRỪ TIỀN
             economy.withdrawPlayer(player, cost);
             
+            // NÂNG CẤP - LƯU NGAY LẬP TỨC
             killManager.setExplosionLevel(player, currentLevel + 1);
             
             player.sendMessage("§a✅ Nâng cấp thành công lên level §e" + (currentLevel + 1) + "§a!");

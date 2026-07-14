@@ -19,6 +19,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerKickEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +31,7 @@ public class AutoKillManager implements Listener {
     private final Map<UUID, Location> lastLocations = new HashMap<>();
     private final Map<UUID, Integer> explosionLevels = new ConcurrentHashMap<>();
     private final Random random = new Random();
+    private final Map<UUID, Boolean> wasSneaking = new HashMap<>();
 
     public AutoKillManager(Schoolminer plugin) {
         this.plugin = plugin;
@@ -61,7 +63,7 @@ public class AutoKillManager implements Listener {
         }
     }
 
-    // Chặn di chuyển khi bật AutoKill
+    // CHỈ CHẶN KHI NGƯỜI CHƠI TỰ DI CHUYỂN (KHÔNG PHẢI BỊ ĐẨY)
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
@@ -71,39 +73,82 @@ public class AutoKillManager implements Listener {
         
         Location from = event.getFrom();
         Location to = event.getTo();
+        
+        // Kiểm tra xem có phải do bị đẩy không (knockback)
+        // Nếu người chơi đang bị đẩy, velocity sẽ khác 0
+        boolean isKnockedBack = player.getVelocity().length() > 0.1;
+        
+        // Kiểm tra nếu người chơi đang bị đẩy bởi quái
+        if (isKnockedBack) {
+            // Nếu bị đẩy, cho phép di chuyển nhưng không tắt AutoKill
+            return;
+        }
+        
+        // Kiểm tra nếu người chơi tự ngồi xuống (shift)
+        if (player.isSneaking()) {
+            wasSneaking.put(uuid, true);
+            return;
+        }
+        
+        // Kiểm tra nếu người chơi tự di chuyển (không phải bị đẩy)
         if (from.getBlockX() != to.getBlockX() || from.getBlockZ() != to.getBlockZ()) {
-            event.setCancelled(true);
-            player.sendMessage("§c⚠️ Bạn đang Auto Kill, không thể di chuyển!");
+            // Cho phép di chuyển nhưng tắt AutoKill
+            player.sendMessage("§c⚠️ Bạn đã di chuyển! Đã tắt Auto Kill!");
+            stopKilling(player);
+            return;
         }
         
         // Kiểm tra block dưới chân
         Location below = player.getLocation().subtract(0, 1, 0);
         if (below.getBlock().getType() == Material.AIR) {
-            player.sendMessage("§c⚠️ Không có block dưới chân! Đã tắt Auto Kill!");
-            stopKilling(player);
-        }
-    }
-
-    @EventHandler
-    public void onPlayerTeleport(PlayerTeleportEvent event) {
-        Player player = event.getPlayer();
-        if (tasks.containsKey(player.getUniqueId())) {
-            player.sendMessage("§c⚠️ Bạn đã bị dịch chuyển! Đã tắt Auto Kill!");
-            stopKilling(player);
-        }
-    }
-
-    @EventHandler
-    public void onPlayerDamage(EntityDamageEvent event) {
-        if (event.getEntity() instanceof Player player) {
-            UUID uuid = player.getUniqueId();
-            if (tasks.containsKey(uuid)) {
-                player.sendMessage("§c⚠️ Bạn đã bị tấn công! Đã tắt Auto Kill!");
+            // Nếu rơi xuống (không có block dưới chân) nhưng không phải tự di chuyển
+            // Ví dụ: bị đẩy xuống hố
+            if (!isKnockedBack) {
+                player.sendMessage("§c⚠️ Không có block dưới chân! Đã tắt Auto Kill!");
                 stopKilling(player);
             }
         }
     }
 
+    // KHÔNG TẮT KHI BỊ DỊCH CHUYỂN (TELEPORT) - CHỈ TẮT KHI TỰ DỊCH CHUYỂN
+    @EventHandler
+    public void onPlayerTeleport(PlayerTeleportEvent event) {
+        Player player = event.getPlayer();
+        if (tasks.containsKey(player.getUniqueId())) {
+            // Kiểm tra nếu là teleport do plugin (không phải do người chơi tự di chuyển)
+            if (event.getCause() == PlayerTeleportEvent.TeleportCause.PLUGIN ||
+                event.getCause() == PlayerTeleportEvent.TeleportCause.COMMAND) {
+                // Nếu do plugin hoặc lệnh, tắt AutoKill
+                player.sendMessage("§c⚠️ Bạn đã bị dịch chuyển! Đã tắt Auto Kill!");
+                stopKilling(player);
+            }
+            // Nếu là do ender pearl hoặc chorus fruit, không tắt
+        }
+    }
+
+    // KHÔNG TẮT KHI BỊ TẤN CÔNG
+    @EventHandler
+    public void onPlayerDamage(EntityDamageEvent event) {
+        // KHÔNG LÀM GÌ - KHÔNG TẮT AUTOKILL KHI BỊ TẤN CÔNG
+        // Chỉ log nếu cần debug
+        if (event.getEntity() instanceof Player player) {
+            if (tasks.containsKey(player.getUniqueId())) {
+                // Kiểm tra nếu bị tấn công bởi entity (quái hoặc người chơi)
+                if (event instanceof EntityDamageByEntityEvent) {
+                    EntityDamageByEntityEvent e = (EntityDamageByEntityEvent) event;
+                    Entity damager = e.getDamager();
+                    if (damager instanceof LivingEntity) {
+                        // Không tắt, chỉ thông báo nhỏ
+                        if (Math.random() < 0.05) { // 5% chance thông báo
+                            player.sendMessage("§e⚔️ Bạn đang bị tấn công! Auto Kill vẫn hoạt động!");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // TẮT KHI NGƯỜI CHƠI CHẾT
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
@@ -112,6 +157,7 @@ public class AutoKillManager implements Listener {
         }
     }
 
+    // TẮT KHI NGƯỜI CHƠI THOÁT GAME
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
@@ -120,11 +166,29 @@ public class AutoKillManager implements Listener {
         }
     }
 
+    // TẮT KHI NGƯỜI CHƠI BỊ KICK
     @EventHandler
     public void onPlayerKick(PlayerKickEvent event) {
         Player player = event.getPlayer();
         if (tasks.containsKey(player.getUniqueId())) {
             stopKilling(player);
+        }
+    }
+
+    // TẮT KHI NGƯỜI CHƠI TỰ NGỒI XUỐNG (SHIFT) - CÓ THỂ TẮT HOẶC KHÔNG
+    @EventHandler
+    public void onPlayerSneak(PlayerToggleSneakEvent event) {
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
+        
+        if (!tasks.containsKey(uuid)) return;
+        
+        if (event.isSneaking()) {
+            // Người chơi đang ngồi xuống, không tắt
+            wasSneaking.put(uuid, true);
+        } else {
+            // Người chơi đứng dậy
+            wasSneaking.remove(uuid);
         }
     }
 
@@ -160,7 +224,8 @@ public class AutoKillManager implements Listener {
             player.sendMessage("§6✦ Sát thương nổ level §e" + level + " §6- Tỉ lệ: §e" + 
                 String.format("%.1f", getExplosionChance(player) * 100) + "%");
         }
-        player.sendMessage("§7⚠️ Không di chuyển để duy trì Auto Kill!");
+        player.sendMessage("§7⚠️ Đứng yên để duy trì Auto Kill!");
+        player.sendMessage("§7⚠️ Bị quái tấn công sẽ không làm tắt Auto Kill!");
     }
 
     public void stopKilling(Player player) {
@@ -171,6 +236,7 @@ public class AutoKillManager implements Listener {
             player.sendMessage(config.getMessage("kill-disabled"));
         }
         lastLocations.remove(uuid);
+        wasSneaking.remove(uuid);
     }
 
     public void stopAll() {
@@ -179,6 +245,7 @@ public class AutoKillManager implements Listener {
         }
         tasks.clear();
         lastLocations.clear();
+        wasSneaking.clear();
     }
 
     public boolean isKilling(Player player) { 
@@ -245,18 +312,28 @@ public class AutoKillManager implements Listener {
             // Kiểm tra block dưới chân
             Location below = player.getLocation().subtract(0, 1, 0);
             if (below.getBlock().getType() == Material.AIR && tasks.containsKey(playerUUID)) {
+                // Nếu không có block dưới chân, tắt AutoKill
                 player.sendMessage("§c⚠️ Không có block dưới chân! Đã tắt Auto Kill!");
                 stopKilling(player);
                 return;
             }
 
+            // Kiểm tra nếu người chơi tự di chuyển (không phải bị đẩy)
             Location lastLoc = lastLocations.get(playerUUID);
-            if (lastLoc != null && lastLoc.distance(player.getLocation()) > 0.1) {
-                if (tasks.containsKey(playerUUID)) {
-                    player.sendMessage("§c⚠️ Bạn đã di chuyển! Đã tắt Auto Kill!");
-                    stopKilling(player);
+            if (lastLoc != null) {
+                double distance = lastLoc.distance(player.getLocation());
+                // Nếu di chuyển hơn 0.1 block và không bị đẩy
+                if (distance > 0.1 && player.getVelocity().length() < 0.1) {
+                    if (tasks.containsKey(playerUUID)) {
+                        player.sendMessage("§c⚠️ Bạn đã di chuyển! Đã tắt Auto Kill!");
+                        stopKilling(player);
+                    }
+                    return;
                 }
-                return;
+                // Cập nhật vị trí nếu di chuyển nhỏ (do bị đẩy)
+                if (distance > 0.01) {
+                    lastLocations.put(playerUUID, player.getLocation().clone());
+                }
             }
 
             Entity target = player.getNearbyEntities(range, range, range).stream()

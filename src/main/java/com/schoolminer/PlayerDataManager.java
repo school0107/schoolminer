@@ -1,6 +1,5 @@
 package com.schoolminer;
 
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -13,10 +12,7 @@ public class PlayerDataManager {
     private File dataFile;
     private FileConfiguration dataConfig;
     
-    // AutoKill levels
     private final Map<UUID, Integer> explosionLevels = new HashMap<>();
-    
-    // MultiBlock levels (lưu theo tool key)
     private final Map<String, Integer> multiBlockLevels = new HashMap<>();
 
     public PlayerDataManager(Schoolminer plugin) {
@@ -62,7 +58,6 @@ public class PlayerDataManager {
         }
     }
 
-    // ===== AUTO KILL LEVELS =====
     private void loadExplosionLevels() {
         explosionLevels.clear();
         if (dataConfig.contains("autokill.levels")) {
@@ -77,17 +72,14 @@ public class PlayerDataManager {
     }
 
     public int getExplosionLevel(Player player) {
-        UUID uuid = player.getUniqueId();
-        return explosionLevels.getOrDefault(uuid, 0);
+        return explosionLevels.getOrDefault(player.getUniqueId(), 0);
     }
 
     public void setExplosionLevel(Player player, int level) {
-        UUID uuid = player.getUniqueId();
-        explosionLevels.put(uuid, level);
+        explosionLevels.put(player.getUniqueId(), level);
         saveData();
     }
 
-    // ===== MULTI BLOCK LEVELS =====
     private void loadMultiBlockLevels() {
         multiBlockLevels.clear();
         if (dataConfig.contains("multi-block-tools")) {
@@ -136,8 +128,7 @@ public class PlayerDataManager {
     }
 
     public void removePlayerData(Player player) {
-        UUID uuid = player.getUniqueId();
-        explosionLevels.remove(uuid);
+        explosionLevels.remove(player.getUniqueId());
         saveData();
     }
 }

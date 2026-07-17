@@ -199,7 +199,6 @@ public class AutoMineManager implements Listener {
         if (name.contains("NETHER_QUARTZ_ORE")) return 2 + new Random().nextInt(3);
         if (name.contains("ANCIENT_DEBRIS")) return 4 + new Random().nextInt(5);
         if (name.contains("COPPER_ORE") || name.contains("DEEPSLATE_COPPER_ORE")) return 1 + new Random().nextInt(2);
-        
         return 0;
     }
 
@@ -211,7 +210,7 @@ public class AutoMineManager implements Listener {
         if (material == Material.ANCIENT_DEBRIS) return Material.NETHERITE_SCRAP;
         if (material == Material.SAND || material == Material.RED_SAND) return Material.GLASS;
         if (material == Material.COBBLESTONE || material == Material.MOSSY_COBBLESTONE) return Material.STONE;
-        if (material == Material.DEEPSLATE_COBBLESTONE) return Material.DEEPSLATE;
+        if (material.name().equals("DEEPSLATE_COBBLESTONE")) return Material.DEEPSLATE;
         if (material.name().contains("LOG") && !material.name().contains("STRIPPED")) return Material.CHARCOAL;
         if (material == Material.CLAY || material == Material.CLAY_BALL) return Material.BRICK;
         return null;
@@ -301,7 +300,7 @@ public class AutoMineManager implements Listener {
                             
                             ItemStack finalDrop = drop.clone();
                             
-                            // Auto Smelt
+                            // ===== AUTO SMELT THEO CONFIG =====
                             Material dropType = finalDrop.getType();
                             if (config.isSmeltable(dropType)) {
                                 Material smelted = getSmeltedResult(dropType);

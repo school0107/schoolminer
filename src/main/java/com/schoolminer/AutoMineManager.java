@@ -234,27 +234,55 @@ public class AutoMineManager implements Listener {
 
         @Override
         public void run() {
-            if (!player.isOnline() || player.isDead()) { stopMining(player); return; }
+            if (!player.isOnline() || player.isDead()) { 
+                stopMining(player); 
+                return; 
+            }
 
+            // KIỂM TRA DI CHUYỂN - FIX LỖI WORLD
             Location lastLoc = lastLocations.get(playerUUID);
-            if (lastLoc != null && lastLoc.distance(player.getLocation()) > 0.1) {
-                player.sendMessage("§c⚠️ Bạn đã di chuyển, Auto Mine đã tắt!");
-                stopMining(player);
-                return;
+            if (lastLoc != null) {
+                Location currentLoc = player.getLocation();
+                // Kiểm tra nếu khác world hoặc đã di chuyển
+                if (!lastLoc.getWorld().equals(currentLoc.getWorld()) || 
+                    lastLoc.distance(currentLoc) > 0.1) {
+                    player.sendMessage("§c⚠️ Bạn đã di chuyển hoặc đổi world, Auto Mine đã tắt!");
+                    stopMining(player);
+                    return;
+                }
             }
 
             ItemStack tool = player.getInventory().getItemInMainHand();
-            if (tool.getType().isAir()) { resetBreak(); return; }
+            if (tool.getType().isAir()) { 
+                resetBreak(); 
+                return; 
+            }
 
             Block target = player.getTargetBlockExact(range);
-            if (target == null) { resetBreak(); return; }
+            if (target == null) { 
+                resetBreak(); 
+                return; 
+            }
 
-            if (!config.isWhitelisted(target.getType())) { resetBreak(); return; }
-            if (target.getLocation().distance(player.getLocation()) > range) { resetBreak(); return; }
-            if (isBlockLocked(target.getLocation(), player)) { resetBreak(); return; }
+            if (!config.isWhitelisted(target.getType())) { 
+                resetBreak(); 
+                return; 
+            }
+            
+            if (target.getLocation().distance(player.getLocation()) > range) { 
+                resetBreak(); 
+                return; 
+            }
+            
+            if (isBlockLocked(target.getLocation(), player)) { 
+                resetBreak(); 
+                return; 
+            }
 
             if (currentBlock == null || !currentBlock.equals(target)) {
-                if (currentBlock != null) unlockBlock(currentBlock.getLocation(), playerUUID);
+                if (currentBlock != null) {
+                    unlockBlock(currentBlock.getLocation(), playerUUID);
+                }
                 currentBlock = target;
                 breakTicks = 0;
                 isBreaking = false;
@@ -263,14 +291,18 @@ public class AutoMineManager implements Listener {
 
             if (!isBreaking) {
                 isBreaking = true;
-                try { player.sendBlockDamage(target.getLocation(), 1.0f); } catch (Exception ignored) {}
+                try { 
+                    player.sendBlockDamage(target.getLocation(), 1.0f); 
+                } catch (Exception ignored) {}
             }
 
             breakTicks++;
             float progress = Math.min((float) breakTicks / requiredTicks, 1.0f);
             int stage = (int) (progress * 9);
             if (stage >= 0 && stage <= 9) {
-                try { player.sendBlockDamage(target.getLocation(), stage / 9.0f); } catch (Exception ignored) {}
+                try { 
+                    player.sendBlockDamage(target.getLocation(), stage / 9.0f); 
+                } catch (Exception ignored) {}
             }
 
             if (breakTicks >= requiredTicks) {
@@ -300,7 +332,7 @@ public class AutoMineManager implements Listener {
                             
                             ItemStack finalDrop = drop.clone();
                             
-                            // ===== AUTO SMELT THEO CONFIG =====
+                            // Auto Smelt
                             Material dropType = finalDrop.getType();
                             if (config.isSmeltable(dropType)) {
                                 Material smelted = getSmeltedResult(dropType);
@@ -362,7 +394,9 @@ public class AutoMineManager implements Listener {
 
         private void resetBreak() {
             if (currentBlock != null && currentBlock.getLocation() != null) {
-                try { player.sendBlockDamage(currentBlock.getLocation(), 0.0f); } catch (Exception ignored) {}
+                try { 
+                    player.sendBlockDamage(currentBlock.getLocation(), 0.0f); 
+                } catch (Exception ignored) {}
                 unlockBlock(currentBlock.getLocation(), playerUUID);
             }
             currentBlock = null;

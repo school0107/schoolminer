@@ -67,7 +67,8 @@ public class SchoolminerCommand implements CommandExecutor {
                     return true;
                 }
                 
-                plugin.getConfigManager().setMultiBlockLevel(tool, level);
+                // DÙNG PlayerDataManager
+                plugin.getPlayerDataManager().setMultiBlockLevel(tool, level);
                 
                 String toolDisplay = tool.getType().name().replace("_", " ").toLowerCase();
                 sender.sendMessage("§a✅ Đã set MultiBlock level §e" + level + " §acho §6" + toolDisplay);
@@ -104,7 +105,8 @@ public class SchoolminerCommand implements CommandExecutor {
                 return true;
             }
 
-            plugin.getConfigManager().removeMultiBlockLevel(tool);
+            // DÙNG PlayerDataManager
+            plugin.getPlayerDataManager().removeMultiBlockLevel(tool);
             
             String toolDisplay = tool.getType().name().replace("_", " ").toLowerCase();
             sender.sendMessage("§a✅ Đã xóa MultiBlock khỏi §6" + toolDisplay);
@@ -125,7 +127,8 @@ public class SchoolminerCommand implements CommandExecutor {
                 return true;
             }
             
-            int level = plugin.getConfigManager().getMultiBlockLevel(tool);
+            // DÙNG PlayerDataManager
+            int level = plugin.getPlayerDataManager().getMultiBlockLevel(tool);
             String toolDisplay = tool.getType().name().replace("_", " ").toLowerCase();
             
             if (level > 1) {
@@ -156,6 +159,6 @@ public class SchoolminerCommand implements CommandExecutor {
     }
 
     private String colorize(String message) {
-        return ChatColor.translateAlternateColorCodes('&', message);
+        return ChatColor.translateAlternateColorCodes('&', msg);
     }
 }

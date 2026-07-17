@@ -36,9 +36,9 @@ public class ConfigManager {
     private Map<Integer, Double> explosionRadii;
     private Map<Integer, Double> upgradeCosts;
     
-    private Map<String, Integer> multiBlockLevels = new HashMap<>();
     private Set<Material> hardBlocks = new HashSet<>();
     private Map<Material, Double> customHardness = new HashMap<>();
+    private Set<Material> smeltableMaterials = new HashSet<>();
 
     public ConfigManager(Schoolminer plugin) {
         this.plugin = plugin;
@@ -53,6 +53,7 @@ public class ConfigManager {
         plugin.reloadConfig();
         FileConfiguration config = plugin.getConfig();
         
+        // Auto Mine
         whitelist = new HashSet<>();
         List<String> blockNames = config.getStringList("whitelist");
         for (String name : blockNames) {
@@ -69,6 +70,9 @@ public class ConfigManager {
         autoPickup = config.getBoolean("automine.auto-pickup", true);
         doubleDrop = config.getBoolean("automine.double-drop", true);
         
+        loadSmelting(config);
+        
+        // Auto Kill
         attackDelay = config.getInt("autokill.attack-delay", 40);
         killRange = config.getInt("autokill.range", 3);
         baseDamage = config.getDouble("autokill.base-damage", 4.0);
@@ -81,33 +85,47 @@ public class ConfigManager {
         xpAnimal = config.getInt("autokill.xp-animal", 1);
         xpMob = config.getInt("autokill.xp-mob", 3);
         
+        // Auto Craft
         craftDelay = config.getInt("autocraft.craft-delay", 20);
         craftCooldown = config.getInt("autocraft.cooldown", 2000);
         maxCraftPerTick = config.getInt("autocraft.max-craft-per-tick", 16);
         loadCrafts(config);
         
         loadExplosionUpgrades(config);
-        loadMultiBlock(config);
         loadHardBlocks(config);
         loadCustomHardness(config);
         
         plugin.getLogger().info("§a✅ Đã load " + whitelist.size() + " block vào whitelist");
         plugin.getLogger().info("§a✅ Đã load " + craftConfigs.size() + " công thức craft");
         plugin.getLogger().info("§a✅ Đã load " + maxExplosionLevel + " cấp nâng cấp AutoKill");
-        plugin.getLogger().info("§a✅ Đã load " + multiBlockLevels.size() + " cấp MultiBlock");
         plugin.getLogger().info("§a✅ Đã load " + hardBlocks.size() + " block cứng");
         plugin.getLogger().info("§a✅ Đã load " + customHardness.size() + " block tùy chỉnh độ bền");
+        plugin.getLogger().info("§a✅ Đã load " + smeltableMaterials.size() + " loại quặng được nung");
     }
 
-    private void loadMultiBlock(FileConfiguration config) {
-        multiBlockLevels.clear();
-        ConfigurationSection multiBlockSection = config.getConfigurationSection("multi-block-tools");
-        if (multiBlockSection == null) return;
-        
-        for (String toolKey : multiBlockSection.getKeys(false)) {
-            int level = multiBlockSection.getInt(toolKey, 1);
-            multiBlockLevels.put(toolKey, level);
+    private void loadSmelting(FileConfiguration config) {
+        smeltableMaterials.clear();
+        ConfigurationSection smeltingSection = config.getConfigurationSection("smelting");
+        if (smeltingSection == null) {
+            plugin.getLogger().warning("§e⚠️ Không tìm thấy phần smelting trong config!");
+            return;
         }
+        
+        for (String key : smeltingSection.getKeys(false)) {
+            boolean enabled = smeltingSection.getBoolean(key, false);
+            if (enabled) {
+                try {
+                    Material mat = Material.valueOf(key.toUpperCase());
+                    smeltableMaterials.add(mat);
+                } catch (IllegalArgumentException e) {
+                    plugin.getLogger().warning("§c⚠️ Material không hợp lệ trong smelting: " + key);
+                }
+            }
+        }
+    }
+
+    public boolean isSmeltable(Material material) {
+        return smeltableMaterials.contains(material);
     }
 
     private void loadHardBlocks(FileConfiguration config) {
@@ -133,108 +151,6 @@ public class ConfigManager {
                 customHardness.put(mat, hardness);
             } catch (IllegalArgumentException ignored) {}
         }
-    }
-
-    public void saveMultiBlock(String toolKey, int level) {
-        multiBlockLevels.put(toolKey, level);
-        FileConfiguration config = plugin.getConfig();
-        ConfigurationSection multiBlockSection = config.createSection("multi-block-tools");
-        for (Map.Entry<String, Integer> entry : multiBlockLevels.entrySet()) {
-            multiBlockSection.set(entry.getKey(), entry.getValue());
-        }
-        plugin.saveConfig();
-    }
-
-    public void removeMultiBlock(String toolKey) {
-        multiBlockLevels.remove(toolKey);
-        FileConfiguration config = plugin.getConfig();
-        ConfigurationSection multiBlockSection = config.createSection("multi-block-tools");
-        for (Map.Entry<String, Integer> entry : multiBlockLevels.entrySet()) {
-            multiBlockSection.set(entry.getKey(), entry.getValue());
-        }
-        plugin.saveConfig();
-    }
-
-    public int getMultiBlockLevel(ItemStack tool) {
-        if (tool == null || tool.getType().isAir()) return 1;
-        String toolKey = getItemKey(tool);
-        return multiBlockLevels.getOrDefault(toolKey, 1);
-    }
-
-    public void setMultiBlockLevel(ItemStack tool, int level) {
-        if (tool == null || tool.getType().isAir()) return;
-        String toolKey = getItemKey(tool);
-        saveMultiBlock(toolKey, level);
-        updateToolLore(tool, level);
-    }
-
-    public void removeMultiBlockLevel(ItemStack tool) {
-        if (tool == null || tool.getType().isAir()) return;
-        String toolKey = getItemKey(tool);
-        removeMultiBlock(toolKey);
-        removeToolLore(tool);
-    }
-
-    public String getItemKey(ItemStack tool) {
-        if (tool == null || tool.getType().isAir()) return "";
-        String baseKey = tool.getType().name();
-        if (tool.hasItemMeta()) {
-            ItemMeta meta = tool.getItemMeta();
-            if (meta.hasDisplayName()) {
-                baseKey += "_" + meta.getDisplayName().hashCode();
-            }
-            if (meta.hasLore()) {
-                baseKey += "_" + meta.getLore().hashCode();
-            }
-        }
-        if (!multiBlockLevels.containsKey(baseKey)) {
-            baseKey += "_" + System.currentTimeMillis();
-        }
-        return baseKey;
-    }
-
-    private void updateToolLore(ItemStack tool, int level) {
-        if (tool == null || tool.getType().isAir()) return;
-        ItemMeta meta = tool.getItemMeta();
-        if (meta == null) return;
-        
-        List<String> lore = meta.getLore();
-        if (lore == null) lore = new ArrayList<>();
-        
-        Iterator<String> iterator = lore.iterator();
-        while (iterator.hasNext()) {
-            String line = iterator.next();
-            if (line.contains("MultiBlock")) iterator.remove();
-        }
-        
-        if (level > 1) {
-            if (!lore.isEmpty() && !lore.get(lore.size() - 1).trim().isEmpty()) {
-                lore.add("");
-            }
-            lore.add("§6✦ MultiBlock: §e" + level + "x");
-            lore.add("§7Nhân vật phẩm khi đào lên §e" + level + "§7 lần");
-        }
-        
-        meta.setLore(lore);
-        tool.setItemMeta(meta);
-    }
-
-    private void removeToolLore(ItemStack tool) {
-        if (tool == null || tool.getType().isAir()) return;
-        ItemMeta meta = tool.getItemMeta();
-        if (meta == null) return;
-        
-        List<String> lore = meta.getLore();
-        if (lore == null) return;
-        
-        Iterator<String> iterator = lore.iterator();
-        while (iterator.hasNext()) {
-            String line = iterator.next();
-            if (line.contains("MultiBlock")) iterator.remove();
-        }
-        
-        meta.setLore(lore);
-        tool.setItemMeta(meta);
     }
 
     public boolean isHardBlock(Material material) {
@@ -373,6 +289,7 @@ public class ConfigManager {
     public int getXpAnimal() { return xpAnimal; }
     public int getXpMob() { return xpMob; }
     public boolean isDoubleDrop() { return doubleDrop; }
+    public boolean isAutoPickup() { return autoPickup; }
     public int getCraftDelay() { return craftDelay; }
     public int getMaxCraftPerTick() { return maxCraftPerTick; }
     public AutoCraftConfig getCraftConfig(String id) { return craftConfigs.get(id); }

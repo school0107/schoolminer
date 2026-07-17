@@ -46,9 +46,10 @@ public class AutoMineManager implements Listener {
         player.sendMessage("§a✅ Đã bật Auto Mine!");
         player.sendMessage("§7Đứng yên và cầm công cụ để đào tự động.");
         player.sendMessage("§7Block đang đào sẽ được §ckhóa §7cho riêng bạn!");
+        player.sendMessage("§6🔥 Tự động nung quặng theo config!");
         
         ItemStack tool = player.getInventory().getItemInMainHand();
-        int mbLevel = plugin.getConfigManager().getMultiBlockLevel(tool);
+        int mbLevel = plugin.getPlayerDataManager().getMultiBlockLevel(tool);
         if (mbLevel > 1) {
             player.sendMessage("§6✦ MultiBlock: §e" + mbLevel + "x §7đang kích hoạt!");
         }
@@ -118,14 +119,12 @@ public class AutoMineManager implements Listener {
         return false;
     }
 
-    // ===== SỰ KIỆN CHO ĐÀO THƯỜNG (ÁP DỤNG MULTIBLOCK) =====
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
         Block block = event.getBlock();
         Location loc = block.getLocation();
         
-        // Kiểm tra block bị khóa
         if (isBlockLocked(loc, player)) {
             UUID owner = lockedBlocks.get(loc);
             Player ownerPlayer = Bukkit.getPlayer(owner);
@@ -136,22 +135,18 @@ public class AutoMineManager implements Listener {
             return;
         }
         
-        // ÁP DỤNG MULTIBLOCK CHO ĐÀO THƯỜNG
         ItemStack tool = player.getInventory().getItemInMainHand();
         if (tool.getType().isAir()) return;
         
-        int multiBlockLevel = plugin.getConfigManager().getMultiBlockLevel(tool);
+        int multiBlockLevel = plugin.getPlayerDataManager().getMultiBlockLevel(tool);
         if (multiBlockLevel <= 1) return;
         
-        // Lấy drops từ block
         Collection<ItemStack> drops = event.getBlock().getDrops(tool);
         if (drops.isEmpty()) return;
         
-        // Hủy drops mặc định
         event.setDropItems(false);
         event.setExpToDrop(0);
         
-        // Tạo drops mới với MultiBlock
         PlayerInventory inventory = player.getInventory();
         for (ItemStack drop : drops) {
             if (drop != null && !drop.getType().isAir()) {
@@ -169,7 +164,6 @@ public class AutoMineManager implements Listener {
             }
         }
         
-        // EXP từ block (nhân với MultiBlock)
         int exp = getBlockExp(block, tool);
         if (exp > 0) {
             player.giveExp(exp * multiBlockLevel);
@@ -195,38 +189,32 @@ public class AutoMineManager implements Listener {
         Material type = block.getType();
         String name = type.name();
         
-        if (name.contains("COAL_ORE") || name.contains("DEEPSLATE_COAL_ORE")) {
-            return 0 + new Random().nextInt(2);
-        }
-        if (name.contains("IRON_ORE") || name.contains("DEEPSLATE_IRON_ORE")) {
-            return 1 + new Random().nextInt(2);
-        }
-        if (name.contains("GOLD_ORE") || name.contains("DEEPSLATE_GOLD_ORE") || name.contains("NETHER_GOLD_ORE")) {
-            return 2 + new Random().nextInt(3);
-        }
-        if (name.contains("DIAMOND_ORE") || name.contains("DEEPSLATE_DIAMOND_ORE")) {
-            return 3 + new Random().nextInt(4);
-        }
-        if (name.contains("EMERALD_ORE") || name.contains("DEEPSLATE_EMERALD_ORE")) {
-            return 3 + new Random().nextInt(4);
-        }
-        if (name.contains("LAPIS_ORE") || name.contains("DEEPSLATE_LAPIS_ORE")) {
-            return 2 + new Random().nextInt(3);
-        }
-        if (name.contains("REDSTONE_ORE") || name.contains("DEEPSLATE_REDSTONE_ORE")) {
-            return 1 + new Random().nextInt(3);
-        }
-        if (name.contains("NETHER_QUARTZ_ORE")) {
-            return 2 + new Random().nextInt(3);
-        }
-        if (name.contains("ANCIENT_DEBRIS")) {
-            return 4 + new Random().nextInt(5);
-        }
-        if (name.contains("COPPER_ORE") || name.contains("DEEPSLATE_COPPER_ORE")) {
-            return 1 + new Random().nextInt(2);
-        }
+        if (name.contains("COAL_ORE") || name.contains("DEEPSLATE_COAL_ORE")) return 0 + new Random().nextInt(2);
+        if (name.contains("IRON_ORE") || name.contains("DEEPSLATE_IRON_ORE")) return 1 + new Random().nextInt(2);
+        if (name.contains("GOLD_ORE") || name.contains("DEEPSLATE_GOLD_ORE") || name.contains("NETHER_GOLD_ORE")) return 2 + new Random().nextInt(3);
+        if (name.contains("DIAMOND_ORE") || name.contains("DEEPSLATE_DIAMOND_ORE")) return 3 + new Random().nextInt(4);
+        if (name.contains("EMERALD_ORE") || name.contains("DEEPSLATE_EMERALD_ORE")) return 3 + new Random().nextInt(4);
+        if (name.contains("LAPIS_ORE") || name.contains("DEEPSLATE_LAPIS_ORE")) return 2 + new Random().nextInt(3);
+        if (name.contains("REDSTONE_ORE") || name.contains("DEEPSLATE_REDSTONE_ORE")) return 1 + new Random().nextInt(3);
+        if (name.contains("NETHER_QUARTZ_ORE")) return 2 + new Random().nextInt(3);
+        if (name.contains("ANCIENT_DEBRIS")) return 4 + new Random().nextInt(5);
+        if (name.contains("COPPER_ORE") || name.contains("DEEPSLATE_COPPER_ORE")) return 1 + new Random().nextInt(2);
         
         return 0;
+    }
+
+    private Material getSmeltedResult(Material material) {
+        if (material == Material.IRON_ORE || material == Material.DEEPSLATE_IRON_ORE || material == Material.RAW_IRON) return Material.IRON_INGOT;
+        if (material == Material.GOLD_ORE || material == Material.DEEPSLATE_GOLD_ORE || material == Material.NETHER_GOLD_ORE || material == Material.RAW_GOLD) return Material.GOLD_INGOT;
+        if (material == Material.COPPER_ORE || material == Material.DEEPSLATE_COPPER_ORE || material == Material.RAW_COPPER) return Material.COPPER_INGOT;
+        if (material == Material.NETHER_QUARTZ_ORE) return Material.QUARTZ;
+        if (material == Material.ANCIENT_DEBRIS) return Material.NETHERITE_SCRAP;
+        if (material == Material.SAND || material == Material.RED_SAND) return Material.GLASS;
+        if (material == Material.COBBLESTONE || material == Material.MOSSY_COBBLESTONE) return Material.STONE;
+        if (material == Material.DEEPSLATE_COBBLESTONE) return Material.DEEPSLATE;
+        if (material.name().contains("LOG") && !material.name().contains("STRIPPED")) return Material.CHARCOAL;
+        if (material == Material.CLAY || material == Material.CLAY_BALL) return Material.BRICK;
+        return null;
     }
 
     private class MineTask extends BukkitRunnable {
@@ -247,52 +235,27 @@ public class AutoMineManager implements Listener {
 
         @Override
         public void run() {
-            if (!player.isOnline() || player.isDead()) {
+            if (!player.isOnline() || player.isDead()) { stopMining(player); return; }
+
+            Location lastLoc = lastLocations.get(playerUUID);
+            if (lastLoc != null && lastLoc.distance(player.getLocation()) > 0.1) {
+                player.sendMessage("§c⚠️ Bạn đã di chuyển, Auto Mine đã tắt!");
                 stopMining(player);
                 return;
             }
 
-            Location lastLoc = lastLocations.get(playerUUID);
-            if (lastLoc != null) {
-                Location currentLoc = player.getLocation();
-                if (lastLoc.distance(currentLoc) > 0.1) {
-                    player.sendMessage("§c⚠️ Bạn đã di chuyển, Auto Mine đã tắt!");
-                    stopMining(player);
-                    return;
-                }
-            }
-
             ItemStack tool = player.getInventory().getItemInMainHand();
-            if (tool.getType().isAir()) {
-                resetBreak();
-                return;
-            }
+            if (tool.getType().isAir()) { resetBreak(); return; }
 
             Block target = player.getTargetBlockExact(range);
-            if (target == null) {
-                resetBreak();
-                return;
-            }
+            if (target == null) { resetBreak(); return; }
 
-            if (!config.isWhitelisted(target.getType())) {
-                resetBreak();
-                return;
-            }
-
-            if (target.getLocation().distance(player.getLocation()) > range) {
-                resetBreak();
-                return;
-            }
-
-            if (isBlockLocked(target.getLocation(), player)) {
-                resetBreak();
-                return;
-            }
+            if (!config.isWhitelisted(target.getType())) { resetBreak(); return; }
+            if (target.getLocation().distance(player.getLocation()) > range) { resetBreak(); return; }
+            if (isBlockLocked(target.getLocation(), player)) { resetBreak(); return; }
 
             if (currentBlock == null || !currentBlock.equals(target)) {
-                if (currentBlock != null) {
-                    unlockBlock(currentBlock.getLocation(), playerUUID);
-                }
+                if (currentBlock != null) unlockBlock(currentBlock.getLocation(), playerUUID);
                 currentBlock = target;
                 breakTicks = 0;
                 isBreaking = false;
@@ -301,19 +264,14 @@ public class AutoMineManager implements Listener {
 
             if (!isBreaking) {
                 isBreaking = true;
-                try {
-                    player.sendBlockDamage(target.getLocation(), 1.0f);
-                } catch (Exception ignored) {}
+                try { player.sendBlockDamage(target.getLocation(), 1.0f); } catch (Exception ignored) {}
             }
 
             breakTicks++;
-
             float progress = Math.min((float) breakTicks / requiredTicks, 1.0f);
             int stage = (int) (progress * 9);
             if (stage >= 0 && stage <= 9) {
-                try {
-                    player.sendBlockDamage(target.getLocation(), stage / 9.0f);
-                } catch (Exception ignored) {}
+                try { player.sendBlockDamage(target.getLocation(), stage / 9.0f); } catch (Exception ignored) {}
             }
 
             if (breakTicks >= requiredTicks) {
@@ -332,22 +290,29 @@ public class AutoMineManager implements Listener {
                     }
                     
                     boolean doubleDrop = config.isDoubleDrop();
-                    int multiBlockLevel = plugin.getConfigManager().getMultiBlockLevel(tool);
+                    int multiBlockLevel = plugin.getPlayerDataManager().getMultiBlockLevel(tool);
                     PlayerInventory inventory = player.getInventory();
                     
                     for (ItemStack drop : drops) {
                         if (drop != null && !drop.getType().isAir()) {
                             int amount = drop.getAmount();
-                            
-                            if (doubleDrop) {
-                                amount *= 2;
-                            }
-                            
-                            if (multiBlockLevel > 1) {
-                                amount *= multiBlockLevel;
-                            }
+                            if (doubleDrop) amount *= 2;
+                            if (multiBlockLevel > 1) amount *= multiBlockLevel;
                             
                             ItemStack finalDrop = drop.clone();
+                            
+                            // Auto Smelt
+                            Material dropType = finalDrop.getType();
+                            if (config.isSmeltable(dropType)) {
+                                Material smelted = getSmeltedResult(dropType);
+                                if (smelted != null) {
+                                    finalDrop.setType(smelted);
+                                    if (Math.random() < 0.1) {
+                                        player.sendMessage("§6🔥 Đã nung " + dropType.name().replace("_", " ").toLowerCase());
+                                    }
+                                }
+                            }
+                            
                             finalDrop.setAmount(amount);
                             
                             if (inventory.firstEmpty() != -1) {
@@ -365,9 +330,7 @@ public class AutoMineManager implements Listener {
                     }
                     
                     int exp = getBlockExp(target, tool);
-                    if (exp > 0) {
-                        player.giveExp(exp);
-                    }
+                    if (exp > 0) player.giveExp(exp);
                     
                     player.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, target.getType());
                 }
@@ -384,28 +347,23 @@ public class AutoMineManager implements Listener {
 
         private boolean isFortuneable(Material material) {
             String name = material.name();
-            return name.contains("ORE") || name.contains("COAL") || 
-                   name.contains("DIAMOND") || name.contains("EMERALD") ||
-                   name.contains("LAPIS") || name.contains("REDSTONE") ||
-                   name.contains("QUARTZ") || name.contains("NETHER_GOLD") ||
-                   name.contains("AMETHYST") || name.contains("COPPER");
+            return name.contains("ORE") || name.contains("COAL") || name.contains("DIAMOND") || 
+                   name.contains("EMERALD") || name.contains("LAPIS") || name.contains("REDSTONE") ||
+                   name.contains("QUARTZ") || name.contains("NETHER_GOLD") || name.contains("AMETHYST") || 
+                   name.contains("COPPER");
         }
 
         private int getFortuneBonus(int fortuneLevel) {
             int bonus = 0;
             for (int i = 0; i < fortuneLevel; i++) {
-                if (random.nextDouble() < 0.33) {
-                    bonus++;
-                }
+                if (random.nextDouble() < 0.33) bonus++;
             }
             return bonus;
         }
 
         private void resetBreak() {
             if (currentBlock != null && currentBlock.getLocation() != null) {
-                try {
-                    player.sendBlockDamage(currentBlock.getLocation(), 0.0f);
-                } catch (Exception ignored) {}
+                try { player.sendBlockDamage(currentBlock.getLocation(), 0.0f); } catch (Exception ignored) {}
                 unlockBlock(currentBlock.getLocation(), playerUUID);
             }
             currentBlock = null;

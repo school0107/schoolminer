@@ -11,6 +11,52 @@ automine:
   max-range: 5
   auto-pickup: true
   double-drop: true
+  
+  # Tự động nung quặng (true/false)
+  auto-smelt: true
+smelting:
+  # Quặng sắt
+  iron_ore: true
+  deepslate_iron_ore: true
+  raw_iron: true
+  
+  # Quặng vàng
+  gold_ore: true
+  deepslate_gold_ore: true
+  nether_gold_ore: true
+  raw_gold: true
+  
+  # Quặng đồng
+  copper_ore: true
+  deepslate_copper_ore: true
+  raw_copper: true
+  
+  # Quặng nether
+  nether_quartz_ore: true
+  ancient_debris: true
+  
+  # Cát -> Thủy tinh
+  sand: false
+  red_sand: false
+  
+  # Đá cuội -> Đá
+  cobblestone: false
+  mossy_cobblestone: false
+  deepslate_cobblestone: false
+  
+  # Gỗ -> Than củi
+  oak_log: false
+  spruce_log: false
+  birch_log: false
+  jungle_log: false
+  acacia_log: false
+  dark_oak_log: false
+  mangrove_log: false
+  cherry_log: false
+  
+  # Clay -> Gạch
+  clay: false
+  clay_ball: false
 
 # ===== WHITELIST =====
 whitelist:

@@ -67,7 +67,6 @@ public class SchoolminerCommand implements CommandExecutor {
                     return true;
                 }
                 
-                // DÙNG PlayerDataManager
                 plugin.getPlayerDataManager().setMultiBlockLevel(tool, level);
                 
                 String toolDisplay = tool.getType().name().replace("_", " ").toLowerCase();
@@ -105,7 +104,6 @@ public class SchoolminerCommand implements CommandExecutor {
                 return true;
             }
 
-            // DÙNG PlayerDataManager
             plugin.getPlayerDataManager().removeMultiBlockLevel(tool);
             
             String toolDisplay = tool.getType().name().replace("_", " ").toLowerCase();
@@ -127,7 +125,6 @@ public class SchoolminerCommand implements CommandExecutor {
                 return true;
             }
             
-            // DÙNG PlayerDataManager
             int level = plugin.getPlayerDataManager().getMultiBlockLevel(tool);
             String toolDisplay = tool.getType().name().replace("_", " ").toLowerCase();
             
@@ -159,6 +156,6 @@ public class SchoolminerCommand implements CommandExecutor {
     }
 
     private String colorize(String message) {
-        return ChatColor.translateAlternateColorCodes('&', msg);
+        return ChatColor.translateAlternateColorCodes('&', message);  // Sửa từ msg thành message
     }
 }

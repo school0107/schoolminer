@@ -61,4 +61,4 @@ jobs:
         upload_url: ${{ github.event.release.upload_url }}
         asset_path: target/Schoolminer-${{ steps.get_version.outputs.version }}.jar
         asset_name: Schoolminer-${{ steps.get_version.outputs.version }}.jar
-        asset_content_type: application/java-archive
+        asset_content_type: application/java-archive 

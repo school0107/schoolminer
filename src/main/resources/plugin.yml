@@ -3,35 +3,13 @@ version: 1.0.0
 main: com.schoolminer.Schoolminer
 api-version: '1.21'
 author: school0107
-description: Auto mine, auto kill and autocraft plugin
+description: MultiBlock Plugin
 commands:
-  automine:
-    description: Tự động đào block
-    usage: /automine
-    aliases: [am]
-  autokill:
-    description: Tự động tấn công mob
-    usage: /autokill [upgrade]
-    aliases: [ak]
-  autocraft:
-    description: Tự động chế tạo
-    usage: /autocraft <type> [off]
-    aliases: [ac]
   schoolminer:
-    description: Quản lý plugin
-    usage: /schoolminer <reload|help|mutiblock|add>
+    description: Quản lý MultiBlock
+    usage: /schoolminer <reload|help|add|remove|check>
     aliases: [smn]
-
 permissions:
-  schoolminer.automine:
-    description: Cho phép sử dụng /automine
-    default: true
-  schoolminer.autokill:
-    description: Cho phép sử dụng /autokill
-    default: true
-  schoolminer.autocraft:
-    description: Cho phép sử dụng /autocraft
-    default: true
   schoolminer.admin:
     description: Quyền admin
     default: op

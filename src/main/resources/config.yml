@@ -9,3 +9,17 @@ messages:
   set-success: '&a✅ Đã set MultiBlock x%level% cho cúp!'
   remove-success: '&a✅ Đã xóa MultiBlock khỏi cúp!'
   check-success: '&6✦ MultiBlock của cúp: &e%level%x'
+
+# Danh sách block KHÔNG áp dụng MultiBlock (Blacklist)
+# Block trong danh sách này khi đào sẽ rơi ra bình thường (x1)
+blacklist:
+  - SPAWNER
+  - BEDROCK
+  - END_PORTAL_FRAME
+  - BARRIER
+  - COMMAND_BLOCK
+  - CHEST
+  - FURNACE
+  - HOPPER
+  - DROPPER
+  - DISPENSER

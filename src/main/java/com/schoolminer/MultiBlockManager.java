@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 import java.util.Collection;
+import java.util.List;
 
 public class MultiBlockManager implements Listener {
     private final Schoolminer plugin;
@@ -27,15 +28,19 @@ public class MultiBlockManager implements Listener {
 
         if (tool.getType().isAir()) return;
 
-        // Lấy level MultiBlock từ PlayerDataManager
+        // 1. Kiểm tra Blacklist
+        List<String> blacklist = plugin.getConfig().getStringList("blacklist");
+        if (blacklist.contains(block.getType().name())) return;
+
+        // 2. Lấy level MultiBlock
         int multiBlockLevel = plugin.getPlayerDataManager().getMultiBlockLevel(tool);
         if (multiBlockLevel <= 1) return;
 
-        // Lấy drops mặc định của block
+        // 3. Lấy drops
         Collection<ItemStack> drops = block.getDrops(tool);
         if (drops.isEmpty()) return;
 
-        // Hủy drop mặc định để tự xử lý
+        // 4. Hủy drop mặc định
         event.setDropItems(false);
         event.setExpToDrop(0);
 
@@ -47,16 +52,17 @@ public class MultiBlockManager implements Listener {
                 ItemStack finalDrop = drop.clone();
                 finalDrop.setAmount(amount);
 
-                // Thêm vào túi hoặc drop ra đất nếu túi đầy
+                // 5. Đưa thẳng vào túi đồ
                 if (inventory.firstEmpty() != -1) {
                     inventory.addItem(finalDrop);
                 } else {
+                    // Nếu túi đầy thì mới rơi ra đất
                     block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), finalDrop);
                 }
             }
         }
 
-        // Thông báo nhỏ (5% tỉ lệ để tránh spam)
+        // Thông báo nhỏ (5% tỉ lệ)
         if (Math.random() < 0.05) {
             player.sendMessage("§6✦ MultiBlock x" + multiBlockLevel + " §ađã kích hoạt!");
         }

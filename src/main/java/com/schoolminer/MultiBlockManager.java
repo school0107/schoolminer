@@ -1,5 +1,6 @@
 package com.schoolminer;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -20,7 +21,7 @@ public class MultiBlockManager implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
         Block block = event.getBlock();
@@ -28,43 +29,42 @@ public class MultiBlockManager implements Listener {
 
         if (tool.getType().isAir()) return;
 
-        // 1. Kiểm tra Blacklist
+        // Kiểm tra Blacklist
         List<String> blacklist = plugin.getConfig().getStringList("blacklist");
         if (blacklist.contains(block.getType().name())) return;
 
-        // 2. Lấy level MultiBlock
+        // Lấy level
         int multiBlockLevel = plugin.getPlayerDataManager().getMultiBlockLevel(tool);
         if (multiBlockLevel <= 1) return;
 
-        // 3. Lấy drops
+        // Lấy drops
         Collection<ItemStack> drops = block.getDrops(tool);
         if (drops.isEmpty()) return;
 
-        // 4. Hủy drop mặc định
+        // Chặn drop mặc định
         event.setDropItems(false);
-        event.setExpToDrop(0);
+        
+        // Dùng Scheduler để đợi block bị phá xong hoàn toàn (tránh lỗi rollback trên Purpur 1.21)
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            PlayerInventory inventory = player.getInventory();
+            for (ItemStack drop : drops) {
+                if (drop != null && !drop.getType().isAir()) {
+                    int amount = drop.getAmount() * multiBlockLevel;
+                    ItemStack finalDrop = drop.clone();
+                    finalDrop.setAmount(amount);
 
-        PlayerInventory inventory = player.getInventory();
-
-        for (ItemStack drop : drops) {
-            if (drop != null && !drop.getType().isAir()) {
-                int amount = drop.getAmount() * multiBlockLevel;
-                ItemStack finalDrop = drop.clone();
-                finalDrop.setAmount(amount);
-
-                // 5. Đưa thẳng vào túi đồ
-                if (inventory.firstEmpty() != -1) {
-                    inventory.addItem(finalDrop);
-                } else {
-                    // Nếu túi đầy thì mới rơi ra đất
-                    block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), finalDrop);
+                    // Thêm vào túi, nếu đầy thì rơi ra đất
+                    if (inventory.firstEmpty() != -1) {
+                        inventory.addItem(finalDrop);
+                    } else {
+                        block.getWorld().dropItemNaturally(block.getLocation(), finalDrop);
+                    }
                 }
             }
-        }
-
-        // Thông báo nhỏ (5% tỉ lệ)
-        if (Math.random() < 0.05) {
-            player.sendMessage("§6✦ MultiBlock x" + multiBlockLevel + " §ađã kích hoạt!");
-        }
+            // Thông báo
+            if (Math.random() < 0.1) {
+                player.sendMessage("§6✦ MultiBlock x" + multiBlockLevel + " §ađã kích hoạt!");
+            }
+        });
     }
 }

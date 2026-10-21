@@ -56,7 +56,6 @@ public class PlayerDataManager {
         }
     }
 
-    // Lấy level (Tự động tạo ID nếu chưa có)
     public int getMultiBlockLevel(ItemStack tool) {
         if (tool == null || tool.getType().isAir() || !tool.hasItemMeta()) return 1;
         
@@ -66,7 +65,6 @@ public class PlayerDataManager {
         return multiBlockLevels.getOrDefault(id, 1);
     }
 
-    // Set level và gắn Lore
     public void setMultiBlockLevel(ItemStack tool, int level) {
         if (tool == null || tool.getType().isAir()) return;
         
@@ -82,7 +80,6 @@ public class PlayerDataManager {
         multiBlockLevels.put(id, level);
         saveData();
 
-        // Cập nhật Lore
         updateLore(tool, level);
     }
 
@@ -98,7 +95,6 @@ public class PlayerDataManager {
             tool.setItemMeta(meta);
             saveData();
             
-            // Xóa Lore
             updateLore(tool, 1);
         }
     }
@@ -107,21 +103,22 @@ public class PlayerDataManager {
         ItemMeta meta = tool.getItemMeta();
         if (meta == null) return;
 
-        List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
+        // Lấy toàn bộ lore hiện tại
+        List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
         
-        // Xóa lore MultiBlock cũ
+        // Xóa các dòng lore MultiBlock cũ (nếu có)
         lore.removeIf(line -> line.contains("MultiBlock"));
         
-        // Xóa dòng trống thừa
+        // Xóa các dòng trống thừa ở cuối
         while (!lore.isEmpty() && lore.get(lore.size() - 1).trim().isEmpty()) {
             lore.remove(lore.size() - 1);
         }
 
-        // Thêm lore mới
+        // Thêm lore mới nếu level > 1
         if (level > 1) {
-            if (!lore.isEmpty()) lore.add(""); // Dòng trống phân cách
-            lore.add("§6✦ MultiBlock: §e" + level + "x");
-            lore.add("§7Đào block nhận x" + level + " vật phẩm");
+            if (!lore.isEmpty()) lore.add(""); // Thêm dòng trống phân cách nếu đã có lore khác
+            lore.add(ChatColor.GOLD + "✦ MultiBlock: " + ChatColor.YELLOW + level + "x");
+            lore.add(ChatColor.GRAY + "Đào block nhận x" + level + " vật phẩm");
         }
 
         meta.setLore(lore);

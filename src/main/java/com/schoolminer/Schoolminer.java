@@ -25,21 +25,22 @@ public class Schoolminer extends JavaPlugin {
         getServer().getPluginManager().registerEvents(autoMineManager, this);
         getServer().getPluginManager().registerEvents(autoKillManager, this);
         
-        getCommand("automine").setExecutor(new AutoMineCommand(this));
-        getCommand("autokill").setExecutor(new AutoKillCommand(this));
-        getCommand("autocraft").setExecutor(new AutoCraftCommand(this));
-        getCommand("schoolminer").setExecutor(new SchoolminerCommand(this));
+        // Đăng ký Commands an toàn
+        if (getCommand("automine") != null) getCommand("automine").setExecutor(new AutoMineCommand(this));
+        if (getCommand("autokill") != null) getCommand("autokill").setExecutor(new AutoKillCommand(this));
+        if (getCommand("autocraft") != null) getCommand("autocraft").setExecutor(new AutoCraftCommand(this));
+        if (getCommand("schoolminer") != null) getCommand("schoolminer").setExecutor(new SchoolminerCommand(this));
         
+        // Đăng ký TabCompleter
         SchoolminerTabCompleter tabCompleter = new SchoolminerTabCompleter(this);
-        getCommand("automine").setTabCompleter(tabCompleter);
-        getCommand("autokill").setTabCompleter(tabCompleter);
-        getCommand("autocraft").setTabCompleter(tabCompleter);
-        getCommand("schoolminer").setTabCompleter(tabCompleter);
+        if (getCommand("automine") != null) getCommand("automine").setTabCompleter(tabCompleter);
+        if (getCommand("autokill") != null) getCommand("autokill").setTabCompleter(tabCompleter);
+        if (getCommand("autocraft") != null) getCommand("autocraft").setTabCompleter(tabCompleter);
+        if (getCommand("schoolminer") != null) getCommand("schoolminer").setTabCompleter(tabCompleter);
         
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
         
-        getLogger().log(Level.INFO, "§a✅ Schoolminer đã được khởi tạo thành công!");
-        getLogger().log(Level.INFO, "§a✅ Đã load dữ liệu người chơi!");
+        getLogger().log(Level.INFO, "§a✅ Schoolminer đã được khởi tạo thành công trên Purpur 1.21.11!");
     }
 
     @Override
@@ -51,27 +52,10 @@ public class Schoolminer extends JavaPlugin {
         getLogger().log(Level.INFO, "§c⛔ Schoolminer đã tắt!");
     }
 
-    public static Schoolminer getInstance() {
-        return instance;
-    }
-
-    public AutoMineManager getAutoMineManager() {
-        return autoMineManager;
-    }
-
-    public AutoKillManager getAutoKillManager() {
-        return autoKillManager;
-    }
-
-    public AutoCraftManager getAutoCraftManager() {
-        return autoCraftManager;
-    }
-
-    public ConfigManager getConfigManager() {
-        return configManager;
-    }
-
-    public PlayerDataManager getPlayerDataManager() {
-        return playerDataManager;
-    }
+    public static Schoolminer getInstance() { return instance; }
+    public AutoMineManager getAutoMineManager() { return autoMineManager; }
+    public AutoKillManager getAutoKillManager() { return autoKillManager; }
+    public AutoCraftManager getAutoCraftManager() { return autoCraftManager; }
+    public ConfigManager getConfigManager() { return configManager; }
+    public PlayerDataManager getPlayerDataManager() { return playerDataManager; }
 }

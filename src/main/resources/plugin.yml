@@ -1,24 +1,26 @@
 name: Schoolminer
 version: 1.0.0
 main: com.schoolminer.Schoolminer
-api-version: 1.21
+api-version: '1.21'
 author: school0107
-description: Auto mine, auto kill and autocraft plugin with upgrades
-depend: [Vault]
-softdepend: [MythicMobs]
+description: Auto mine, auto kill and autocraft plugin
 commands:
   automine:
     description: Tự động đào block
     usage: /automine
+    aliases: [am]
   autokill:
     description: Tự động tấn công mob
     usage: /autokill [upgrade]
+    aliases: [ak]
   autocraft:
     description: Tự động chế tạo
     usage: /autocraft <type> [off]
+    aliases: [ac]
   schoolminer:
     description: Quản lý plugin
     usage: /schoolminer <reload|help|mutiblock|add>
+    aliases: [smn]
 
 permissions:
   schoolminer.automine:
@@ -32,75 +34,4 @@ permissions:
     default: true
   schoolminer.admin:
     description: Quyền admin
-    default: op
-  
-  schoolminer.range.1:
-    description: Phạm vi đào 1 block
-    default: true
-  schoolminer.range.2:
-    description: Phạm vi đào 2 block
-    default: true
-  schoolminer.range.3:
-    description: Phạm vi đào 3 block
-    default: true
-  schoolminer.range.4:
-    description: Phạm vi đào 4 block
-    default: true
-  schoolminer.range.5:
-    description: Phạm vi đào 5 block
-    default: true
-
-  schoolminer.autocraft.go:
-    description: Cho phép craft gỗ
-    default: op
-  schoolminer.autocraft.da:
-    description: Cho phép craft đá
-    default: op
-  schoolminer.autocraft.kimcuong:
-    description: Cho phép craft kim cương
-    default: op
-  schoolminer.autocraft.sat:
-    description: Cho phép craft sắt
-    default: op
-  schoolminer.autocraft.vang:
-    description: Cho phép craft vàng
-    default: op
-  schoolminer.autocraft.da_cuoi:
-    description: Cho phép craft đá cuội
-    default: op
-  schoolminer.autocraft.than_cui:
-    description: Cho phép craft than củi
-    default: op
-  schoolminer.autocraft.ngoc_luc_bao:
-    description: Cho phép craft ngọc lục bảo
-    default: op
-  schoolminer.autocraft.da_nether:
-    description: Cho phép craft đá nether
-    default: op
-  schoolminer.autocraft.manh_vo_co_dai:
-    description: Cho phép craft mảnh vỡ cổ đại
-    default: op
-  schoolminer.autocraft.da_bazan:
-    description: Cho phép craft đá bazan
-    default: op
-  schoolminer.autocraft.da_blackstone:
-    description: Cho phép craft blackstone
-    default: op
-  schoolminer.autocraft.quang_nether_gold:
-    description: Cho phép craft quặng nether vàng
-    default: op
-  schoolminer.autocraft.quang_nether_quartz:
-    description: Cho phép craft quặng nether quartz
-    default: op
-  schoolminer.autocraft.soul_sand:
-    description: Cho phép craft soul sand
-    default: op
-  schoolminer.autocraft.soul_soil:
-    description: Cho phép craft soul soil
-    default: op
-  schoolminer.autocraft.gach_nether:
-    description: Cho phép craft gạch nether
-    default: op
-  schoolminer.autocraft.gach_nether_do:
-    description: Cho phép craft gạch nether đỏ
     default: op

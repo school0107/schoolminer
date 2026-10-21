@@ -23,6 +23,7 @@ public class Schoolminer extends JavaPlugin {
             getCommand("schoolminer").setTabCompleter(new SchoolminerTabCompleter(this));
         }
         
+        // Đăng ký sự kiện MultiBlock
         getServer().getPluginManager().registerEvents(multiBlockManager, this);
         
         getLogger().log(Level.INFO, "§a✅ Schoolminer (MultiBlock) đã khởi tạo!");

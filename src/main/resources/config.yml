@@ -10,16 +10,25 @@ messages:
   remove-success: '&a✅ Đã xóa MultiBlock khỏi cúp!'
   check-success: '&6✦ MultiBlock của cúp: &e%level%x'
 
-# Danh sách block KHÔNG áp dụng MultiBlock (Blacklist)
-# Block trong danh sách này khi đào sẽ rơi ra bình thường (x1)
-blacklist:
-  - SPAWNER
-  - BEDROCK
-  - END_PORTAL_FRAME
-  - BARRIER
-  - COMMAND_BLOCK
-  - CHEST
-  - FURNACE
-  - HOPPER
-  - DROPPER
-  - DISPENSER
+# Danh sách block ĐƯỢC PHÉP áp dụng MultiBlock (Chỉ Quặng)
+# Bất kỳ block nào không nằm trong danh sách này sẽ rơi ra bình thường (x1)
+allowed-ores:
+  - COAL_ORE
+  - DEEPSLATE_COAL_ORE
+  - IRON_ORE
+  - DEEPSLATE_IRON_ORE
+  - COPPER_ORE
+  - DEEPSLATE_COPPER_ORE
+  - GOLD_ORE
+  - DEEPSLATE_GOLD_ORE
+  - REDSTONE_ORE
+  - DEEPSLATE_REDSTONE_ORE
+  - EMERALD_ORE
+  - DEEPSLATE_EMERALD_ORE
+  - LAPIS_ORE
+  - DEEPSLATE_LAPIS_ORE
+  - DIAMOND_ORE
+  - DEEPSLATE_DIAMOND_ORE
+  - NETHER_QUARTZ_ORE
+  - NETHER_GOLD_ORE
+  - ANCIENT_DEBRIS
